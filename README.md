@@ -12,7 +12,7 @@ office request -> triage -> quote -> production sheet -> production -> delivery 
 
 - FastAPI backend with SQLAlchemy models, Alembic migrations, role-based access, and modular routers.
 - Vue 3 + Vite frontend with role-aware navigation and production/order workspaces.
-- CPQ-style quoting: simple and structured quote modes, material/labor calculations, margins, overhead, and transport.
+- CPQ-style quoting: basic and structured quote modes, material/labor calculations, margins, overhead, and transport.
 - Production document generation through Jinja2 and WeasyPrint.
 - Product/template catalog with operations, BOM-like materials, project grouping, and PDF output.
 - Order workflow with triage, quote approval, production state changes, delivery, history, and analytics.
@@ -27,7 +27,7 @@ office request -> triage -> quote -> production sheet -> production -> delivery 
 | `ceo` | Reads analytics, schedules, benchmarks, and financial summaries |
 | `dyrektor_produkcji` | Oversees production, catalog, materials, operations, and profitability |
 
-Demo PINs are intentionally simple and only for local/demo use:
+Demo PINs are fixed for local/demo use only:
 
 ```text
 biuro: 1111
