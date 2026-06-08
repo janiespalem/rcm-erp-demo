@@ -1,0 +1,41 @@
+# База данных — генерируется через seed.py
+*.db
+backend/factoryflow_demo.db
+backend/*.db
+
+# Загруженные файлы (рисунки, документация)
+backend/uploads/
+
+# Локальные/реальные seed-данные из Excel не коммитим
+backend/data/service_history_seed.json
+# Все JSON-файлы с реальными данными из data/; безопасные fixtures добавляем явно
+backend/data/*.json
+!backend/data/synthetic_*.json
+
+# Экспорты / выгрузки — могут содержать данные клиентов
+backend/exports/
+*.xlsx
+*.xls
+*.pdf
+
+# Разрешаем явно безопасные тестовые fixtures
+!tests/fixtures/safe/**
+
+# Python
+__pycache__/
+.venv/
+.codex
+.agents
+.agents/
+.claude/
+*.pyc
+*.pyo
+.env
+
+# IDE
+.idea/
+.vscode/
+*.swp
+Arkusze/
+design-system/
+rewrite_git_identity.sh

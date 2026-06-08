@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<title>Protokół Przyjęcia Pojazdu — DemoCo</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 10pt;
+    color: #1a1a2e;
+    background: #fff;
+    padding: 9mm 12mm 8mm;
+  }
+
+  /* ── Nagłówek ── */
+  .header {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 10px;
+    align-items: start;
+    border-bottom: 3.5px solid #1a3a5c;
+    padding-bottom: 7px;
+    margin-bottom: 10px;
+  }
+  .logo-block .company {
+    font-size: 24pt; font-weight: 900; color: #1a3a5c;
+    line-height: 1; letter-spacing: -0.5px;
+  }
+  .logo-block .tagline {
+    font-size: 6.5pt; color: #aaa; text-transform: uppercase;
+    letter-spacing: .12em; margin-top: 1px;
+  }
+  .doc-block { text-align: right; white-space: nowrap; }
+  .doc-type { font-size: 6.5pt; font-weight: 700; text-transform: uppercase; letter-spacing: .12em; color: #999; }
+  .doc-nr   { font-size: 15pt; font-weight: 900; color: #1a3a5c; line-height: 1.1; }
+  .doc-badge {
+    display: inline-block; margin-top: 4px;
+    background: #1a3a5c; color: #fff;
+    font-size: 7pt; font-weight: 700;
+    padding: 2px 8px; border-radius: 3px;
+    letter-spacing: .06em; text-transform: uppercase;
+  }
+  .header-meta {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2px 10px;
+    font-size: 9pt;
+    padding-top: 2px;
+  }
+  .hm-lbl { color: #999; font-size: 7pt; text-transform: uppercase; letter-spacing: .04em; margin-bottom: 1px; }
+  .hm-val { font-weight: 700; font-size: 10pt; color: #1a3a5c; }
+
+  /* ── Sekcje ── */
+  .section {
+    margin-bottom: 7px;
+    border: 1.5px solid #dde1e6;
+    border-radius: 4px;
+    overflow: hidden;
+    page-break-inside: avoid;
+  }
+  .section-header {
+    background: #1a3a5c;
+    color: #fff;
+    font-size: 7.5pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    padding: 4px 10px;
+  }
+
+  /* ── Tabela danych ── */
+  .dt { width: 100%; border-collapse: collapse; }
+  .dt td { padding: 4px 8px; border-bottom: 1.5px solid #ccc; font-size: 9.5pt; vertical-align: middle; }
+  .dt td.lbl { color: #555; font-size: 7.5pt; white-space: nowrap; padding-top: 5px; vertical-align: middle; }
+  .dt tr:last-child td { border-bottom: none; }
+
+  /* ── Linia do pisania ── */
+  .wl {
+    display: inline-block;
+    border-bottom: 2px solid #888;
+    min-width: 120px;
+    height: 14pt;
+    vertical-align: bottom;
+  }
+  .wl.full  { width: 100%; min-width: unset; }
+  .wl.short { min-width: 65px; }
+  .wl.tel   { min-width: 100px; }
+
+  /* ── Checkboxy ── */
+  .cb {
+    width: 13px; height: 13px;
+    border: 1.5px solid #1a3a5c;
+    border-radius: 2px;
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 3px;
+    flex-shrink: 0;
+  }
+  .cb-row { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .cb-item { display: flex; align-items: center; gap: 4px; font-size: 9.5pt; font-weight: 600; }
+  .cb-item.topkop .cb { border-color: #c62828; }
+  .cb-item.topkop     { color: #c62828; }
+
+  /* ── Tabela części ── */
+  .parts-table { width: 100%; border-collapse: collapse; font-size: 8.5pt; }
+  .parts-table th {
+    background: #f4f6f8; color: #555; font-size: 7pt;
+    font-weight: 700; text-transform: uppercase; letter-spacing: .06em;
+    padding: 4px 8px; text-align: left;
+    border-bottom: 2px solid #aaa;
+    border-right: 1.5px solid #bbb;
+  }
+  .parts-table th:last-child { border-right: none; }
+  .parts-table td {
+    padding: 5px 8px;
+    border-bottom: 1.5px solid #ccc;
+    border-right: 1.5px solid #ccc;
+    vertical-align: middle;
+    height: 22px;
+  }
+  .parts-table td:last-child { border-right: none; }
+  .parts-table tr:last-child td { border-bottom: none; }
+  .parts-table .col-nr   { width: 26px; text-align: center; color: #bbb; font-size: 7.5pt; }
+  .parts-table .col-name { width: 48%; }
+  .parts-table .col-qty  { width: 64px; text-align: center; }
+
+  /* ── Tabela robocizny ── */
+  .labor-table { width: 100%; border-collapse: collapse; font-size: 8.5pt; }
+  .labor-table th {
+    background: #f4f6f8; color: #555; font-size: 7pt;
+    font-weight: 700; text-transform: uppercase; letter-spacing: .06em;
+    padding: 4px 8px; text-align: left;
+    border-bottom: 2px solid #aaa;
+    border-right: 1.5px solid #bbb;
+  }
+  .labor-table th:last-child { border-right: none; }
+  .labor-table td {
+    padding: 5px 8px;
+    border-bottom: 1.5px solid #ccc;
+    border-right: 1.5px solid #ccc;
+    height: 22px;
+    vertical-align: middle;
+  }
+  .labor-table td:last-child { border-right: none; }
+  .labor-table tr:last-child td { border-bottom: none; }
+  .labor-table .col-nr   { width: 26px; text-align: center; color: #bbb; font-size: 7.5pt; }
+  .labor-table .col-rbh  { width: 90px; text-align: center; }
+
+  /* ── Podpisy ── */
+  .sigs { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
+  .sig-box { padding-top: 6px; }
+  .sig-line { border-top: 2px solid #1a3a5c; margin-bottom: 4px; margin-top: 34px; }
+  .sig-label { font-size: 7.5pt; color: #555; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; }
+
+  /* ── Stopka ── */
+  .footer {
+    border-top: 1px solid #dde1e6; margin-top: 6px; padding-top: 3px;
+    font-size: 6.5pt; color: #ccc; display: flex; justify-content: space-between;
+  }
+
+  @media print {
+    body { padding: 7mm 10mm 6mm; }
+    .section { page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══ NAGŁÓWEK ═══════════════════════════════════════════ -->
+<div class="header">
+  <div class="logo-block">
+    <div class="company">DemoCo</div>
+    <div class="tagline">Sp. z o.o. · Warsztat</div>
+  </div>
+
+  <div class="header-meta">
+    <div>
+      <div class="hm-lbl">Data przyjęcia</div>
+      <div class="hm-val"><span class="wl short"></span></div>
+    </div>
+    <div>
+      <div class="hm-lbl">Planowany odbiór</div>
+      <div class="hm-val"><span class="wl short"></span></div>
+    </div>
+  </div>
+
+  <div class="doc-block">
+    <div class="doc-type">Protokół Przyjęcia</div>
+    <div class="doc-nr">Pojazdu</div>
+    <div class="doc-badge">Warsztat Demo</div>
+  </div>
+</div>
+
+<!-- ═══ 1. IDENTYFIKACJA ═════════════════════════════════════ -->
+<div class="section">
+  <div class="section-header">1. Identyfikacja</div>
+  <div style="padding:0">
+    <table class="dt">
+      <col style="width:18%"><col><col style="width:16%"><col style="width:22%">
+      <tr>
+        <td class="lbl">Firma zlecająca:</td>
+        <td colspan="3">
+          <div class="cb-row" style="margin-top:2px">
+            <div class="cb-item topkop"><span class="cb"></span> TopKop</div>
+            <div class="cb-item"><span class="cb"></span> DemoCo</div>
+            <div class="cb-item"><span class="cb"></span> Inna:&nbsp;<span class="wl" style="min-width:160px"></span></div>
+          </div>
+        </td>
+      </tr>
+      <tr>
+        <td class="lbl">Osoba zdająca:</td>
+        <td><span class="wl full"></span></td>
+        <td class="lbl" style="padding-left:12px">Tel.:</td>
+        <td><span class="wl tel"></span></td>
+      </tr>
+      <tr>
+        <td class="lbl">Mechanik przyjmujący:</td>
+        <td colspan="3"><span class="wl full"></span></td>
+      </tr>
+    </table>
+  </div>
+</div>
+
+<!-- ═══ 2. DANE POJAZDU ══════════════════════════════════════ -->
+<div class="section">
+  <div class="section-header">2. Dane pojazdu</div>
+  <div style="padding:0">
+    <table class="dt">
+      <col style="width:18%"><col><col style="width:16%"><col style="width:22%">
+      <tr>
+        <td class="lbl">Marka i Model:</td>
+        <td><span class="wl full"></span></td>
+        <td class="lbl" style="padding-left:12px">Nr rej.:</td>
+        <td><span class="wl full" style="font-family:monospace;font-size:11pt;font-weight:900;letter-spacing:.08em"></span></td>
+      </tr>
+      <tr>
+        <td class="lbl">Przebieg (km):</td>
+        <td><span class="wl" style="min-width:130px"></span> km</td>
+        <td class="lbl" style="padding-left:12px">Rok prod.:</td>
+        <td><span class="wl short"></span></td>
+      </tr>
+      <tr>
+        <td class="lbl">Nr VIN:</td>
+        <td colspan="3"><span class="wl" style="min-width:300px;font-family:monospace;font-size:9pt"></span></td>
+      </tr>
+    </table>
+  </div>
+</div>
+
+<!-- ═══ 3. PRZEDMIOT ZLECENIA ════════════════════════════════ -->
+<div class="section">
+  <div class="section-header">3. Przedmiot zlecenia</div>
+  <div style="padding:0">
+    <table class="dt">
+      <col style="width:18%">
+      <tr>
+        <td class="lbl" style="vertical-align:top;padding-top:6px">Usterki / zakres prac:</td>
+        <td style="padding:6px 8px 4px">
+          <div style="display:flex;gap:6px;align-items:baseline;margin-bottom:6px">
+            <span style="color:#bbb;font-size:8pt;min-width:14px">1.</span><span class="wl full"></span>
+          </div>
+          <div style="display:flex;gap:6px;align-items:baseline;margin-bottom:6px">
+            <span style="color:#bbb;font-size:8pt;min-width:14px">2.</span><span class="wl full"></span>
+          </div>
+          <div style="display:flex;gap:6px;align-items:baseline;margin-bottom:6px">
+            <span style="color:#bbb;font-size:8pt;min-width:14px">3.</span><span class="wl full"></span>
+          </div>
+          <div style="display:flex;gap:6px;align-items:baseline;margin-bottom:6px">
+            <span style="color:#bbb;font-size:8pt;min-width:14px">4.</span><span class="wl full"></span>
+          </div>
+          <div style="display:flex;gap:6px;align-items:baseline;margin-bottom:6px">
+            <span style="color:#bbb;font-size:8pt;min-width:14px">5.</span><span class="wl full"></span>
+          </div>
+          <div style="display:flex;gap:6px;align-items:baseline;margin-bottom:2px">
+            <span style="color:#bbb;font-size:8pt;min-width:14px">6.</span><span class="wl full"></span>
+          </div>
+        </td>
+      </tr>
+      <tr>
+        <td class="lbl">Uwagi przy odbiorze:</td>
+        <td><span class="wl full"></span></td>
+      </tr>
+    </table>
+  </div>
+</div>
+
+<!-- ═══ 4A. CZĘŚCI I MATERIAŁY ══════════════════════════════ -->
+<div class="section">
+  <div class="section-header">4a. Części i materiały</div>
+  <div style="padding:0">
+    <table class="parts-table">
+      <thead>
+        <tr>
+          <th class="col-nr">#</th>
+          <th class="col-name">Nazwa</th>
+          <th class="col-qty">Ilość</th>
+          <th>Koszt netto / skąd pobrano</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td class="col-nr" style="color:#ddd">1</td><td></td><td></td><td></td></tr>
+        <tr><td class="col-nr" style="color:#ddd">2</td><td></td><td></td><td></td></tr>
+        <tr><td class="col-nr" style="color:#ddd">3</td><td></td><td></td><td></td></tr>
+        <tr><td class="col-nr" style="color:#ddd">4</td><td></td><td></td><td></td></tr>
+        <tr><td class="col-nr" style="color:#ddd">5</td><td></td><td></td><td></td></tr>
+        <tr>
+          <td colspan="2" style="text-align:right;color:#555;font-size:8pt;font-weight:700;padding-right:12px;border-right:none">RAZEM netto:</td>
+          <td colspan="2" style="border-top:1.5px solid #1a3a5c;font-weight:800;font-size:10pt;color:#1a3a5c;border-right:none"></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══ 4B. ROBOCIZNA ════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-header">4b. Robocizna</div>
+  <div style="padding:0">
+    <table class="labor-table">
+      <thead>
+        <tr>
+          <th class="col-nr">#</th>
+          <th>Osoba</th>
+          <th class="col-rbh">Godziny pracy</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td class="col-nr" style="color:#ddd">1</td><td></td><td></td></tr>
+        <tr><td class="col-nr" style="color:#ddd">2</td><td></td><td></td></tr>
+        <tr><td class="col-nr" style="color:#ddd">3</td><td></td><td></td></tr>
+        <tr><td class="col-nr" style="color:#ddd">4</td><td></td><td></td></tr>
+        <tr><td class="col-nr" style="color:#ddd">5</td><td></td><td></td></tr>
+        <tr><td class="col-nr" style="color:#ddd">6</td><td></td><td></td></tr>
+        <tr>
+          <td colspan="2" style="text-align:right;color:#555;font-size:8pt;font-weight:700;padding-right:12px;border-right:none">RAZEM:</td>
+          <td style="border-top:2px solid #1a3a5c;font-weight:800;font-size:10pt;color:#1a3a5c;border-right:none"></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══ 5. PODPISY ═══════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-header">5. Potwierdzenie odbioru</div>
+  <div style="padding:10px 14px 12px">
+    <div class="sigs">
+      <div class="sig-box">
+        <div class="sig-line"></div>
+        <div class="sig-label">Podpis kierowcy</div>
+      </div>
+      <div class="sig-box">
+        <div class="sig-line"></div>
+        <div class="sig-label">Podpis mechanika</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ STOPKA ══════════════════════════════════════════════ -->
+<div class="footer">
+  <span>Demo Manufacturing Sp. z o.o. · ul. Testowa 1, 00-000 Demo City</span>
+  <span>Protokół Przyjęcia Pojazdu · Wydruk: <script>document.write(new Date().toLocaleDateString('pl-PL'))</script></span>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,10 @@
+# Development and test dependencies — not needed in production.
+# Canonical setup (Python 3.11+):
+#   python -m venv .venv
+#   .venv/bin/pip install -r requirements.txt -r requirements-dev.txt
+#   .venv/bin/python -m pytest -q
+
+pytest==9.0.3
+# anyio pytest plugin is shipped as pytest-anyio stub that registers anyio.pytest_plugin
+pytest-anyio==0.0.0
+httpx==0.27.2   # required by starlette TestClient

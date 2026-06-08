@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 10pt;
+    color: #1a1a2e;
+    background: #fff;
+    padding: 9mm 12mm 8mm;
+  }
+
+  /* ── Nagłówek ── */
+  .header {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 10px;
+    align-items: start;
+    border-bottom: 3.5px solid #1a3a5c;
+    padding-bottom: 7px;
+    margin-bottom: 10px;
+  }
+  .logo-block .company {
+    font-size: 24pt; font-weight: 900; color: #1a3a5c;
+    line-height: 1; letter-spacing: -0.5px;
+  }
+  .logo-img {
+    width: 62px;
+    height: auto;
+    display: block;
+    margin-bottom: 3px;
+  }
+  .logo-block .tagline {
+    font-size: 6.5pt; color: #aaa; text-transform: uppercase;
+    letter-spacing: .12em; margin-top: 1px;
+  }
+
+  .header-meta {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    gap: 2px 10px;
+    font-size: 9pt;
+    padding-top: 2px;
+  }
+  .hm-lbl { color: #999; font-size: 7pt; text-transform: uppercase; letter-spacing: .04em; margin-bottom: 1px; }
+  .hm-val { font-weight: 800; font-size: 11pt; color: #1a3a5c; line-height: 1.1; }
+  .hm-val.deadline { color: #c62828; }
+  .hm-val.drw { font-size: 9pt; font-family: monospace; }
+  .field-line {
+    border-bottom: 1.5px solid #bbb;
+    min-width: 70px; display: inline-block;
+    height: 13pt; font-weight: 700;
+  }
+
+  .doc-block { text-align: right; white-space: nowrap; }
+  .doc-type { font-size: 6.5pt; font-weight: 700; text-transform: uppercase; letter-spacing: .12em; color: #999; }
+  .doc-nr   { font-size: 15pt; font-weight: 900; color: #1a3a5c; line-height: 1.1; }
+  .doc-date { font-size: 7pt; color: #aaa; margin-top: 2px; }
+  .doc-badge {
+    display: inline-block; margin-top: 4px;
+    background: #1a3a5c; color: #fff;
+    font-size: 7pt; font-weight: 700;
+    padding: 2px 8px; border-radius: 3px;
+    letter-spacing: .06em; text-transform: uppercase;
+  }
+  .doc-badge.remont { background: #e8891a; }
+
+  /* ── Alert wizyty ── */
+  .visit-alert {
+    background: #fff3e0; border: 1.5px solid #e8891a;
+    border-radius: 4px; padding: 5px 10px;
+    font-size: 9pt; color: #5d4037; font-weight: 600;
+    margin-bottom: 8px;
+  }
+
+  /* ── Sekcje ── */
+  .section {
+    margin-bottom: 7px;
+    border: 1.5px solid #dde1e6;
+    border-radius: 4px;
+    overflow: hidden;
+    page-break-inside: avoid;
+  }
+  .section-header {
+    background: #1a3a5c;
+    color: #fff;
+    font-size: 7.5pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    padding: 4px 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .badge {
+    background: #e8891a; color: #fff;
+    font-size: 6.5pt; font-weight: 700;
+    padding: 2px 7px; border-radius: 10px;
+    text-transform: none; letter-spacing: 0;
+  }
+  .section-body { padding: 7px 10px; }
+
+  /* ── Tabela danych ── */
+  .dt { width: 100%; border-collapse: collapse; }
+  .dt td { padding: 3.5px 6px; border-bottom: 1px solid #f0f0f0; font-size: 9.5pt; vertical-align: top; }
+  .dt td.lbl { color: #555; font-size: 7.5pt; width: 26%; white-space: nowrap; padding-top: 4.5px; }
+  .dt td.val { font-weight: 600; }
+  .dt tr:last-child td { border-bottom: none; }
+
+  /* ── BOM fallback ── */
+  .bom-note {
+    font-size: 9pt; color: #888; font-style: italic; padding: 6px 10px;
+  }
+
+  /* ── Tabela materiałów BOM ── */
+  .bom-table { width: 100%; border-collapse: collapse; font-size: 8.5pt; }
+  .bom-table th {
+    background: #f4f6f8; color: #555; font-size: 7pt;
+    font-weight: 700; text-transform: uppercase; letter-spacing: .06em;
+    padding: 4px 6px; text-align: left; border-bottom: 1.5px solid #dde1e6;
+  }
+  .bom-table td { padding: 5px 6px; border-bottom: 1px solid #eee; vertical-align: middle; }
+  .bom-table tr:last-child td { border-bottom: none; }
+  .bom-table .col-pos  { width: 32px; text-align: center; }
+  .bom-table .col-part { width: 88px; font-family: monospace; font-size: 7.5pt; }
+  .bom-table .col-mat  { width: 92px; font-size: 8pt; }
+  .bom-table .col-dim  { font-size: 8pt; color: #444; font-family: monospace; }
+  .bom-table .col-qty  { width: 34px; text-align: right; font-weight: 700; }
+  .bom-table .col-unit { width: 28px; text-align: center; color: #666; }
+  .bom-table .col-mass { width: 48px; text-align: right; font-family: monospace; }
+
+  /* ── Routing ── */
+  .routing {
+    display: flex; align-items: center; gap: 3px;
+    font-size: 8pt; flex-wrap: wrap; padding: 6px 10px;
+  }
+  .rt-chip {
+    background: #e8f0fc; border: 1px solid #b8cef0;
+    border-radius: 3px; padding: 2px 8px;
+    font-weight: 700; color: #1a3a5c; font-size: 7.5pt;
+  }
+  .rt-arr { color: #bbb; font-size: 10pt; padding: 0 1px; }
+
+  /* ── Tabela operacji ── */
+  .ops-table { width: 100%; border-collapse: collapse; font-size: 9.5pt; }
+  .ops-table th {
+    background: #f4f6f8; color: #555; font-size: 6.5pt;
+    font-weight: 700; text-transform: uppercase; letter-spacing: .06em;
+    padding: 4px 7px; text-align: left; border-bottom: 1.5px solid #dde1e6;
+  }
+  .ops-table td {
+    padding: 7px 7px;
+    border-bottom: 1px solid #dde1e6;
+    vertical-align: middle;
+    height: 26px;
+  }
+  .ops-table tr:last-child td { border-bottom: none; }
+  .ops-table .col-nr   { width: 20px; text-align: center; color: #aaa; font-size: 8pt; }
+  .ops-table .col-op   { width: 24%; }
+  .ops-table .col-wyd  { width: 88px; }
+  .ops-table .col-mat  { }
+  .ops-table .col-zad  { width: 54px; text-align: center; }
+  .ops-table .col-real { width: 72px; text-align: center; border-left: 1px dashed #ccc; }
+  .ops-table .col-sig  { width: 80px; border-left: 1px dashed #ccc; }
+
+  /* Wydział chip w tabeli */
+  .wyd-chip {
+    display: inline-block;
+    font-size: 7pt; font-weight: 700; padding: 1px 6px;
+    border-radius: 3px; white-space: nowrap;
+    background: #eef2f7; color: #1a3a5c; border: 1px solid #c5cfe0;
+  }
+  .wyd-chip.spawalnia  { background: #fff0e6; color: #c64a00; border-color: #f7c49a; }
+  .wyd-chip.cnc        { background: #e6f0ff; color: #0047b3; border-color: #9ab8f0; }
+  .wyd-chip.kj         { background: #e6faf0; color: #00703c; border-color: #8adbb4; }
+  .wyd-chip.lakiernia  { background: #f5e6ff; color: #7a00cc; border-color: #d49af7; }
+  .wyd-chip.montaz     { background: #fffbe6; color: #806200; border-color: #f0d96e; }
+  .prep-row td { background: #fafcff; color: #4d5f75; }
+  .prep-row .op-name { font-size: 8.5pt; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; }
+
+  .hrs-badge {
+    background: #e8f4ff; color: #1a3a5c;
+    font-weight: 700; font-size: 8.5pt;
+    padding: 1px 6px; border-radius: 8px;
+  }
+  .op-name { font-weight: 600; font-size: 9.5pt; }
+  .write-line { display: inline-block; width: 100%; border-bottom: 1px solid #aaa; height: 12pt; }
+  .cb { width: 12px; height: 12px; border: 1.5px solid #1a3a5c; border-radius: 2px; display: inline-block; vertical-align: middle; margin-right: 3px; }
+  .time-log-row td {
+    background: #fbfcfd;
+    border-top: 0;
+    padding: 0 8px 7px 48px;
+  }
+  .time-log {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 7.8pt;
+    color: #444;
+  }
+  .time-log th {
+    color: #777;
+    font-size: 6.5pt;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    font-weight: 700;
+    padding: 2px 5px 3px;
+    text-align: left;
+  }
+  .time-log td {
+    padding: 3px 5px;
+    border-bottom: 1px solid #e4e8ee;
+    background: transparent;
+  }
+  .time-log .tl-date { width: 76px; }
+  .time-log .tl-worker { width: 115px; }
+  .time-log .tl-hours { width: 70px; }
+  .time-log .tl-sign { width: 130px; }
+  .time-log .write-line { height: 13pt; }
+
+  /* ── Uwagi ── */
+  .note-line { border-bottom: 1px solid #bbb; height: 15pt; margin-bottom: 3pt; }
+
+  /* ── Podpisy ── */
+  .sigs { display: grid; grid-template-columns: 1.1fr 1.1fr 1fr; gap: 10px; }
+  .sig-box { padding-top: 4px; }
+  .sig-line { border-top: 1.5px solid #1a3a5c; margin-bottom: 3px; }
+  .sig-label { font-size: 7pt; color: #666; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; }
+  .sig-date  { font-size: 7pt; color: #aaa; margin-top: 2px; }
+  .check-row { display: flex; gap: 5px; align-items: center; font-size: 9pt; margin-bottom: 5px; }
+
+  /* ── Stopka ── */
+  .footer {
+    border-top: 1px solid #dde1e6; margin-top: 6px; padding-top: 3px;
+    font-size: 6.5pt; color: #ccc; display: flex; justify-content: space-between;
+  }
+
+  @media print {
+    body { padding: 7mm 10mm 6mm; }
+    .section { page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+{% macro fmt_num(v) -%}
+  {%- if v is number and v == (v | int) -%}{{ v | int }}
+  {%- elif v -%}{{ v }}
+  {%- else -%}—{%- endif -%}
+{%- endmacro %}
+
+<!-- ═══ NAGŁÓWEK ═══════════════════════════════════════════ -->
+<div class="header">
+  <div class="logo-block">
+    {% if logo_url %}<img class="logo-img" src="{{ logo_url }}" alt="DemoCo">{% endif %}
+    <div class="company">DemoCo</div>
+    <div class="tagline">Sp. z o.o. · Arkusz Zlecenia</div>
+  </div>
+
+  <div class="header-meta">
+    <div>
+      <div class="hm-lbl">Zlecenie Nr</div>
+      <div class="hm-val">{{ order.order_number or ('ZW-' + order.id|string) }}</div>
+    </div>
+    <div>
+      <div class="hm-lbl">Termin</div>
+      <div class="hm-val deadline">
+        {{ order.deadline.strftime('%d.%m.%Y') if order.deadline else '—' }}
+      </div>
+    </div>
+    <div>
+      <div class="hm-lbl">Nr rysunku</div>
+      <div class="hm-val drw">{{ (sop_template.position_nr if sop_template else None) or order.sop_name or '—' }}</div>
+    </div>
+    <div>
+      <div class="hm-lbl">Rewizja</div>
+      <div class="hm-val"><span class="field-line" style="min-width:36px"></span></div>
+    </div>
+  </div>
+
+  <div class="doc-block">
+    <div class="doc-type">Arkusz Zlecenia</div>
+    <div class="doc-nr">{{ order.order_number or order.id }}</div>
+    <div class="doc-date">Wydruk: {{ today }}</div>
+    <div class="doc-badge {% if order.order_type == 'remont' %}remont{% endif %}">
+      {% if order.order_type == 'remont' %}Remont
+      {% elif order.order_type == 'nowa_czesc' %}Nowa część
+      {% elif order.order_type == 'zbrojenie' %}Zbrojenie
+      {% else %}Produkcja{% endif %}
+    </div>
+  </div>
+</div>
+
+{% if order.requires_visit %}
+<div class="visit-alert">⚠ Zlecenie wymaga wizyty u klienta przed realizacją</div>
+{% endif %}
+
+<!-- ═══ 1. LEGENDA ═══════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-header">
+    <span>1. Legenda zlecenia</span>
+    <span class="badge">{{ order.client }}</span>
+  </div>
+  <div class="section-body" style="padding:0">
+    <table class="dt">
+      {% if sop_template %}
+      <tr>
+        <td class="lbl">Produkt:</td>
+        <td class="val" style="font-size:10.5pt;font-weight:800;color:#1a3a5c">{{ sop_template.name }}</td>
+        {% if order.quantity and order.quantity > 1 %}
+        <td class="lbl" style="padding-left:12px;width:20%">Ilość:</td>
+        <td class="val" style="width:15%">{{ order.quantity }} szt.</td>
+        {% else %}
+        <td colspan="2"></td>
+        {% endif %}
+      </tr>
+      {% endif %}
+      {% if order.description %}
+      <tr>
+        <td class="lbl">Opis / cel:</td>
+        <td class="val" colspan="3">{{ order.description }}</td>
+      </tr>
+      {% endif %}
+      <tr>
+        <td class="lbl">Materiał ogólny:</td>
+        <td class="val">{{ order.material or '—' }}</td>
+        {% if not (order.quantity and order.quantity > 1) %}
+        {% if order.quantity %}<td class="lbl" style="padding-left:12px;width:20%">Ilość:</td><td class="val" style="width:15%">{{ order.quantity }} szt.</td>
+        {% else %}<td colspan="2"></td>{% endif %}
+        {% else %}<td colspan="2"></td>{% endif %}
+      </tr>
+      {% set _mat_w = (quote.material_weight_kg or 0)|float if quote else 0 %}
+      {% set _net_w = (quote.weight_netto_kg or 0)|float if quote else 0 %}
+      {% if _mat_w > 0 or _net_w > 0 %}
+      <tr>
+        <td class="lbl">Masa surowca:</td>
+        <td class="val">{% if _mat_w > 0 %}{{ _mat_w | int if _mat_w == _mat_w | int else _mat_w }} kg{% else %}—{% endif %}</td>
+        <td class="lbl" style="padding-left:12px">Masa wyrobu:</td>
+        <td class="val">{% if _net_w > 0 %}{{ _net_w | int if _net_w == _net_w | int else _net_w }} kg{% else %}—{% endif %}</td>
+      </tr>
+      {% endif %}
+      {% if order.notes %}
+      <tr>
+        <td class="lbl">Uwagi:</td>
+        <td class="val" colspan="3" style="color:#c62828;font-weight:700">{{ order.notes }}</td>
+      </tr>
+      {% endif %}
+    </table>
+  </div>
+</div>
+
+<!-- ═══ 2. LISTA MATERIAŁÓW / BOM ══════════════════════════ -->
+{% set bom_list = sop_template.materials_json if sop_template else [] %}
+{% if bom_list %}
+<div class="section">
+  <div class="section-header">
+    <span>2. Lista materiałów</span>
+    <span class="badge">{{ bom_list | length }} poz.</span>
+  </div>
+  <div class="section-body" style="padding:0">
+    <table class="bom-table">
+      <thead>
+        <tr>
+          <th class="col-pos">#</th>
+          <th class="col-part">Nr części</th>
+          <th class="col-mat">Materiał</th>
+          <th class="col-dim">Wymiary / opis</th>
+          <th class="col-qty">Ilość</th>
+          <th class="col-unit">JM</th>
+          <th class="col-mass">Masa kg</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for m in bom_list %}
+        <tr>
+          <td class="col-pos" style="color:#aaa;font-size:7.5pt">{{ loop.index }}</td>
+          <td class="col-part">{{ m.part_no or m.name or m.line_id or '—' }}</td>
+          <td class="col-mat">{{ m.mat or '—' }}</td>
+          <td class="col-dim">{{ m.dim or m.name or '—' }}</td>
+          <td class="col-qty">{{ fmt_num(m.qty or 1) }}</td>
+          <td class="col-unit">{{ m.unit or 'szt' }}</td>
+          <td class="col-mass">{{ fmt_num(m.mass_kg) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% elif sop_template and sop_template.drawing_path %}
+<div class="section">
+  <div class="section-header"><span>2. Lista materiałów</span></div>
+  <div class="bom-note">Lista materiałów wbudowana w rysunek techniczny — patrz strony dołączone do zlecenia (nr {{ sop_template.position_nr or sop_template.name }}).</div>
+</div>
+{% endif %}
+
+<!-- ═══ 3. ROUTING WYDZIAŁÓW ════════════════════════════════ -->
+{% if operations %}
+{% set routing_ops = [] %}
+{% for op in operations %}
+  {% set wyd = op.wydział or op.department %}
+  {% if wyd and wyd not in routing_ops %}
+    {% set _ = routing_ops.append(wyd) %}
+  {% endif %}
+{% endfor %}
+{% if routing_ops %}
+<div class="section">
+  <div class="section-header"><span>3. Routing wydziałów</span></div>
+  <div class="routing">
+    {% for wyd in routing_ops %}
+    <span class="rt-chip">{{ wyd }}</span>
+    {% if not loop.last %}<span class="rt-arr">→</span>{% endif %}
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+{% endif %}
+
+<!-- ═══ 4. OPERACJE ══════════════════════════════════════════ -->
+<div class="section">
+  {% set op_list = operations if operations else (sop_template.operations_json if sop_template else []) %}
+  <div class="section-header">
+    <span>4. Operacje</span>
+    {% set total_h = namespace(v=0) %}{% for o in op_list %}{% if o.hours %}{% set total_h.v = total_h.v + o.hours %}{% endif %}{% endfor %}
+    <span class="badge">{{ op_list | length }} czynności{% if total_h.v > 0 %} · {{ fmt_num(total_h.v) }}h łącznie{% endif %}</span>
+  </div>
+  <div class="section-body" style="padding:0">
+    <table class="ops-table">
+      <thead>
+        <tr>
+          <th class="col-nr">#</th>
+          <th class="col-op">Czynność</th>
+          <th class="col-wyd">Wydział</th>
+          <th class="col-mat">Materiał / Półfabrykat / Wymiary</th>
+          <th class="col-zad">Plan<br>godz.</th>
+          <th class="col-real">Real. czas<br><span style="font-weight:400;text-transform:none;font-size:6pt">(odręcznie)</span></th>
+          <th class="col-sig">Podpis</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if op_list %}
+          {% for op in op_list %}
+          {% set op_wydzial = op.wydział or op.department %}
+          {% set wyd_key = (op_wydzial or '')|lower|replace(' ','') %}
+          <tr class="{% if op.is_preparation %}prep-row{% endif %}">
+            <td class="col-nr">{{ loop.index }}</td>
+            <td class="col-op">
+              <div class="op-name">{{ op.name or op.op or '—' }}</div>
+              {% if op.source_page %}
+              <div style="font-size:7pt;color:#888;margin-top:1px">Rysunek: str. {{ op.source_page }}</div>
+              {% endif %}
+            </td>
+            <td class="col-wyd">
+              {% if op_wydzial %}
+              <span class="wyd-chip {{ wyd_key if wyd_key in ['spawalnia','cnc','kj','lakiernia','montaz'] else '' }}">{{ op_wydzial }}</span>
+              {% endif %}
+            </td>
+            <td class="col-mat" style="font-size:8.5pt;color:#555">
+              {%- if op.material -%}
+                {{ op.material }}{% if op.dim %} · <span style="font-family:monospace">{{ op.dim }}</span>{% endif %}
+              {%- elif op.material_ref -%}
+                {{ op.material_ref }}
+              {%- elif loop.first and order.material -%}
+                {{ order.material }}
+              {%- else -%}—{%- endif -%}
+            </td>
+            <td class="col-zad">
+              {% if op.is_preparation %}
+                —
+              {% elif op.hours and op.hours > 0 %}
+                <span class="hrs-badge">{{ op.hours }}h</span>
+              {% else %}—{% endif %}
+            </td>
+            <td class="col-real"><span class="write-line"></span></td>
+            <td class="col-sig"><span class="cb"></span><span class="write-line" style="width:calc(100% - 16px)"></span></td>
+          </tr>
+          <tr class="time-log-row">
+            <td colspan="7">
+              <table class="time-log">
+                <thead>
+                  <tr>
+                    <th class="tl-date">Data</th>
+                    <th class="tl-worker">Pracownik</th>
+                    <th>Wykonana czynność / uwagi</th>
+                    <th class="tl-hours">Czas</th>
+                    <th class="tl-sign">Podpis</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for i in range(7) %}
+                  <tr>
+                    <td><span class="write-line"></span></td>
+                    <td><span class="write-line"></span></td>
+                    <td><span class="write-line"></span></td>
+                    <td><span class="write-line"></span></td>
+                    <td><span class="write-line"></span></td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </td>
+          </tr>
+          {% endfor %}
+        {% else %}
+          {# brak operacji z systemu — 8 pustych wierszy do ręcznego wpisu #}
+          {% for i in range(8) %}
+          <tr>
+            <td class="col-nr" style="color:#ddd">{{ loop.index }}</td>
+            <td class="col-op"></td>
+            <td class="col-wyd"></td>
+            <td class="col-mat"></td>
+            <td class="col-zad"></td>
+            <td class="col-real"></td>
+            <td class="col-sig"></td>
+          </tr>
+          {% endfor %}
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══ UWAGI (odręcznie) ═══════════════════════════════════ -->
+<div class="section">
+  <div class="section-header"><span>5. Uwagi (odręcznie)</span></div>
+  <div class="section-body">
+    <div class="note-line"></div>
+    <div class="note-line"></div>
+    <div class="note-line"></div>
+    <div class="note-line"></div>
+  </div>
+</div>
+
+<!-- ═══ PODPIS KOŃCOWY ═══════════════════════════════════════ -->
+<div class="section">
+  <div class="section-header"><span>6. Podpis końcowy</span></div>
+  <div class="section-body">
+    <div class="sigs">
+      <div class="sig-box">
+        <div class="sig-line"></div>
+        <div class="sig-label">Wykonał</div>
+        <div class="sig-date">Data: ___________</div>
+      </div>
+      <div class="sig-box">
+        <div class="sig-line"></div>
+        <div class="sig-label">Sprawdził</div>
+        <div class="sig-date">Data: ___________</div>
+      </div>
+      <div class="sig-box" style="padding-top:6px">
+        <div class="check-row"><span class="cb"></span> Jakość OK</div>
+        <div class="check-row"><span class="cb"></span> Gotowe do wydania</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ STOPKA ══════════════════════════════════════════════ -->
+<div class="footer">
+  <span>Demo Manufacturing Sp. z o.o. · ul. Testowa 1, 00-000 Demo City</span>
+  <span>{{ order.order_number or order.id }} · Rev___ · Wydruk: {{ today }}</span>
+</div>
+
+</body>
+</html>
