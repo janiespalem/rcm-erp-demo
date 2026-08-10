@@ -17,17 +17,13 @@ from utils import _now, DEFAULT_MARGIN_PCT
 
 class OrderStatus(str, enum.Enum):
     draft         = "draft"
-    triage        = "triage"
     standard      = "standard"
-    cancelled     = "cancelled"
     niestandard   = "niestandard"
     quoted        = "quoted"         # Technolog zapisał wycenę, czeka na akceptację Biura
     rejected      = "rejected"
-    in_production = "in_production"  # Biuro zatwierdziło — czeka na start
-    w_trakcie     = "w_trakcie"      # Technolog rozpoczął pracę
+    in_production = "in_production"  # Biuro zatwierdziło — w produkcji
     gotowe        = "gotowe"         # Gotowe do odbioru przez klienta
     wydane        = "wydane"         # Wydane klientowi — zamknięte
-    done          = "done"           # Zachowane dla wstecznej kompatybilności
 
 class TriageBranch(str, enum.Enum):
     odrzut      = "odrzut"
@@ -39,7 +35,7 @@ class UserRole(str, enum.Enum):
     technolog    = "technolog"
     dyrektor     = "dyrektor"   # legacy — zachowane dla istniejących rekordów
     ceo          = "ceo"        # Dyrektor Generalny (analytics, finanse)
-    dyrektor_produkcji = "dyrektor_produkcji"  # Dyrektor Produkcji DemoCo (kolejka, katalog, arkusze)
+    # dyrektor_rcm removed — all powers merged into technolog
 
 class Priority(str, enum.Enum):
     low    = "low"
@@ -68,10 +64,11 @@ class Base(DeclarativeBase):
 class User(Base):
     __tablename__ = "users"
 
-    id   = Column(Integer, primary_key=True)
-    name = Column(String(100), nullable=False)
-    role = Column(Enum(UserRole), nullable=False)
-    pin  = Column(String(10))   # legacy — auth używa _USERS dict w auth.py z bcrypt, nie tej tabeli
+    id       = Column(Integer, primary_key=True)
+    name     = Column(String(100), nullable=False)
+    role     = Column(Enum(UserRole), nullable=False)
+    pin      = Column(String(10))   # legacy plaintext; cleared by migration
+    pin_hash = Column(String(128))  # null means login disabled
 
 
 # =============================================================================
@@ -90,6 +87,7 @@ class Order(Base):
     notes            = Column(Text)
     has_drawing      = Column(Boolean, default=False)  # Gotowy projekt? — kluczowy dla triage
     material         = Column(String(100))             # Materiał (sprawdzany w Odrzut)
+    materials_json   = Column(JSON, default=list)      # [{name, qty_kg?, price_per_kg?}] — intake prefill for wycena
     approved_material_id = Column(Integer, ForeignKey("approved_materials.id"))
     purpose          = Column(Text)                    # Przeznaczenie / Do czego to? (Nowa część)
     estimated_value  = Column(Numeric(10, 2), default=0)
@@ -99,12 +97,19 @@ class Order(Base):
     requires_visit   = Column(Boolean, default=False)  # Wymaga wizyty u klienta
     template_id      = Column(Integer, ForeignKey("product_templates.id"))  # Wybrany produkt (catalog)
     quantity         = Column(Integer, default=1)      # Ilość sztuk
-    is_defence       = Column(Boolean, default=False)  # Projekt zbrojeniowy / MON — czerwona ikona w liście
+    is_defence       = Column(Boolean, default=False)  # Restricted-project marker
+    is_internal      = Column(Boolean, default=False)  # Zlecenie wewnętrzne (własna firma) → koszt własny zamiast oferty
+    weight_kg        = Column(Numeric(10, 3))          # Masa zlecenia (kg) — znana z rysunku/klienta
+    drawing_number   = Column(String(50))              # Nr rysunku
+    dimensions       = Column(String(120))             # Wymiary (np. "20x60x10")
+    delivery_address = Column(Text)                    # Adres dostawy
+    contact          = Column(String(160))             # Osoba kontaktowa / telefon
     created_at    = Column(DateTime, default=_now)
     quoted_at     = Column(DateTime)
     started_at    = Column(DateTime)
     completed_at  = Column(DateTime)
     delivered_at  = Column(DateTime)
+    archived_at   = Column(DateTime)
     created_by_id = Column(Integer, ForeignKey("users.id"))
     assigned_to_id = Column(Integer, ForeignKey("users.id"))  # Technolog przy niestandard
 
@@ -250,8 +255,8 @@ class ProductTemplate(Base):
     margin_pct      = Column(Numeric(5, 4), default=DEFAULT_MARGIN_PCT)
     is_active       = Column(Boolean, default=True)
 
-    # Katalog projektów — grupowanie szablonów pod projekt (np. "PK1")
-    project_code    = Column(String(50))         # "PK1", "PK2", None = usługa/remont
+    # Katalog projektów — grupowanie szablonów pod neutralny kod projektu.
+    project_code    = Column(String(50))         # np. "DEMO-A"; None = usługa/remont
     position_nr     = Column(String(50))         # "1_legs", "2_spiral" — pozycja z rysunku
     drawing_path    = Column(String(500))        # uploads/templates/{id}/rysunek.pdf
     notes           = Column(Text)               # legenda ogólna: opis detalu, uwagi do serii
@@ -297,6 +302,8 @@ class Quote(Base):
 
     # --- Wycena strukturalna v2 (formuła technologa) ---
     # processes_json: [{name: "Cięcie plazmą", cost: 150.0}, ...]
+    pricing_method    = Column(String(12), default="kalkulacja")
+    weight_basis      = Column(String(8), default="netto")
     processes_json     = Column(JSON, default=list)
     weight_kg          = Column(Numeric(10, 3), default=0)
     weight_rate_pln_kg = Column(Numeric(6, 2), default=15)   # 7–30 PLN/kg zależnie od złożoności

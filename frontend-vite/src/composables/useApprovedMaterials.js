@@ -1,16 +1,19 @@
 import { ref } from 'vue'
-import { api } from './useApi'
+import { api, readCache, writeCache } from './useApi'
 import { useToast } from './useToast'
 import { useConfirm } from './useConfirm'
 
-const approvedMaterials = ref([])
+// Hydratacja z cache — lista widoczna natychmiast, świeże dane dogrywają się w tle.
+const approvedMaterials = ref(readCache('materials') || [])
 
 export function useApprovedMaterials() {
   const { show } = useToast()
   const { confirm } = useConfirm()
 
   async function loadApprovedMaterials() {
-    approvedMaterials.value = await api('/approved-materials')
+    const fresh = await api('/approved-materials')
+    approvedMaterials.value = fresh
+    writeCache('materials', fresh)
   }
 
   async function saveMaterial(mat, draft) {

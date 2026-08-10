@@ -1,5 +1,7 @@
 import os
 import pathlib
+from urllib.parse import quote
+
 from sqlalchemy import create_engine, event
 from sqlalchemy.orm import sessionmaker
 
@@ -13,9 +15,25 @@ def _normalize_database_url(url: str) -> str:
         url = url.replace("postgresql://", "postgresql+psycopg://", 1)
     return url
 
-DATABASE_URL = _normalize_database_url(
-    os.getenv("DATABASE_URL", f"sqlite:///{BACKEND_DIR / 'factoryflow_demo.db'}")
-)
+
+def _database_url_from_env() -> str:
+    raw = os.getenv("DATABASE_URL")
+    if raw:
+        return _normalize_database_url(raw)
+    password = os.getenv("POSTGRES_PASSWORD")
+    if password:
+        user = quote(os.getenv("POSTGRES_USER", "factoryflow_demo"), safe="")
+        password = quote(password, safe="")
+        host = os.getenv("POSTGRES_HOST", "factoryflow-demo-db")
+        port = os.getenv("POSTGRES_PORT", "5432")
+        database = quote(os.getenv("POSTGRES_DB", "factoryflow_demo"), safe="")
+        return f"postgresql+psycopg://{user}:{password}@{host}:{port}/{database}"
+    if os.getenv("APP_ENV", "prod").lower() in ("dev", "test"):
+        return f"sqlite:///{BACKEND_DIR / 'factoryflow_demo.db'}"
+    raise RuntimeError("DATABASE_URL or POSTGRES_PASSWORD is required in production; refusing SQLite fallback.")
+
+
+DATABASE_URL = _database_url_from_env()
 _connect_args = {"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
 engine = create_engine(
     DATABASE_URL,

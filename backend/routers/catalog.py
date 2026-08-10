@@ -9,9 +9,9 @@ from models import OperationCatalog
 
 router = APIRouter(prefix="/api/operation-catalog", tags=["Catalog"])
 
-_ALL  = require_role("biuro", "technolog", "ceo", "dyrektor_produkcji")
-_TECH = require_role("technolog", "dyrektor_produkcji")
-_DIR  = require_role("dyrektor_produkcji")
+_ALL  = require_role("biuro", "technolog", "ceo")
+_TECH = require_role("technolog")
+_DIR  = require_role("technolog")
 
 
 def _auto_keywords(name: str | None, department: str | None, formula: str | None) -> str:

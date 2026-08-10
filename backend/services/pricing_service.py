@@ -7,48 +7,16 @@ from typing import List
 
 from utils import DEFAULT_LABOR_RATE_PLN, DEFAULT_OVERHEAD_PCT, DEFAULT_MARGIN_PCT
 
-ZAPOR_MULTIPLIER_DEFAULT = 3.5
-
-
-@dataclass
-class SimpleQuoteResult:
-    labor_cost:  float
-    subtotal:    float
-    total_net:   float
-
-
 @dataclass
 class StructuredQuoteResult:
     ops_total:      float
     material_total: float
     extra_labor:    float
+    weight_total:   float
     base:           float
     subtotal:       float
     total_net:      float
-
-
-@dataclass
-class ZaporQuoteResult:
-    multiplier: float
-    total_net:  float
-    margin_pct: float
-
-
-def calc_simple_quote(
-    labor_hours: float,
-    material_cost: float,
-    overhead_pct: float = DEFAULT_OVERHEAD_PCT,
-    margin_pct: float = DEFAULT_MARGIN_PCT,
-    labor_rate: float = DEFAULT_LABOR_RATE_PLN,
-) -> SimpleQuoteResult:
-    labor_cost = labor_hours * labor_rate
-    subtotal   = (material_cost + labor_cost) * (1 + overhead_pct)
-    total_net  = round(subtotal * (1 + margin_pct), 2)
-    return SimpleQuoteResult(
-        labor_cost=labor_cost,
-        subtotal=subtotal,
-        total_net=total_net,
-    )
+    pricing_method: str = "kalkulacja"
 
 
 def _material_line_total(line) -> float:
@@ -59,6 +27,14 @@ def _material_line_total(line) -> float:
     qty = float(getattr(line, "qty_kg", 0) or 0)
     price = float(getattr(line, "price_per_kg", 0) or 0)
     return qty * price
+
+
+def process_total(process) -> float:
+    """Use legacy fixed cost only when hours/rate were not supplied at all."""
+    supplied = getattr(process, "model_fields_set", set())
+    if "hours" in supplied or "rate_per_hour" in supplied:
+        return float(process.hours or 0) * float(process.rate_per_hour or 0)
+    return float(process.cost or 0)
 
 
 def calc_structured_quote(
@@ -72,11 +48,11 @@ def calc_structured_quote(
     transport_cost: float = 0.0,
     labor_rate: float = DEFAULT_LABOR_RATE_PLN,
     materials: List = None,   # objects with .qty_kg, .price_per_kg, .cost; multi-material v3
+    weight_kg: float = 0.0,
+    weight_rate_pln_kg: float = 0.0,
+    method: str = "kalkulacja",
 ) -> StructuredQuoteResult:
-    ops_total = sum(
-        p.hours * p.rate_per_hour if (p.hours and p.rate_per_hour) else (p.cost or 0)
-        for p in processes
-    )
+    ops_total = sum(process_total(process) for process in processes)
     if materials:
         # Multi-material: sum each line. Legacy single fields are ignored.
         material_total = sum(_material_line_total(m) for m in materials)
@@ -88,29 +64,25 @@ def calc_structured_quote(
             else material_cost
         )
     extra_labor = labor_hours * labor_rate
-    base        = ops_total + material_total + extra_labor
-    subtotal    = base * (1 + overhead_pct)
-    total_net   = round(subtotal * (1 + margin_pct) + transport_cost, 2)
+    method = method or "kalkulacja"
+    weight_total = (weight_kg or 0) * (weight_rate_pln_kg or 0)
+    if method == "od_masy":
+        # PLN/kg is an all-in commercial shortcut, not another line item.
+        base = weight_total
+        subtotal = base
+        total_net = round(base + transport_cost, 2)
+    else:
+        weight_total = 0.0
+        base = ops_total + material_total + extra_labor
+        subtotal = base * (1 + overhead_pct)
+        total_net = round(subtotal * (1 + margin_pct) + transport_cost, 2)
     return StructuredQuoteResult(
         ops_total=ops_total,
         material_total=material_total,
         extra_labor=extra_labor,
+        weight_total=weight_total,
         base=base,
         subtotal=subtotal,
         total_net=total_net,
-    )
-
-
-def calc_zapor_quote(
-    material_cost: float,
-    hours_estimate: float,
-    zapor_multiplier: float = ZAPOR_MULTIPLIER_DEFAULT,
-) -> ZaporQuoteResult:
-    multiplier = max(1.0, float(zapor_multiplier))
-    total_net  = round(material_cost * hours_estimate * multiplier, 2)
-    margin_pct = round(multiplier - 1, 4)
-    return ZaporQuoteResult(
-        multiplier=multiplier,
-        total_net=total_net,
-        margin_pct=margin_pct,
+        pricing_method=method,
     )

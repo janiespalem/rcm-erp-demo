@@ -15,11 +15,11 @@ async function addMaterial() {
 
 <template>
   <div>
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-      <h2 style="font-size:1rem;font-weight:700;color:var(--rcm-blue)">Materiały, średnice i ceny</h2>
-      <button class="btn btn-outline btn-sm" @click="loadApprovedMaterials()">🔄 Odśwież</button>
+    <div class="tab-toolbar">
+      <span></span>
+      <button class="btn btn-outline btn-sm" @click="loadApprovedMaterials()">Odśwież</button>
     </div>
-    <div class="card" style="margin-bottom:14px">
+    <div class="card">
       <div style="font-weight:700;margin-bottom:10px;color:var(--rcm-blue)">Dodaj materiał</div>
       <div class="manager-form-grid">
         <div class="form-group"><label>Nazwa / wymiar</label><input v-model="draft.name" placeholder="np. S355JR zbrojeniowy Ø12/Ø6"></div>
@@ -27,25 +27,24 @@ async function addMaterial() {
         <div class="form-group"><label>PLN/kg</label><input type="number" v-model.number="draft.default_rate_pln_kg" min="0" step="0.10"></div>
         <button class="btn btn-primary" @click="addMaterial()">Dodaj</button>
       </div>
-    </div>
-    <div class="card">
+      <div class="section-sep"></div>
       <div v-if="!approvedMaterials.length" style="padding:18px;color:var(--muted);text-align:center">Brak materiałów</div>
       <div v-else class="manager-table-wrap">
-        <table class="manager-table" style="width:100%;border-collapse:collapse;font-size:0.84rem">
+        <table class="manager-table">
           <thead>
-            <tr style="background:var(--surface2);text-align:left">
-              <th style="padding:8px 10px">Materiał / wymiar</th>
-              <th style="padding:8px 10px;width:160px">Kategoria</th>
-              <th style="padding:8px 10px;width:110px">PLN/kg</th>
-              <th style="padding:8px 10px;width:120px;text-align:right">Akcje</th>
+            <tr>
+              <th>Materiał / wymiar</th>
+              <th style="width:160px">Kategoria</th>
+              <th class="num" style="width:110px">PLN/kg</th>
+              <th class="num" style="width:120px">Akcje</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="mat in approvedMaterials" :key="mat.id" style="border-bottom:1px solid var(--surface2)">
-              <td style="padding:7px 10px"><input v-model="mat.name" style="font-size:0.82rem"></td>
-              <td style="padding:7px 10px"><input v-model="mat.category" style="font-size:0.82rem"></td>
-              <td style="padding:7px 10px"><input type="number" v-model.number="mat.default_rate_pln_kg" min="0" step="0.10" style="font-size:0.82rem"></td>
-              <td style="padding:7px 10px;text-align:right;white-space:nowrap">
+            <tr v-for="mat in approvedMaterials" :key="mat.id">
+              <td><input v-model="mat.name"></td>
+              <td><input v-model="mat.category"></td>
+              <td class="num"><input type="number" v-model.number="mat.default_rate_pln_kg" min="0" step="0.10"></td>
+              <td class="num" style="white-space:nowrap">
                 <button class="btn btn-outline btn-sm" @click="saveMaterial(mat)">Zapisz</button>
                 <button class="btn btn-outline btn-sm" style="color:var(--rcm-red)" @click="deleteMaterial(mat)">Usuń</button>
               </td>

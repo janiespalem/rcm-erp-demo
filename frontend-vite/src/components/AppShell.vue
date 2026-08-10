@@ -24,7 +24,6 @@ const OperationsTab   = defineAsyncComponent(() => import('./tabs/OperationsTab.
 const MaterialsTab    = defineAsyncComponent(() => import('./tabs/MaterialsTab.vue'))
 const ProjectsTab     = defineAsyncComponent(() => import('./tabs/ProjectsTab.vue'))
 const RentownoscTab   = defineAsyncComponent(() => import('./tabs/RentownoscTab.vue'))
-const LegoCalcTab     = defineAsyncComponent(() => import('./tabs/LegoCalcTab.vue'))
 
 const { currentUser, logout } = useAuth()
 const { loadOrders }          = useOrders()
@@ -39,7 +38,7 @@ const initLoading = ref(true)
 
 // ── Tab state ─────────────────────────────────────────────────────────────────
 const DEFAULT_TAB = {
-  biuro: 'wizard', technolog: 'orders', ceo: 'analytics', dyrektor_produkcji: 'orders',
+  biuro: 'wizard', technolog: 'orders', ceo: 'analytics',
 }
 const tab = ref(DEFAULT_TAB[currentUser.value?.role] || 'wizard')
 
@@ -49,15 +48,16 @@ function switchTab(name) {
 }
 
 // ── Global data load on mount ─────────────────────────────────────────────────
+// Blokujemy render TYLKO na zleceniach (dane lądowania). Reszta (szablony,
+// materiały, ustawienia, pytania) hydratuje się z cache natychmiast i
+// rewaliduje w tle — nie trzyma ekranu na spinnerze.
 onMounted(async () => {
+  loadTemplates().catch(() => {})
+  loadApprovedMaterials().catch(() => {})
+  loadSettings().catch(() => {})
+  if (currentUser.value?.role === 'biuro') loadPytania().catch(() => {})
   try {
-    await Promise.all([
-      loadOrders(),
-      loadTemplates(),
-      loadApprovedMaterials(),
-      loadSettings(),
-      loadPytania(),
-    ])
+    await loadOrders()
   } catch (e) {
     initError.value = e?.message || 'Nie udało się załadować danych. Sprawdź połączenie z serwerem.'
   } finally {
@@ -103,7 +103,6 @@ function reloadPage() {
     <MaterialsTab     v-if="tab==='materials'" />
     <ProjectsTab      v-if="tab==='projects'" />
     <RentownoscTab    v-if="tab==='rentownosc'" />
-    <LegoCalcTab      v-if="tab==='lego_kalk'" />
   </main>
 
   <ConfirmDialog />

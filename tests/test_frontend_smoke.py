@@ -29,7 +29,7 @@ def test_frontend_roles_have_visible_navigation():
         page.get_by_text("FactoryFlow ERP Demo").first.wait_for(state="visible")
         assert page.get_by_text("Biuro").count() > 0
         assert page.get_by_text("Technolog").count() > 0
-        assert page.get_by_text("Dyrektor Produkcji").count() > 0
+        assert page.get_by_text("CEO").count() > 0
         assert page.locator("body").bounding_box()["height"] > 200
 
         browser.close()

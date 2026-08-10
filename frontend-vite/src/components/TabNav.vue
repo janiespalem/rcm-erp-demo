@@ -1,6 +1,6 @@
 <script setup>
 import {
-  Plus, List, HelpCircle, BookOpen, Calculator,
+  Plus, List, HelpCircle, BookOpen,
   FolderOpen, LayoutDashboard, Calendar, BarChart2,
   Settings2, Package, Archive, TrendingUp,
 } from 'lucide-vue-next'
@@ -32,23 +32,35 @@ const emit = defineEmits(['switch'])
       <button class="nav-secondary" :class="{active: activeTab==='biuro_katalog'}" @click="emit('switch','biuro_katalog')">
         <BookOpen :size="14" /> Katalog
       </button>
-      <button class="nav-secondary" :class="{active: activeTab==='lego_kalk'}" @click="emit('switch','lego_kalk')">
-        <Calculator :size="14" /> Kalkulator LEGO
-      </button>
     </template>
 
-    <!-- TECHNOLOG: główna ścieżka = Zlecenia; wycena i pytania są w workspace zlecenia -->
+    <!-- TECHNOLOG: główna ścieżka = Zlecenia + Nowe zlecenie; Admin = Operacje/Materiały/Katalog PK/Rentowność -->
     <template v-if="role === 'technolog'">
       <button :class="{active: activeTab==='orders'}" @click="emit('switch','orders')">
         <List :size="15" /> Zlecenia
+      </button>
+      <button :class="{active: activeTab==='wizard'}" @click="emit('switch','wizard')">
+        <Plus :size="15" /> Nowe zlecenie
       </button>
 
       <span class="nav-sep" aria-hidden="true"></span>
       <button class="nav-secondary" :class="{active: activeTab==='templates'}" @click="emit('switch','templates')">
         <FolderOpen :size="14" /> Katalog SOP
       </button>
-      <button class="nav-secondary" :class="{active: activeTab==='lego_kalk'}" @click="emit('switch','lego_kalk')">
-        <Calculator :size="14" /> Kalkulator LEGO
+
+      <span class="nav-sep" aria-hidden="true"></span>
+      <span class="nav-group-label">Admin</span>
+      <button class="nav-secondary" :class="{active: activeTab==='operations'}" @click="emit('switch','operations')">
+        <Settings2 :size="14" /> Operacje
+      </button>
+      <button class="nav-secondary" :class="{active: activeTab==='materials'}"  @click="emit('switch','materials')">
+        <Package :size="14" /> Materiały
+      </button>
+      <button class="nav-secondary" :class="{active: activeTab==='projects'}"   @click="emit('switch','projects')">
+        <Archive :size="14" /> Katalog PK
+      </button>
+      <button class="nav-secondary" :class="{active: activeTab==='rentownosc'}" @click="emit('switch','rentownosc')">
+        <TrendingUp :size="14" /> Rentowność
       </button>
     </template>
 
@@ -68,30 +80,6 @@ const emit = defineEmits(['switch'])
       </button>
     </template>
 
-    <!-- DYREKTOR_PRODUKCJI: główna ścieżka = Zlecenia / Nowe zlecenie; reszta w Admin -->
-    <template v-if="role === 'dyrektor_produkcji'">
-      <button :class="{active: activeTab==='orders'}"     @click="emit('switch','orders')">
-        <List :size="15" /> Zlecenia
-      </button>
-      <button :class="{active: activeTab==='wizard'}"     @click="emit('switch','wizard')">
-        <Plus :size="15" /> Nowe zlecenie
-      </button>
-
-      <span class="nav-sep" aria-hidden="true"></span>
-      <span class="nav-group-label">Admin</span>
-      <button class="nav-secondary" :class="{active: activeTab==='operations'}" @click="emit('switch','operations')">
-        <Settings2 :size="14" /> Operacje
-      </button>
-      <button class="nav-secondary" :class="{active: activeTab==='materials'}"  @click="emit('switch','materials')">
-        <Package :size="14" /> Materiały
-      </button>
-      <button class="nav-secondary" :class="{active: activeTab==='projects'}"   @click="emit('switch','projects')">
-        <Archive :size="14" /> Katalog PK
-      </button>
-      <button class="nav-secondary" :class="{active: activeTab==='rentownosc'}" @click="emit('switch','rentownosc')">
-        <TrendingUp :size="14" /> Rentowność
-      </button>
-    </template>
   </nav>
 </template>
 

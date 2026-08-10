@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 from models import PriceHistory, ProductTemplate
 
 
-SERVICE_HISTORY_SOURCE = "Kopia Lista zleceń usługi.xlsx"
+SERVICE_HISTORY_SOURCE = "synthetic_service_history.json"
 SERVICE_HISTORY_SEED_PATH = Path(__file__).resolve().parent / "data" / "service_history_seed.json"
 
 
@@ -23,7 +23,7 @@ def _parse_date(value: Any) -> date | None:
 
 
 def seed_service_history_from_builtin(db: Session) -> dict[str, int]:
-    """Seed usług z Excela do demo/produkcji, idempotentnie."""
+    """Seed optional synthetic service history idempotently."""
     if db.query(PriceHistory).filter(PriceHistory.source == SERVICE_HISTORY_SOURCE).first():
         return {"created_templates": 0, "created_price_history": 0, "skipped": 1}
     if not SERVICE_HISTORY_SEED_PATH.exists():

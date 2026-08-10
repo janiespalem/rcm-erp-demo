@@ -1,11 +1,13 @@
 import { ref } from 'vue'
-import { api } from './useApi'
+import { api, readCache, writeCache } from './useApi'
 
-const templates = ref([])
+const templates = ref(readCache('templates') || [])
 
 export function useTemplates() {
   async function loadTemplates() {
-    templates.value = await api('/templates')
+    const fresh = await api('/templates')
+    templates.value = fresh
+    writeCache('templates', fresh)
   }
 
   async function saveAsTemplate(orderId, payload) {

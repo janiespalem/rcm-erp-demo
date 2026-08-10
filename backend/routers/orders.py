@@ -11,10 +11,10 @@ from services import order_service
 
 router = APIRouter(prefix="/api/orders", tags=["Orders"])
 
-_ALL   = require_role("biuro", "technolog", "ceo", "dyrektor_produkcji")
-_BIURO = require_role("biuro", "dyrektor_produkcji")
-_TECH  = require_role("technolog", "dyrektor_produkcji")
-_DIR   = require_role("dyrektor_produkcji")
+_ALL   = require_role("biuro", "technolog", "ceo")
+_BIURO = require_role("biuro", "technolog")
+_TECH  = require_role("technolog")
+_DIR   = require_role("technolog")
 
 
 @router.post("/", response_model=OrderOut, status_code=201)
@@ -30,10 +30,11 @@ def create_order(
 def list_orders(
     status: Optional[str] = None,
     branch: Optional[str] = None,
+    archived: bool = False,
     db: Session = Depends(get_db),
     _: dict = _ALL,
 ) -> list[Order]:
-    return order_service.list_orders(db, status=status, branch=branch)
+    return order_service.list_orders(db, status=status, branch=branch, archived=archived)
 
 
 @router.get("/{order_id}", response_model=OrderOut)
@@ -51,8 +52,26 @@ def delete_order(
     db: Session = Depends(get_db),
     _: dict = _DIR,
 ) -> Response:
-    order_service.archive_order(db, order_id)
+    order_service.delete_order(db, order_id)
     return Response(status_code=204)
+
+
+@router.post("/{order_id}/archive", response_model=OrderOut)
+def archive_order(
+    order_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = _TECH,
+) -> Order:
+    return order_service.archive_order(db, order_id, user=current_user)
+
+
+@router.post("/{order_id}/restore", response_model=OrderOut)
+def restore_order(
+    order_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = _TECH,
+) -> Order:
+    return order_service.restore_order(db, order_id, user=current_user)
 
 
 @router.patch("/{order_id}", response_model=OrderOut)
@@ -60,9 +79,9 @@ def update_order(
     order_id: int,
     data: OrderUpdate,
     db: Session = Depends(get_db),
-    _: dict = require_role("biuro", "technolog", "dyrektor_produkcji"),
+    current_user: dict = require_role("biuro", "technolog"),
 ) -> Order:
-    return order_service.update_order(db, order_id, data)
+    return order_service.update_order(db, order_id, data, user=current_user)
 
 
 @router.post("/{order_id}/confirm", response_model=OrderOut)
@@ -72,15 +91,6 @@ def confirm_order(
     current_user: dict = _BIURO,
 ) -> Order:
     return order_service.confirm_order(db, order_id, user=current_user)
-
-
-@router.post("/{order_id}/start", response_model=OrderOut)
-def start_order(
-    order_id: int,
-    db: Session = Depends(get_db),
-    current_user: dict = _TECH,
-) -> Order:
-    return order_service.start_order(db, order_id, user=current_user)
 
 
 @router.post("/{order_id}/complete", response_model=OrderOut)
@@ -135,12 +145,20 @@ def set_actual_hours(
     op_id: int,
     payload: ActualHoursUpdate,
     db: Session = Depends(get_db),
-    _: dict = _TECH,
+    current_user: dict = _TECH,
 ):
+    order = order_service.get_mutable_order_or_404(db, order_id)
     op = db.get(OrderOperation, op_id)
     if not op or op.order_id != order_id:
         raise HTTPException(status_code=404, detail="Operacja nie znaleziona")
     op.actual_hours = payload.actual_hours
+    order_service._log_event(
+        db,
+        order,
+        "actual_hours_updated",
+        user=current_user,
+        note=f"Operacja {op.id}: {payload.actual_hours} h",
+    )
     db.commit()
     return {"id": op.id, "actual_hours": float(op.actual_hours)}
 

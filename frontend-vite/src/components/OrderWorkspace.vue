@@ -9,29 +9,34 @@ import {
   isOrderOverdue,
   canQuote as wfCanQuote,
   canConfirm as wfCanConfirm,
-  canStartProduction,
   canCompleteProduction,
   canDeliver as wfCanDeliver,
 } from '@/utils/orderWorkflow'
-import QuotePanel from '@/components/QuotePanel.vue'
 import OrderRail from '@/components/OrderRail.vue'
+import { useToast } from '@/composables/useToast'
+
+const ORDER_TYPE_OPTIONS = [
+  { key: 'remont', label: 'Remont / naprawa' },
+  { key: 'nowa_czesc', label: 'Nowa część / projekt' },
+  { key: 'catalog', label: 'Produkt z katalogu' },
+  { key: 'zbrojenie', label: 'Zbrojenie' },
+]
 
 const props = defineProps({
   order: Object,
   showClose: { type: Boolean, default: false },
 })
-const emit = defineEmits(['close', 'saved'])
+const emit = defineEmits(['close', 'saved', 'open-quote'])
 
 const { currentUser } = useAuth()
 const {
   loadOrders,
   deleteOrder: doDelete,
   confirmOrder,
-  startOrder,
-  completeOrder,
   deliverOrder,
 } = useOrders()
 const { approvedMaterials } = useApprovedMaterials()
+const { show: showToast } = useToast()
 
 const order = ref({ ...props.order })
 const editMode = ref(false)
@@ -39,7 +44,6 @@ const confirmDel = ref(false)
 const deleteError = ref('')
 const form = ref({})
 const busyAction = ref('')
-const quoteOpen = ref(false)
 const rail = ref(null)
 
 function fmtDeadline(value) {
@@ -58,32 +62,39 @@ function orderTypeLabel(value) {
 
 const role = computed(() => currentUser.value?.role)
 const canConfirm = computed(() => wfCanConfirm(order.value, role.value))
-const canStart = computed(() => canStartProduction(order.value, role.value))
 const canComplete = computed(() => canCompleteProduction(order.value, role.value))
 const canDeliver = computed(() => wfCanDeliver(order.value, role.value))
-// Quoting is restricted to technolog/dyrektor on the backend (_TECH); gate the UI
+// Quoting is restricted to technolog on the backend (_TECH); gate the UI
 // to match so biuro never sees a quote action that would 403.
 const canQuote = computed(() =>
-  wfCanQuote(order.value) && ['technolog', 'dyrektor_produkcji'].includes(role.value)
+  wfCanQuote(order.value) && role.value === 'technolog'
+)
+const canEditOrder = computed(() =>
+  ['biuro', 'technolog'].includes(role.value) && !order.value.archived_at
+)
+const canHardDelete = computed(() =>
+  role.value === 'technolog' && order.value.status === 'draft'
 )
 const canEditQuote = computed(() => order.value.status === 'quoted' && canQuote.value)
 const overdue = computed(() => isOrderOverdue(order.value))
 
 const nextAction = computed(() => {
-  if (['draft', 'triage'].includes(order.value.status)) {
+  if (order.value.status === 'draft') {
     return {
       title: 'Zlecenie czeka na klasyfikację',
-      body: 'Po triage trafi do wyceny albo zostanie oznaczone jako standard/odrzut.',
+      body: 'System sprawdzi dane i skieruje zlecenie do wyceny.',
       label: '',
       enabled: false,
     }
   }
   if (order.value.status === 'standard') {
     return {
-      title: 'Zlecenie standardowe',
-      body: 'Ten status nie korzysta z ręcznej wyceny w prostym pipeline.',
-      label: '',
-      enabled: false,
+      title: 'Zlecenie standardowe — jest szablon w katalogu',
+      body: 'Potwierdź wycenę na bazie szablonu i przekaż do zatwierdzenia.',
+      label: 'Wyceń zlecenie',
+      enabled: canQuote.value,
+      waitingFor: 'Technologa',
+      handler: () => emit('open-quote'),
     }
   }
   if (order.value.status === 'niestandard') {
@@ -93,7 +104,7 @@ const nextAction = computed(() => {
       label: 'Wyceń zlecenie',
       enabled: canQuote.value,
       waitingFor: 'Technologa',
-      handler: () => { quoteOpen.value = true },
+      handler: () => emit('open-quote'),
     }
   }
   if (order.value.status === 'quoted') {
@@ -108,22 +119,12 @@ const nextAction = computed(() => {
   }
   if (order.value.status === 'in_production') {
     return {
-      title: 'Produkcja czeka na start',
-      body: 'Rozpocznij pracę, gdy zlecenie faktycznie trafia na warsztat.',
-      label: 'Rozpocznij produkcję',
-      enabled: canStart.value,
-      waitingFor: 'Technologa',
-      handler: () => runStatusAction('start', startOrder, 'w_trakcie'),
-    }
-  }
-  if (order.value.status === 'w_trakcie') {
-    return {
       title: 'Zlecenie jest w produkcji',
-      body: 'Po zakończeniu oznacz je jako gotowe do wydania.',
-      label: 'Oznacz jako gotowe',
+      body: 'Po zakończeniu produkcji zamknij zlecenie — jednym krokiem.',
+      label: 'Zakończ zlecenie',
       enabled: canComplete.value,
       waitingFor: 'Technologa',
-      handler: () => runStatusAction('complete', completeOrder, 'gotowe'),
+      handler: () => runStatusAction('deliver', deliverOrder, 'wydane'),
     }
   }
   if (order.value.status === 'gotowe') {
@@ -142,7 +143,7 @@ const nextAction = computed(() => {
   if (['rejected', 'odrzut'].includes(order.value.status)) {
     return { title: 'Zlecenie odrzucone', body: 'Nie wymaga dalszej pracy w pipeline.', label: '', enabled: false }
   }
-  return { title: 'Brak następnej akcji', body: 'Status nie ma przypisanej akcji w prostym pipeline.', label: '', enabled: false }
+  return { title: 'Brak następnej akcji', body: 'Ten status nie wymaga teraz żadnego działania.', label: '', enabled: false }
 })
 
 const materialNeedsReview = computed(() => {
@@ -156,10 +157,13 @@ watch(() => props.order, (next, previous) => {
   editMode.value = false
   confirmDel.value = false
   deleteError.value = ''
-  if (next?.id !== previous?.id) {
-    quoteOpen.value = false
-  }
 }, { deep: false })
+
+const ACTION_SUCCESS_MESSAGES = {
+  confirm: 'Zatwierdzono — zlecenie w produkcji',
+  complete: 'Oznaczono jako gotowe do wydania',
+  deliver: 'Wydano klientowi',
+}
 
 async function runStatusAction(key, fn, nextStatus) {
   if (busyAction.value) return
@@ -168,25 +172,34 @@ async function runStatusAction(key, fn, nextStatus) {
     await fn(order.value.id)
     order.value = { ...order.value, status: nextStatus }
     await Promise.all([rail.value?.reload?.(), loadOrders()])
+    if (ACTION_SUCCESS_MESSAGES[key]) showToast(ACTION_SUCCESS_MESSAGES[key], 'success')
+  } catch (e) {
+    showToast(e?.message || 'Nie udało się zmienić statusu zlecenia', 'error')
   } finally {
     busyAction.value = ''
   }
 }
 
-async function handleQuoteSaved() {
-  quoteOpen.value = false
-  await rail.value?.reload?.()
-}
 
 function startEdit() {
   const o = order.value
   form.value = {
+    order_number: o.order_number || '',
+    client: o.client || '',
+    order_type: o.order_type || 'remont',
     deadline: o.deadline || '',
+    quantity: o.quantity || 1,
     material: o.material || '',
+    description: o.description || '',
     notes: o.notes || '',
     estimated_value: o.estimated_value || '',
     has_drawing: !!o.has_drawing,
     requires_visit: !!o.requires_visit,
+    weight_kg: o.weight_kg != null ? o.weight_kg : '',
+    drawing_number: o.drawing_number || '',
+    dimensions: o.dimensions || '',
+    delivery_address: o.delivery_address || '',
+    contact: o.contact || '',
   }
   confirmDel.value = false
   deleteError.value = ''
@@ -201,16 +214,28 @@ function cancelEdit() {
 
 async function saveEdit() {
   const f = form.value
-  const payload = {}
-  if (f.deadline) payload.deadline = f.deadline
-  if (f.material) {
-    payload.material = f.material
-    if (f.material !== order.value.material) payload.approved_material_id = null
+  if (!f.client?.trim() || !f.deadline) {
+    showToast('Klient i termin są wymagane', 'error')
+    return
   }
+  const payload = {}
+  payload.order_number = f.order_number?.trim() || order.value.order_number
+  payload.client = f.client.trim()
+  if (f.order_type) payload.order_type = f.order_type
+  payload.deadline = f.deadline
+  if (f.quantity) payload.quantity = parseInt(f.quantity, 10) || 1
+  payload.material = f.material?.trim() || null
+  if (payload.material !== order.value.material) payload.approved_material_id = null
+  payload.description = f.description || ''
   payload.notes = f.notes || ''
   if (f.estimated_value !== '') payload.estimated_value = parseFloat(f.estimated_value) || 0
   payload.has_drawing = !!f.has_drawing
   payload.requires_visit = !!f.requires_visit
+  payload.weight_kg = f.weight_kg !== '' && f.weight_kg !== null ? parseFloat(f.weight_kg) : null
+  payload.drawing_number = f.drawing_number || null
+  payload.dimensions = f.dimensions || null
+  payload.delivery_address = f.delivery_address || null
+  payload.contact = f.contact || null
 
   const updated = await api(`/orders/${order.value.id}`, { method: 'PATCH', body: payload })
   order.value = updated
@@ -242,24 +267,15 @@ async function confirmDelete() {
         </div>
         <div class="header-actions">
           <span :class="'badge badge-' + (order.status || 'draft')">{{ STATUS_PL[order.status] || order.status || '—' }}</span>
-          <button v-if="!editMode" class="btn btn-outline btn-sm" type="button" @click="startEdit">Edytuj</button>
+          <button v-if="!editMode && canEditOrder" class="btn btn-outline btn-sm" type="button" @click="startEdit">Edytuj</button>
         </div>
       </header>
 
       <div v-if="order.is_defence" class="defence-banner">
-        Projekt zbrojeniowy / MON - dokumenty poufne
+        Projekt zastrzeżony — dokumenty poufne
       </div>
 
-      <QuotePanel
-        v-if="quoteOpen"
-        :order="order"
-        :show-close="true"
-        class="workspace-quote"
-        @close="quoteOpen = false"
-        @saved="handleQuoteSaved"
-      />
-
-      <div v-else class="workspace-grid">
+      <div class="workspace-grid">
         <main class="workspace-main">
           <section class="next-action">
             <div>
@@ -277,11 +293,20 @@ async function confirmDelete() {
               {{ busyAction ? 'Pracuję...' : nextAction.label }}
             </button>
             <span
-              v-else-if="nextAction.label && nextAction.waitingFor"
+              v-else-if="nextAction.waitingFor"
               class="waiting-pill"
             >
               Czeka na {{ nextAction.waitingFor }}
             </span>
+            <!-- Wewnętrzne: wycena (operacje/materiały) jest OPCJONALNA. -->
+            <button
+              v-if="order.is_internal && canQuote"
+              class="btn btn-success"
+              type="button"
+              @click="emit('open-quote')"
+            >
+              Wyceń
+            </button>
           </section>
 
           <section class="workspace-section">
@@ -316,17 +341,57 @@ async function confirmDelete() {
                 <strong>{{ order.requires_visit ? 'Wizyta u klienta' : 'Bez wizyty' }}</strong>
                 <small v-if="order.has_drawing">Rysunek techniczny</small>
               </div>
+              <div v-if="order.weight_kg != null">
+                <span>Masa</span>
+                <strong>{{ order.weight_kg }} kg</strong>
+              </div>
+              <div v-if="order.drawing_number">
+                <span>Nr rysunku</span>
+                <strong>{{ order.drawing_number }}</strong>
+              </div>
+              <div v-if="order.dimensions">
+                <span>Wymiary</span>
+                <strong>{{ order.dimensions }}</strong>
+              </div>
+              <div v-if="order.delivery_address">
+                <span>Dostawa</span>
+                <strong>{{ order.delivery_address }}</strong>
+              </div>
+              <div v-if="order.contact">
+                <span>Kontakt</span>
+                <strong>{{ order.contact }}</strong>
+              </div>
             </div>
             <p v-if="order.description" class="description-text">{{ order.description }}</p>
             <p v-if="order.notes" class="notes-text">{{ order.notes }}</p>
             <div v-if="canEditQuote" class="context-actions">
-              <button class="inline-action" type="button" @click="quoteOpen = true">Edytuj wycenę</button>
+              <button class="inline-action" type="button" @click="emit('open-quote')">Edytuj wycenę</button>
             </div>
             <div v-if="editMode" class="inline-edit">
               <div class="edit-grid">
                 <label>
+                  <span>Nr zlecenia</span>
+                  <input v-model="form.order_number" placeholder="auto">
+                </label>
+                <label>
+                  <span>Klient</span>
+                  <input v-model="form.client" placeholder="Nazwa klienta">
+                </label>
+                <label>
+                  <span>Kategoria</span>
+                  <select v-model="form.order_type">
+                    <option v-for="type in ORDER_TYPE_OPTIONS" :key="type.key" :value="type.key">
+                      {{ type.label }}
+                    </option>
+                  </select>
+                </label>
+                <label>
                   <span>Termin</span>
                   <input type="date" v-model="form.deadline">
+                </label>
+                <label>
+                  <span>Ilość</span>
+                  <input type="number" v-model="form.quantity" min="1">
                 </label>
                 <label>
                   <span>Materiał</span>
@@ -337,8 +402,32 @@ async function confirmDelete() {
                   <input type="number" v-model="form.estimated_value" min="0" step="100">
                 </label>
                 <label class="wide">
+                  <span>Opis</span>
+                  <textarea v-model="form.description" rows="3"></textarea>
+                </label>
+                <label class="wide">
                   <span>Uwagi</span>
                   <textarea v-model="form.notes" rows="3"></textarea>
+                </label>
+                <label>
+                  <span>Masa (kg)</span>
+                  <input type="number" v-model="form.weight_kg" min="0" step="0.1" placeholder="np. 120">
+                </label>
+                <label>
+                  <span>Nr rysunku</span>
+                  <input v-model="form.drawing_number" placeholder="np. RYS-2026/14">
+                </label>
+                <label>
+                  <span>Wymiary</span>
+                  <input v-model="form.dimensions" placeholder="np. 20x60x10">
+                </label>
+                <label class="wide">
+                  <span>Adres dostawy</span>
+                  <textarea v-model="form.delivery_address" rows="2"></textarea>
+                </label>
+                <label class="wide">
+                  <span>Osoba kontaktowa / tel.</span>
+                  <input v-model="form.contact" placeholder="Jan Kowalski, 600 100 200">
                 </label>
               </div>
               <div class="edit-checks">
@@ -349,7 +438,7 @@ async function confirmDelete() {
                 <button class="btn btn-primary" type="button" @click="saveEdit">Zapisz zmiany</button>
                 <button class="btn btn-outline" type="button" @click="cancelEdit">Anuluj</button>
               </div>
-              <div class="delete-zone">
+              <div v-if="canHardDelete" class="delete-zone">
                 <div v-if="deleteError" class="delete-error">Błąd: {{ deleteError }}</div>
                 <div v-if="confirmDel" class="confirm-delete">
                   <span>Usunąć zlecenie {{ order.order_number || '#' + order.id }}?</span>
@@ -362,14 +451,15 @@ async function confirmDelete() {
           </section>
         </main>
 
-        <OrderRail ref="rail" :order="order" />
+        <details class="rail-drawer" open>
+          <summary>
+            <span>Dokumenty, pliki, pytania i historia</span>
+            <small>Otwórz panel pomocniczy</small>
+          </summary>
+          <OrderRail ref="rail" :order="order" />
+        </details>
       </div>
 
-      <footer class="workspace-footer">
-        <div class="footer-actions">
-          <button class="btn btn-outline" type="button" @click="emit('close'); confirmDel=false">Zamknij</button>
-        </div>
-      </footer>
     </section>
 </template>
 
@@ -380,7 +470,7 @@ async function confirmDelete() {
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: 8px;
-  box-shadow: var(--sh-lg);
+  box-shadow: var(--sh-xs);
 }
 
 .workspace-header {
@@ -426,8 +516,7 @@ async function confirmDelete() {
   font-size: 0.78rem;
 }
 
-.header-actions,
-.footer-actions {
+.header-actions {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -448,14 +537,14 @@ async function confirmDelete() {
 
 .workspace-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 310px;
-  gap: 18px;
+  grid-template-columns: 1fr;
+  gap: 12px;
   padding: 18px 22px 20px;
 }
 
 .workspace-main {
   display: grid;
-  gap: 14px;
+  gap: 12px;
   align-content: start;
 }
 
@@ -467,14 +556,14 @@ async function confirmDelete() {
 }
 
 .next-action {
-  border-color: var(--rcm-accent);
-  background: linear-gradient(90deg, rgba(245, 158, 11, 0.18), #fff 52%);
-  padding: 20px;
+  border-color: var(--border);
+  border-left: 5px solid var(--rcm-accent);
+  background: #fff;
+  padding: 18px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  box-shadow: var(--sh-sm);
 }
 
 .status-line {
@@ -493,20 +582,20 @@ async function confirmDelete() {
 .workspace-section h3 {
   margin: 0;
   color: var(--rcm-blue);
-  font-size: 0.95rem;
+  font-size: 1rem;
   font-weight: 850;
 }
 
 .next-action p {
-  margin: 4px 0 0;
+  margin: 5px 0 0;
   color: var(--muted);
-  font-size: 0.86rem;
+  font-size: 0.88rem;
 }
 
 .next-action .btn {
-  min-height: 42px;
-  padding-left: 18px;
-  padding-right: 18px;
+  min-height: 46px;
+  padding-left: 22px;
+  padding-right: 22px;
   font-weight: 850;
 }
 
@@ -547,14 +636,12 @@ async function confirmDelete() {
 .facts-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
+  gap: 6px 18px;
 }
 
 .facts-grid div {
-  border: 1px solid var(--border-soft);
-  border-radius: 7px;
-  background: var(--sl-50);
-  padding: 8px 10px;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--border-soft);
 }
 
 .facts-grid span,
@@ -587,6 +674,7 @@ async function confirmDelete() {
 
 .description-text,
 .notes-text {
+  max-width: 80ch;
   color: var(--text);
   font-size: 0.92rem;
   line-height: 1.55;
@@ -598,10 +686,6 @@ async function confirmDelete() {
   border-top: 1px solid var(--border-soft);
   padding-top: 10px;
   color: var(--muted);
-}
-
-.workspace-quote {
-  margin: 18px 22px 20px;
 }
 
 .context-actions {
@@ -693,15 +777,6 @@ async function confirmDelete() {
   gap: 8px;
 }
 
-.workspace-footer {
-  border-top: 1px solid var(--border);
-  padding: 14px 22px;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 14px;
-  background: var(--sl-50);
-}
 
 .danger-link,
 .confirm-delete button,
@@ -751,19 +826,65 @@ async function confirmDelete() {
   font-weight: 800;
 }
 
-@media (max-width: 920px) {
-  .workspace-grid {
-    grid-template-columns: 1fr;
-  }
+.rail-drawer {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--sl-50);
+}
 
-  .facts-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+.rail-drawer summary {
+  min-height: 46px;
+  padding: 10px 14px;
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--rcm-blue);
+  font-size: 0.86rem;
+  font-weight: 850;
+}
+
+.rail-drawer summary::-webkit-details-marker {
+  display: none;
+}
+
+.rail-drawer summary::after {
+  content: '+';
+  width: 24px;
+  height: 24px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--sl-700);
+  display: grid;
+  place-items: center;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.rail-drawer[open] summary {
+  border-bottom: 1px solid var(--border);
+  background: #fff;
+}
+
+.rail-drawer[open] summary::after {
+  content: '−';
+}
+
+.rail-drawer summary small {
+  color: var(--muted);
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
+.rail-drawer :deep(.workspace-rail) {
+  padding: 12px;
 }
 
 @media (max-width: 640px) {
   .workspace-header,
-  .workspace-footer,
   .next-action {
     align-items: stretch;
     flex-direction: column;
@@ -777,11 +898,6 @@ async function confirmDelete() {
   .workspace-grid {
     padding-left: 14px;
     padding-right: 14px;
-  }
-
-  .workspace-quote {
-    margin-left: 14px;
-    margin-right: 14px;
   }
 }
 </style>

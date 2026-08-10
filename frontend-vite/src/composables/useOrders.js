@@ -3,19 +3,24 @@ import { api } from './useApi'
 import { useAuth } from './useAuth'
 
 const orders       = ref([])
+const archivedOrders = ref([])
 const serviceHistory = ref([])
+// Order to auto-select when the Zlecenia tab opens next (set after creating an order)
+const focusOrderId = ref(null)
 
 export function useOrders() {
   const { currentUser } = useAuth()
 
   async function loadOrders() {
-    const [all, history] = await Promise.all([
+    const [all, archived, history] = await Promise.all([
       api('/orders'),
+      api('/orders?archived=true'),
       currentUser.value?.role === 'biuro'
         ? api('/service-history')
         : Promise.resolve(serviceHistory.value),
     ])
-    orders.value = all.filter(o => o.status !== 'cancelled')
+    orders.value = all
+    archivedOrders.value = archived
     if (currentUser.value?.role === 'biuro') serviceHistory.value = history
   }
 
@@ -24,13 +29,18 @@ export function useOrders() {
     await loadOrders()
   }
 
-  async function confirmOrder(id) {
-    await api(`/orders/${id}/confirm`, { method: 'POST' })
+  async function archiveOrder(id) {
+    await api(`/orders/${id}/archive`, { method: 'POST' })
     await loadOrders()
   }
 
-  async function startOrder(id) {
-    await api(`/orders/${id}/start`, { method: 'POST' })
+  async function restoreOrder(id) {
+    await api(`/orders/${id}/restore`, { method: 'POST' })
+    await loadOrders()
+  }
+
+  async function confirmOrder(id) {
+    await api(`/orders/${id}/confirm`, { method: 'POST' })
     await loadOrders()
   }
 
@@ -44,28 +54,10 @@ export function useOrders() {
     await loadOrders()
   }
 
-  async function saveEdit(id, form) {
-    const payload = {}
-    if (form.order_number)   payload.order_number   = form.order_number
-    if (form.client)         payload.client         = form.client
-    if (form.deadline)       payload.deadline       = form.deadline
-    payload.approved_material_id = form.approved_material_id || null
-    if (form.material)       payload.material       = form.material
-    if (form.order_type)     payload.order_type     = form.order_type
-    if (form.quantity)       payload.quantity       = parseInt(form.quantity, 10) || 1
-    if (form.description)    payload.description    = form.description
-    if (form.notes)          payload.notes          = form.notes
-    if (form.estimated_value !== '') payload.estimated_value = parseFloat(form.estimated_value) || 0
-    payload.has_drawing   = !!form.has_drawing
-    payload.requires_visit = !!form.requires_visit
-    await api(`/orders/${id}`, { method: 'PATCH', body: payload })
-    await loadOrders()
-  }
-
   const nonstandardOrders = computed(() =>
     orders.value.filter(o =>
       o.triage_branch === 'niestandard' &&
-      !['rejected', 'cancelled', 'done', 'wydane'].includes(o.status)
+      !['rejected', 'wydane'].includes(o.status)
     )
   )
 
@@ -79,8 +71,8 @@ export function useOrders() {
   })
 
   return {
-    orders, serviceHistory, loadOrders,
-    deleteOrder, confirmOrder, startOrder, completeOrder, deliverOrder, saveEdit,
+    orders, archivedOrders, serviceHistory, focusOrderId, loadOrders,
+    deleteOrder, archiveOrder, restoreOrder, confirmOrder, completeOrder, deliverOrder,
     nonstandardOrders, uniqueClients,
   }
 }

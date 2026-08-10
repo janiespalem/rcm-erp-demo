@@ -1,5 +1,5 @@
 services:
-  rcm-erp:
+  factoryflow-demo:
     build: .
     ports:
       - "8000:8000"
@@ -8,7 +8,7 @@ services:
     environment:
       - DATABASE_URL=sqlite:////app/data/factoryflow_demo.db
       - JWT_SECRET=${JWT_SECRET:?set JWT_SECRET before running}
-    # Run migrations then start the server — same pattern as render.yaml
+    # Run migrations before starting the demo server.
     command: >
       sh -c "cd /app && python -m alembic upgrade head &&
              cd /app/backend && python -m uvicorn main:app --host 0.0.0.0 --port 8000"
@@ -18,5 +18,3 @@ services:
 #   export JWT_SECRET=<losowy-secret>
 #   docker compose up -d
 # Migracje uruchamiane automatycznie przy starcie kontenera (alembic upgrade head).
-# Dostęp z sieci biura:
-#   http://192.168.1.15:8000

@@ -1,8 +1,8 @@
 """
-Integration tests for the FactoryFlow ERP Demo FastAPI backend (main.py).
+Integration tests for the FactoryFlow ERP demo backend (main.py).
 
 Uses FastAPI's TestClient with an in-memory SQLite database.
-The `get_db` dependency is overridden so tests never touch factoryflow_demo.db.
+The `get_db` dependency is overridden so tests never touch the local demo database.
 
 Coverage:
 - Health check
@@ -24,10 +24,14 @@ Coverage:
 """
 import sys
 import os
+import socket
+import threading
+import time
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'backend'))
 
+import httpx
 import pytest
-from fastapi.testclient import TestClient
+import uvicorn
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
@@ -67,8 +71,37 @@ def db_session():
         session.close()
 
 
+@pytest.fixture(scope="session")
+def live_server_url():
+    sock = socket.socket()
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    sock.bind(("127.0.0.1", 0))
+    sock.listen(128)
+    port = sock.getsockname()[1]
+    server = uvicorn.Server(uvicorn.Config(
+        app,
+        log_level="error",
+        lifespan="off",
+    ))
+    thread = threading.Thread(
+        target=server.run,
+        kwargs={"sockets": [sock]},
+        daemon=True,
+    )
+    thread.start()
+    deadline = time.monotonic() + 10
+    while not server.started and time.monotonic() < deadline:
+        time.sleep(0.01)
+    if not server.started:
+        raise RuntimeError("Test server did not start")
+    yield f"http://127.0.0.1:{port}"
+    server.should_exit = True
+    thread.join(timeout=5)
+    sock.close()
+
+
 @pytest.fixture(scope="function")
-def client(db_session):
+def client(db_session, live_server_url):
     """
     TestClient that uses the in-memory DB session via dependency override.
     Any endpoint that calls `get_db` will get our in-memory session instead.
@@ -80,11 +113,11 @@ def client(db_session):
             pass
 
     def override_get_current_user():
-        return {"id": "4", "role": "dyrektor_produkcji", "name": "Test"}
+        return {"id": "4", "role": "technolog", "name": "Test"}
 
     app.dependency_overrides[get_db] = override_get_db
     app.dependency_overrides[get_current_user] = override_get_current_user
-    with TestClient(app) as c:
+    with httpx.Client(base_url=live_server_url, timeout=10, follow_redirects=True) as c:
         yield c
     app.dependency_overrides.clear()
 
@@ -281,8 +314,7 @@ class TestTemplates:
         names = [t["name"] for t in resp.json()]
         assert "Szablon A" in names
 
-    def test_delete_removes_template(self, client, db_session):
-        """DELETE /api/templates/{id} permanently removes the template."""
+    def test_delete_archives_template(self, client, db_session):
         tmpl = seed_template(db_session)
         resp = client.delete(f"/api/templates/{tmpl.id}")
         assert resp.status_code == 204
@@ -290,19 +322,19 @@ class TestTemplates:
         list_resp = client.get("/api/templates")
         ids = [t["id"] for t in list_resp.json()]
         assert tmpl.id not in ids
-        assert db_session.get(ProductTemplate, tmpl.id) is None
+        assert db_session.get(ProductTemplate, tmpl.id).is_active is False
 
     def test_delete_template_not_found(self, client):
         resp = client.delete("/api/templates/9999")
         assert resp.status_code == 404
 
-    def test_restore_after_hard_delete_not_found(self, client, db_session):
-        """Hard-deleted templates cannot be restored."""
+    def test_restore_archived_template(self, client, db_session):
         tmpl = seed_template(db_session)
         client.delete(f"/api/templates/{tmpl.id}")
 
         resp = client.patch(f"/api/templates/{tmpl.id}/restore")
-        assert resp.status_code == 404
+        assert resp.status_code == 200
+        assert resp.json()["is_active"] is True
 
 
 # ─── Settings ─────────────────────────────────────────────────────────────────
@@ -340,8 +372,8 @@ class TestServiceHistory:
                 "production_hours": 2.5,
                 "source_order_number": "19/2026",
             },
-            source="Kopia Lista zleceń usługi.xlsx",
-            client="DemoCo",
+            source="synthetic_service_history.json",
+            client="Demo Client",
         ))
         db_session.commit()
 
@@ -467,8 +499,7 @@ class TestStructuredQuote:
         second = client.post(f"/api/orders/{order_id}/quote/structured", json=base).json()
         assert second["last_edited_at"] >= first["last_edited_at"]
 
-    def test_quote_edit_allowed_in_in_production(self, client, db_session):
-        """Wycena editable even after confirm → in_production."""
+    def test_external_quote_edit_blocked_in_production(self, client, db_session):
         order_id = self._niestandard_order_id(client, db_session)
         base = {"processes": [], "material_cost": 100.0, "weight_kg": 0,
                 "weight_rate_pln_kg": 15, "welding_hours": 0}
@@ -476,7 +507,7 @@ class TestStructuredQuote:
         client.post(f"/api/orders/{order_id}/confirm")  # quoted → in_production
         base["material_cost"] = 555.0
         resp = client.post(f"/api/orders/{order_id}/quote/structured", json=base)
-        assert resp.status_code == 201
+        assert resp.status_code == 409
         order = client.get(f"/api/orders/{order_id}").json()
         assert order["status"] == "in_production"
 
@@ -485,32 +516,6 @@ class TestStructuredQuote:
 
 class TestStatusTransitions:
     """Status machine: niestandard → quoted → in_production."""
-
-    def test_simple_quote_also_flips_to_quoted(self, client, db_session):
-        """Legacy /quote endpoint should also set status=quoted for niestandard orders."""
-        seed_setting(db_session)
-        order_id = create_order(client, has_drawing=False).json()["id"]
-        client.post(f"/api/orders/{order_id}/triage")
-        client.post(f"/api/orders/{order_id}/quote", json={
-            "labor_hours": 2.0, "material_cost": 100.0,
-            "overhead_pct": 0.1, "margin_pct": 0.25,
-        })
-        order = client.get(f"/api/orders/{order_id}").json()
-        assert order["status"] == "quoted"
-
-    def test_simple_quote_upserts_existing_quote(self, client, db_session):
-        """Legacy /quote should update the existing quote instead of creating duplicates."""
-        seed_setting(db_session)
-        order_id = create_order(client, has_drawing=False).json()["id"]
-        client.post(f"/api/orders/{order_id}/triage")
-        payload = {"labor_hours": 1.0, "material_cost": 100.0}
-        client.post(f"/api/orders/{order_id}/quote", json=payload)
-        payload["material_cost"] = 250.0
-        resp = client.post(f"/api/orders/{order_id}/quote", json=payload)
-
-        assert resp.status_code == 201
-        assert db_session.query(Quote).filter(Quote.order_id == order_id).count() == 1
-        assert client.get(f"/api/orders/{order_id}/quote").json()["material_cost"] == 250.0
 
     def test_confirm_quoted_order(self, client, db_session):
         """POST /confirm on quoted order → status becomes in_production."""
@@ -598,21 +603,6 @@ class TestAttachments:
 # ─── Child resources should not create orphan rows ───────────────────────────
 
 class TestOrderChildResources:
-    def test_material_request_order_not_found(self, client):
-        resp = client.post("/api/orders/9999/materials", json={
-            "client": "Ghost",
-            "materials": [],
-        })
-        assert resp.status_code == 404
-
-    def test_quality_card_order_not_found(self, client):
-        resp = client.post("/api/orders/9999/quality", json={
-            "stage_name": "Kontrola",
-            "passed": True,
-            "checked_by": "QA",
-        })
-        assert resp.status_code == 404
-
     def test_parameter_request_order_not_found(self, client):
         resp = client.post("/api/orders/9999/params", json={
             "question_text": "Jaki materiał?",
@@ -636,35 +626,29 @@ class TestProductionPipeline:
         client.post(f"/api/orders/{order_id}/confirm")
         return order_id
 
-    def test_start_moves_to_w_trakcie(self, client, db_session):
+    def test_confirm_moves_to_in_production(self, client, db_session):
+        """Confirm sends the order straight into production — the separate
+        'start production' step was merged away."""
         order_id = self._order_in_production(client, db_session)
-        resp = client.post(f"/api/orders/{order_id}/start")
+        resp = client.get(f"/api/orders/{order_id}")
         assert resp.status_code == 200
-        assert resp.json()["status"] == "w_trakcie"
+        assert resp.json()["status"] == "in_production"
 
     def test_complete_moves_to_gotowe(self, client, db_session):
         order_id = self._order_in_production(client, db_session)
-        client.post(f"/api/orders/{order_id}/start")
         resp = client.post(f"/api/orders/{order_id}/complete")
         assert resp.status_code == 200
         assert resp.json()["status"] == "gotowe"
 
     def test_deliver_moves_to_wydane(self, client, db_session):
         order_id = self._order_in_production(client, db_session)
-        client.post(f"/api/orders/{order_id}/start")
         client.post(f"/api/orders/{order_id}/complete")
         resp = client.post(f"/api/orders/{order_id}/deliver")
         assert resp.status_code == 200
         assert resp.json()["status"] == "wydane"
 
-    def test_start_guard_wrong_status(self, client, db_session):
-        """POST /start on a non in_production order returns 409."""
-        order_id = create_order(client).json()["id"]
-        resp = client.post(f"/api/orders/{order_id}/start")
-        assert resp.status_code == 409
-
     def test_complete_guard_wrong_status(self, client, db_session):
-        """POST /complete on a non w_trakcie order returns 409."""
+        """POST /complete on a non in_production order returns 409."""
         order_id = create_order(client).json()["id"]
         resp = client.post(f"/api/orders/{order_id}/complete")
         assert resp.status_code == 409

@@ -6,9 +6,13 @@ Create Date: 2026-05-05 00:01:00 UTC
 """
 from __future__ import annotations
 
+from pathlib import Path
+import sys
+
 from alembic import op
 import sqlalchemy as sa
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "backend"))
 from models import Base
 
 revision = "20260505_0001"
@@ -36,14 +40,18 @@ def _ensure_unique_quote_order_index() -> None:
     if "quotes" not in inspector.get_table_names():
         return
 
-    bind.execute(sa.text("""
-        DELETE FROM quotes
-        WHERE id NOT IN (
-            SELECT MAX(id)
-            FROM quotes
-            GROUP BY order_id
+    duplicates = bind.execute(sa.text("""
+        SELECT order_id
+        FROM quotes
+        GROUP BY order_id
+        HAVING COUNT(*) > 1
+        ORDER BY order_id
+    """)).scalars().all()
+    if duplicates:
+        raise RuntimeError(
+            "Nie można utworzyć unikalnego indeksu quotes.order_id; "
+            f"duplikaty dla zleceń: {duplicates}"
         )
-    """))
 
     indexes = {index["name"] for index in inspector.get_indexes("quotes")}
     unique_constraints = {constraint["name"] for constraint in inspector.get_unique_constraints("quotes")}

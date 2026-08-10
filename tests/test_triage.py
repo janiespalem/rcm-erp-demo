@@ -10,8 +10,7 @@ Coverage:
 - ODRZUT: rule field missing on order → rule skipped safely
 - STANDARD (catalog): order_type="catalog" + valid template_id → standard
 - STANDARD (catalog): order_type="catalog" + no template → standard with unknown name
-- STANDARD (drawing): has_drawing=True + SOP name matches template → standard
-- STANDARD (drawing): has_drawing=True + category fallback matches → standard
+- STANDARD (drawing): has_drawing=True + exact SOP name matches template → standard
 - NIESTANDARD: has_drawing=False, no catalog → niestandard (brak rysunku)
 - NIESTANDARD: has_drawing=True but no template matches → niestandard (brak szablonu)
 - OPERATORS: eq, in, lt, gt — all branches of _matches_rule
@@ -75,6 +74,7 @@ def make_db(rules=None, templates=None, approved_materials=None):
         elif model is ProductTemplate:
             inner = MagicMock()
             inner.first.return_value = templates[0] if templates else None
+            inner.all.return_value = templates
             mock_query.filter.return_value = inner
             mock_query.filter.return_value.filter.return_value = inner
         elif model is ApprovedMaterial:
@@ -101,6 +101,22 @@ def base_order(**kwargs):
     )
     defaults.update(kwargs)
     return TriageInput(**defaults)
+
+
+# ─── WEWNĘTRZNE (internal) tests ──────────────────────────────────────────────
+
+class TestInternal:
+    def test_internal_skips_to_standard(self):
+        """Zlecenie wewnętrzne → standard, niezależnie od rysunku/szablonu."""
+        order = base_order(is_internal=True, has_drawing=False, order_type="remont")
+        result = run_triage(order, make_db())
+        assert result.branch == "standard"
+
+    def test_internal_still_obeys_safety_reject_rules(self):
+        rule = make_rule("Aluminium", "material", "eq", "aluminium", action="reject")
+        order = base_order(is_internal=True, material="aluminium")
+        result = run_triage(order, make_db(rules=[rule]))
+        assert result.branch == "odrzut"
 
 
 # ─── ODRZUT tests ─────────────────────────────────────────────────────────────
@@ -196,19 +212,24 @@ class TestStandard:
         assert "katalogowe" in result.message
 
     def test_drawing_plus_sop_name_is_standard(self):
-        """has_drawing=True + sop_name matches a template → standard branch."""
+        """Only one exact SOP name may select production instructions."""
         tmpl = make_template(id=3, name="Wymiana zęba w łyżce")
-        order = base_order(has_drawing=True, sop_name="Wymiana zęba", order_type="remont")
+        order = base_order(has_drawing=True, sop_name="Wymiana zęba w łyżce", order_type="remont")
         result = run_triage(order, make_db(templates=[tmpl]))
         assert result.branch == "standard"
         assert result.template_id == 3
 
-    def test_drawing_plus_category_fallback_is_standard(self):
-        """has_drawing=True, no sop_name, but category matches a template → standard."""
+    def test_drawing_does_not_use_category_fallback(self):
         tmpl = make_template(id=7, name="Remont ogólny", category="remont")
         order = base_order(has_drawing=True, sop_name=None, order_type="remont")
         result = run_triage(order, make_db(templates=[tmpl]))
-        assert result.branch == "standard"
+        assert result.branch == "niestandard"
+
+    def test_drawing_does_not_use_partial_name_match(self):
+        tmpl = make_template(id=3, name="Wymiana zęba w łyżce")
+        order = base_order(has_drawing=True, sop_name="Wymiana zęba", order_type="remont")
+        result = run_triage(order, make_db(templates=[tmpl]))
+        assert result.branch == "niestandard"
 
 
 # ─── NIESTANDARD tests ────────────────────────────────────────────────────────
@@ -279,6 +300,17 @@ class TestMaterialWhitelist:
         assert result.branch != "odrzut"
         assert any("mithril-99" in w for w in (result.warnings or []))
 
+    def test_unknown_material_in_materials_json_adds_warning(self):
+        approved = [make_approved_material("S235"), make_approved_material("S355")]
+        order = base_order(
+            material="S235",
+            materials_json=[{"name": "S235"}, {"name": "mithril-99"}],
+            has_drawing=False,
+        )
+        result = run_triage(order, make_db(approved_materials=approved))
+        assert result.branch != "odrzut"
+        assert any("mithril-99" in w for w in (result.warnings or []))
+
     def test_empty_whitelist_no_warn(self):
         """If approved_materials table is empty — no warning (feature not configured)."""
         order = base_order(material="cokolwiek", has_drawing=False)
@@ -293,3 +325,9 @@ class TestMaterialWhitelist:
         result = run_triage(order, make_db(approved_materials=approved))
         mat_warnings = [w for w in (result.warnings or []) if "s235" in w.lower()]
         assert mat_warnings == []
+
+    def test_reject_rule_checks_each_material_in_materials_json(self):
+        rule = make_rule("Aluminium", "material", "eq", "aluminium", action="reject")
+        order = base_order(material="S235", materials_json=[{"name": "S235"}, {"name": "aluminium"}])
+        result = run_triage(order, make_db(rules=[rule]))
+        assert result.branch == "odrzut"

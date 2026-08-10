@@ -8,7 +8,7 @@ from models import Base, Order, OrderStatus, Setting
 TEST_USERS = {
     "office": {"id": "1", "role": "biuro", "name": "Test Office"},
     "technologist": {"id": "2", "role": "technolog", "name": "Test Technolog"},
-    "director": {"id": "3", "role": "dyrektor_produkcji", "name": "Test Director"},
+    "director": {"id": "3", "role": "technolog", "name": "Test Director"},
 }
 
 

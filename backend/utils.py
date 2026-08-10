@@ -1,5 +1,7 @@
 """Shared constants and helper functions used across routers."""
+import os
 import pathlib
+import tempfile
 from datetime import datetime, timezone
 from typing import Optional
 
@@ -24,13 +26,23 @@ def _now() -> datetime:
 def safe_upload_filename(filename: Optional[str]) -> str:
     raw_name = pathlib.Path(filename or "plik").name
     safe_name = "".join(ch if ch.isalnum() or ch in "._- " else "_" for ch in raw_name).strip()
+    safe_name = safe_name or "plik"
+    while len(safe_name.encode("utf-8")) > 240:
+        safe_name = safe_name[:-1]
     return safe_name or "plik"
 
 
 async def save_upload_file_chunked(file: UploadFile, dest: pathlib.Path) -> int:
     total_bytes = 0
+    temp_path: pathlib.Path | None = None
     try:
-        with dest.open("wb") as out:
+        with tempfile.NamedTemporaryFile(
+            mode="wb",
+            dir=dest.parent,
+            prefix=f".{dest.name}.",
+            delete=False,
+        ) as out:
+            temp_path = pathlib.Path(out.name)
             while True:
                 chunk = await file.read(UPLOAD_CHUNK_BYTES)
                 if not chunk:
@@ -39,7 +51,9 @@ async def save_upload_file_chunked(file: UploadFile, dest: pathlib.Path) -> int:
                 if total_bytes > MAX_UPLOAD_BYTES:
                     raise HTTPException(status_code=413, detail="Plik za duży (max 100 MB)")
                 out.write(chunk)
+        os.replace(temp_path, dest)
     except Exception:
-        dest.unlink(missing_ok=True)
+        if temp_path:
+            temp_path.unlink(missing_ok=True)
         raise
     return total_bytes
