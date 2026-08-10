@@ -25,6 +25,8 @@ class TriageInput:
     sop_name: Optional[str]    # np. "Wymiana zęba" — jeśli order_type == "remont"
     template_id: Optional[int] = None   # ID wybranego produktu (catalog) — przekazany z Order
     estimated_value: float = 0.0
+    is_internal: bool = False  # zlecenie wewnętrzne (własna firma) → omija niestandard/odrzut
+    materials_json: list = field(default_factory=list)
 
 
 @dataclass
@@ -67,15 +69,23 @@ def run_triage(order: TriageInput, db: Session) -> TriageResult:
     # Jeśli tabela approved_materials nie jest pusta i materiał zlecenia
     # nie pasuje do żadnego wpisu — dodaj ostrzeżenie (nie blokuje).
     # ----------------------------------------------------------------
-    if order.material:
+    material_names = _material_names(order)
+    if material_names:
         approved = db.query(ApprovedMaterial).filter(ApprovedMaterial.is_active == True).all()
         if approved:
-            material_lower = order.material.lower()
-            matched = any(material_lower == m.name.lower() for m in approved)
-            if not matched:
-                warnings.append(
-                    f"Nieznany materiał '{order.material}' — nie ma go na liście zatwierdzonych. Zweryfikuj."
-                )
+            approved_names = {m.name.lower() for m in approved}
+            for material in material_names:
+                if material.lower() not in approved_names:
+                    warnings.append(
+                        f"Nieznany materiał '{material}' — nie ma go na liście zatwierdzonych. Zweryfikuj."
+                    )
+
+    if order.is_internal:
+        return TriageResult(
+            branch="standard",
+            message="Zlecenie wewnętrzne — od razu do kalkulacji kosztu własnego.",
+            warnings=warnings,
+        )
 
     # ----------------------------------------------------------------
     # KROK 2: STANDARD
@@ -98,7 +108,7 @@ def run_triage(order: TriageInput, db: Session) -> TriageResult:
 
         return TriageResult(
             branch="standard",
-            message=f"Standard (katalog): '{template.name}'. Wycena wygenerowana automatycznie.",
+            message=f"Standard (katalog): '{template.name}'. Technolog potwierdzi wycenę.",
             template_id=template.id,
             warnings=warnings,
         )
@@ -129,10 +139,19 @@ def _matches_rule(order: TriageInput, rule: ConstraintRule) -> bool:
     Sprawdza czy zlecenie narusza regułę Odrzutu.
     Obsługiwane operatory: eq, in, lt, gt
     """
+    if rule.field == "material":
+        return any(_matches_value(material, rule) for material in _material_names(order))
+
     # Pobierz wartość pola z obiektu order
     field_value = getattr(order, rule.field, None)
     if field_value is None:
         return False
+
+    return _matches_value(field_value, rule)
+
+
+def _matches_value(field_value, rule: ConstraintRule) -> bool:
+    """Sprawdza czy jedna wartość narusza regułę."""
 
     op: str = rule.operator
     rule_val: str = rule.value
@@ -162,27 +181,29 @@ def _matches_rule(order: TriageInput, rule: ConstraintRule) -> bool:
     return False
 
 
+def _material_names(order: TriageInput) -> list[str]:
+    names = []
+    for item in order.materials_json or []:
+        if isinstance(item, dict):
+            name = item.get("name") or item.get("material") or item.get("mat")
+            if name:
+                names.append(str(name))
+        elif item:
+            names.append(str(item))
+    if order.material:
+        names.insert(0, order.material)
+    return list(dict.fromkeys(n.strip() for n in names if n and n.strip()))
+
+
 def _find_matching_template(order: TriageInput, db: Session) -> Optional[ProductTemplate]:
-    """
-    Szuka szablonu w katalogu pasującego do zlecenia.
-    Proste dopasowanie po nazwie SOP lub kategorii.
-    """
-    query = db.query(ProductTemplate).filter(ProductTemplate.is_active == True)
-
-    if order.sop_name:
-        # Szukaj po nazwie (case-insensitive LIKE)
-        tmpl = query.filter(
-            ProductTemplate.name.ilike(f"%{order.sop_name}%")
-        ).first()
-        if tmpl:
-            return tmpl
-
-    if order.order_type:
-        # Fallback: szukaj po kategorii
-        tmpl = query.filter(
-            ProductTemplate.category == order.order_type
-        ).first()
-        if tmpl:
-            return tmpl
-
-    return None
+    templates = db.query(ProductTemplate).filter(ProductTemplate.is_active == True).all()
+    if order.template_id:
+        return next((template for template in templates if template.id == order.template_id), None)
+    if not order.sop_name:
+        return None
+    matches = [
+        template
+        for template in templates
+        if (template.name or "").casefold() == order.sop_name.strip().casefold()
+    ]
+    return matches[0] if len(matches) == 1 else None

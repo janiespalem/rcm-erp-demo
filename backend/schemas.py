@@ -3,8 +3,8 @@ Pydantic schemas — walidacja danych wejście/wyjście API.
 Oddzielone od modeli SQLAlchemy celowo (separacja warstw).
 """
 from datetime import date, datetime
-from typing import Optional, List, Any
-from pydantic import BaseModel, Field
+from typing import Optional, List, Any, Literal
+from pydantic import BaseModel, Field, field_validator
 
 from utils import DEFAULT_OVERHEAD_PCT, DEFAULT_MARGIN_PCT
 
@@ -25,21 +25,28 @@ class UserOut(BaseModel):
 class OrderCreate(BaseModel):
     """Dane wejściowe z Wizarda Biuro (Step 1-3)."""
     order_number:    Optional[str]  = None
-    client:          Optional[str]  = ""
+    client:          str            = Field(default="", max_length=200)
     deadline:        date
     approved_material_id: Optional[int] = None 
     material:        Optional[str]  = None
+    materials_json:  List[Any]      = Field(default_factory=list)
     has_drawing:     bool           = False
     order_type:      str            = "remont"   # remont | catalog | nowa_czesc | zbrojenie
     sop_name:        Optional[str]  = None
     purpose:         Optional[str]  = None
     notes:           Optional[str]  = None
-    estimated_value: float          = 0.0
+    estimated_value: float          = Field(default=0.0, ge=0, le=99_999_999.99, allow_inf_nan=False)
     description:     Optional[str]  = None        # Opis problemu (remont/nowa_czesc)
     requires_visit:  bool           = False        # Wymaga wizyty u klienta
     template_id:     Optional[int]  = None         # Wybrany produkt z katalogu
-    quantity:        int            = 1            # Ilość sztuk
-    is_defence:      bool           = False        # Projekt zbrojeniowy / MON
+    quantity:        int            = Field(default=1, ge=1, le=1_000_000)  # Ilość sztuk
+    is_defence:      bool           = False        # Restricted-project marker
+    is_internal:     bool           = False        # Zlecenie wewnętrzne (własna firma)
+    weight_kg:        Optional[float] = Field(default=None, ge=0, le=9_999_999.999, allow_inf_nan=False)
+    drawing_number:   Optional[str]  = None        # Nr rysunku
+    dimensions:       Optional[str]  = None        # Wymiary
+    delivery_address: Optional[str]  = None        # Adres dostawy
+    contact:          Optional[str]  = None        # Osoba kontaktowa / telefon
 
 
 class OrderOut(BaseModel):
@@ -52,6 +59,15 @@ class OrderOut(BaseModel):
     deadline:      Optional[date]
     has_drawing:   bool
     material:      Optional[str]
+    materials_json: List[Any] = Field(default_factory=list)
+
+    # Stare zlecenia mają materials_json = NULL (kolumna dodana później) — z ORM
+    # przychodzi None, a pole wymaga listy → 500 na całym GET /orders. Koercja None→[].
+    @field_validator("materials_json", mode="before")
+    @classmethod
+    def _materials_json_none_to_list(cls, v):
+        return v if isinstance(v, list) else []
+
     notes:         Optional[str]
     order_type:    Optional[str]   = None
     sop_name:      Optional[str]   = None
@@ -60,13 +76,20 @@ class OrderOut(BaseModel):
     purpose:       Optional[str]   = None
     requires_visit: bool           = False
     quantity:      Optional[int]   = None
-    estimated_value: Optional[float] = None
+    estimated_value: Optional[float] = Field(default=None, ge=0, le=99_999_999.99, allow_inf_nan=False)
     is_defence:    bool            = False
+    is_internal:   bool            = False
+    weight_kg:        Optional[float] = None
+    drawing_number:   Optional[str]  = None
+    dimensions:       Optional[str]  = None
+    delivery_address: Optional[str]  = None
+    contact:          Optional[str]  = None
     created_at:    datetime
     quoted_at:     Optional[datetime] = None
     started_at:    Optional[datetime] = None
     completed_at:  Optional[datetime] = None
     delivered_at:  Optional[datetime] = None
+    archived_at:   Optional[datetime] = None
     model_config = {"from_attributes": True}
 
 
@@ -85,8 +108,20 @@ class OrderUpdate(BaseModel):
     estimated_value: Optional[float] = None
     description:     Optional[str]   = None
     requires_visit:  Optional[bool]  = None
-    quantity:        Optional[int]   = None
+    quantity:        Optional[int]   = Field(default=None, ge=1, le=1_000_000)
     is_defence:      Optional[bool]  = None
+    weight_kg:        Optional[float] = Field(default=None, ge=0, le=9_999_999.999, allow_inf_nan=False)
+    drawing_number:   Optional[str]  = None
+    dimensions:       Optional[str]  = None
+    delivery_address: Optional[str]  = None
+    contact:          Optional[str]  = None
+
+    @field_validator("client")
+    @classmethod
+    def _client_cannot_be_null(cls, value):
+        if value is None:
+            raise ValueError("Klient nie może być null")
+        return value
 
 
 # =============================================================================
@@ -103,24 +138,14 @@ class TriageResponse(BaseModel):
 # =============================================================================
 # QUOTES — Wycena
 # =============================================================================
-class QuoteCreate(BaseModel):
-    """Ręczna wycena przez Technologa (gałąź Niestandard)."""
-    labor_hours:   float
-    material_cost: float
-    overhead_pct:  float = DEFAULT_OVERHEAD_PCT
-    margin_pct:    float = DEFAULT_MARGIN_PCT
-    # line_items: [{name, qty, unit_price}, ...]
-    line_items:    List[Any] = Field(default_factory=list)
-
-
 class ProcessItem(BaseModel):
     """Operacja produkcyjna v3: hours × rate_per_hour. Legacy: cost bezpośredni."""
     name:          str
     department:    Optional[str] = None
     material:      Optional[str] = None
-    hours:         float = 0
-    rate_per_hour: float = 0
-    cost:          float = 0  # legacy fallback gdy hours/rate nieznane
+    hours:         float = Field(default=0, ge=0, le=1_000_000, allow_inf_nan=False)
+    rate_per_hour: float = Field(default=0, ge=0, le=1_000_000, allow_inf_nan=False)
+    cost:          float = Field(default=0, ge=0, le=99_999_999.99, allow_inf_nan=False)
 
 
 class MaterialLine(BaseModel):
@@ -130,9 +155,9 @@ class MaterialLine(BaseModel):
     """
     name:         Optional[str] = None   # nazwa/marka materiału (np. S235)
     material:     Optional[str] = None   # alias akceptowany od starszych klientów
-    qty_kg:       float = 0
-    price_per_kg: float = 0
-    cost:         float = 0   # jawny koszt linii — fallback gdy brak kg/ceny
+    qty_kg:       float = Field(default=0, ge=0, le=9_999_999.999, allow_inf_nan=False)
+    price_per_kg: float = Field(default=0, ge=0, le=1_000_000, allow_inf_nan=False)
+    cost:         float = Field(default=0, ge=0, le=99_999_999.99, allow_inf_nan=False)
 
 
 class QuoteStructuredCreate(BaseModel):
@@ -143,35 +168,27 @@ class QuoteStructuredCreate(BaseModel):
     Operacje: sum(hours × rate_per_hour), fallback na cost.
     """
     processes:             List[ProcessItem] = Field(default_factory=list)
+    method:                Literal["kalkulacja", "od_masy"] = "kalkulacja"
+    weight_basis:          Literal["netto", "brutto"] = "netto"
     materials:             List[MaterialLine] = Field(default_factory=list)
-    material_weight_kg:    float = 0   # kg surowca (np. 50 kg S235)
-    material_price_per_kg: float = 0   # PLN/kg surowca (np. 3.50)
-    material_cost:         float = 0   # legacy: całkowity koszt materiału
-    weight_netto_kg:       float = 0
-    weight_brutto_kg:      float = 0
-    labor_hours:           float = 0   # dodatkowa robocizna (montaż, wykończenie)
-    overhead_pct:          float = DEFAULT_OVERHEAD_PCT
-    margin_pct:            float = DEFAULT_MARGIN_PCT
-    transport_cost:        float = 0
+    material_weight_kg:    float = Field(default=0, ge=0, le=9_999_999.999, allow_inf_nan=False)
+    material_price_per_kg: float = Field(default=0, ge=0, le=1_000_000, allow_inf_nan=False)
+    material_cost:         float = Field(default=0, ge=0, le=99_999_999.99, allow_inf_nan=False)
+    weight_netto_kg:       float = Field(default=0, ge=0, le=9_999_999.999, allow_inf_nan=False)
+    weight_brutto_kg:      float = Field(default=0, ge=0, le=9_999_999.999, allow_inf_nan=False)
+    labor_hours:           float = Field(default=0, ge=0, le=1_000_000, allow_inf_nan=False)
+    overhead_pct:          float = Field(default=DEFAULT_OVERHEAD_PCT, ge=0, le=1, allow_inf_nan=False)
+    margin_pct:            float = Field(default=DEFAULT_MARGIN_PCT, ge=0, le=1, allow_inf_nan=False)
+    transport_cost:        float = Field(default=0, ge=0, le=99_999_999.99, allow_inf_nan=False)
     show_unit_prices:      bool  = True
     # Stare pola — backward compat
-    weight_kg:             float = 0
-    weight_rate_pln_kg:    float = 0
+    weight_kg:             float = Field(default=0, ge=0, le=9_999_999.999, allow_inf_nan=False)
+    weight_rate_pln_kg:    float = Field(default=0, ge=0, le=1_000_000, allow_inf_nan=False)
 
 
 class ManualQuoteCreate(BaseModel):
     """Ręczna cena netto bez liczenia — technolog wpisuje finalną kwotę."""
-    total_net: float
-
-
-class QuoteZaporCreate(BaseModel):
-    """
-    Zaporowa marża — Technolog klika jeden przycisk.
-    System sam oblicza cenę zaporową (materiał × robocizna × mnożnik).
-    """
-    material_cost:    float
-    hours_estimate:   float   # przybliżone godziny robocizny
-    zapor_multiplier: float = 3.5  # mnożnik (default 3.5, source of truth is backend)
+    total_net: float = Field(ge=0, le=99_999_999.99, allow_inf_nan=False)
 
 
 class QuoteOut(BaseModel):
@@ -192,6 +209,8 @@ class QuoteOut(BaseModel):
     weight_netto_kg:    Optional[float]     = None
     weight_brutto_kg:   Optional[float]     = None
     estimate_version:   Optional[str]       = None
+    pricing_method:     Optional[str]       = "kalkulacja"
+    weight_basis:       Optional[str]       = "netto"
     last_edited_at:     Optional[datetime]  = None
     transport_cost:     Optional[float]     = None
     # v3 pola
@@ -203,60 +222,30 @@ class QuoteOut(BaseModel):
 
 
 # =============================================================================
-# MATERIAL REQUESTS — Zapotrzebowanie Materiałowe
-# =============================================================================
-class MaterialRequestCreate(BaseModel):
-    client:      str
-    materials:   List[Any] = Field(default_factory=list)  # [{type, qty, unit}]
-    extra_notes: Optional[str] = None
-    priority:    str = "normal"
-
-
-class MaterialRequestOut(BaseModel):
-    id:       int
-    order_id: int
-    client:   str
-    materials: List[Any]
-    priority:  str
-    status:    str
-    model_config = {"from_attributes": True}
-
-
-# =============================================================================
-# QUALITY CARDS — Karta Kontrolna (po każdym etapie)
-# =============================================================================
-class QualityCardCreate(BaseModel):
-    operation_id:    Optional[int] = None
-    stage_name:      str
-    check_linear:    bool = False
-    check_geometric: bool = False
-    check_surface:   bool = False
-    passed:          bool
-    checked_by:      str
-
-
-class QualityCardOut(BaseModel):
-    id:              int
-    order_id:        int
-    stage_name:      Optional[str]
-    check_linear:    bool
-    check_geometric: bool
-    check_surface:   bool
-    passed:          Optional[bool]
-    checked_by:      Optional[str]
-    checked_at:      Optional[datetime]
-    model_config = {"from_attributes": True}
-
-
-# =============================================================================
 # PARAMETER REQUESTS — "Zapytaj o parametry" (Technolog → Biuro)
 # =============================================================================
 class ParameterRequestCreate(BaseModel):
-    question_text: str   # np. "Proszę podać markę stali i grubość ścianki"
+    question_text: str = Field(min_length=1, max_length=2000)
+
+    @field_validator("question_text")
+    @classmethod
+    def _trim_question(cls, value):
+        value = value.strip()
+        if not value:
+            raise ValueError("Pytanie nie może być puste")
+        return value
 
 
 class ParameterRequestAnswer(BaseModel):
-    answer_text: str     # odpowiedź Biuro
+    answer_text: str = Field(min_length=1, max_length=2000)
+
+    @field_validator("answer_text")
+    @classmethod
+    def _trim_answer(cls, value):
+        value = value.strip()
+        if not value:
+            raise ValueError("Odpowiedź nie może być pusta")
+        return value
 
 
 class ParameterRequestOut(BaseModel):
@@ -280,8 +269,8 @@ class TemplateCreate(BaseModel):
     materials_json:     List[Any] = Field(default_factory=list)
     instruction_blocks: List[Any] = Field(default_factory=list)
     machines_json:      List[Any] = Field(default_factory=list)
-    base_price_pln:     Optional[float] = None
-    margin_pct:         float = 0.25
+    base_price_pln:     Optional[float] = Field(default=None, ge=0, le=99_999_999.99, allow_inf_nan=False)
+    margin_pct:         float = Field(default=0.25, ge=0, le=1, allow_inf_nan=False)
     project_code:       Optional[str] = None
     position_nr:        Optional[str] = None
     notes:              Optional[str] = None
@@ -324,13 +313,13 @@ class AttachmentOut(BaseModel):
 class OperationCatalogCreate(BaseModel):
     name:   str
     department: Optional[str] = None
-    default_rate: Optional[float] = None
+    default_rate: Optional[float] = Field(default=None, ge=0, le=1_000_000, allow_inf_nan=False)
     formula: Optional[str] = None
 
 class OperationCatalogUpdate(BaseModel):
     name: Optional[str] = None
     department: Optional[str] = None
-    default_rate: Optional[float] = None
+    default_rate: Optional[float] = Field(default=None, ge=0, le=1_000_000, allow_inf_nan=False)
     formula: Optional[str] = None
 
 class OperationCatalogOut(BaseModel):
@@ -385,7 +374,7 @@ class AnalyticsSummary(BaseModel):
 class ApprovedMaterialCreate(BaseModel):
     name:                str
     category:            Optional[str]   = None
-    default_rate_pln_kg: Optional[float] = None
+    default_rate_pln_kg: Optional[float] = Field(default=None, ge=0, le=1_000_000, allow_inf_nan=False)
     is_active:           bool            = True
     notes:               Optional[str]   = None
 
@@ -426,7 +415,7 @@ class BenchmarkOut(BaseModel):
 # ORDER OPERATIONS — actual hours update
 # =============================================================================
 class ActualHoursUpdate(BaseModel):
-    actual_hours: float
+    actual_hours: float = Field(ge=0, le=1_000_000, allow_inf_nan=False)
 
 
 # =============================================================================
@@ -438,12 +427,24 @@ class TemplatePatch(BaseModel):
     materials_json:     Optional[List[Any]] = None
     instruction_blocks: Optional[List[Any]] = None
     machines_json:      Optional[List[Any]] = None
-    base_price_pln:     Optional[float]     = None
+    base_price_pln:     Optional[float]     = Field(default=None, ge=0, le=99_999_999.99, allow_inf_nan=False)
     notes:              Optional[str]       = None
-    margin_pct:         Optional[float]     = None
+    margin_pct:         Optional[float]     = Field(default=None, ge=0, le=1, allow_inf_nan=False)
     category:           Optional[str]       = None
     project_code:       Optional[str]       = None
     position_nr:        Optional[str]       = None
+
+    @field_validator(
+        "operations_json",
+        "materials_json",
+        "instruction_blocks",
+        "machines_json",
+    )
+    @classmethod
+    def _json_lists_cannot_be_null(cls, value):
+        if value is None:
+            raise ValueError("Lista nie może być null")
+        return value
 
 
 # =============================================================================
@@ -456,7 +457,7 @@ class SettingUpdate(BaseModel):
 class ApprovedMaterialPatch(BaseModel):
     name:                Optional[str]   = None
     category:            Optional[str]   = None
-    default_rate_pln_kg: Optional[float] = None
+    default_rate_pln_kg: Optional[float] = Field(default=None, ge=0, le=1_000_000, allow_inf_nan=False)
     is_active:           Optional[bool]  = None
     notes:               Optional[str]   = None
 
@@ -473,6 +474,12 @@ class QuotePreviewOut(BaseModel):
     ops_total:      float
     material_total: float
     extra_labor:    float
+    weight_total:   float = 0
     base:           float
     subtotal:       float
     total_net:      float
+    pricing_method: str = "kalkulacja"
+    weight_basis:   str = "netto"
+    koszt_materialu:     float = 0
+    koszt_robocizny:     float = 0
+    koszt_wytworzenia:   float = 0

@@ -4,6 +4,7 @@ const pending = ref(null) // { message, resolve }
 
 export function useConfirm() {
   function confirm(message, { confirmLabel = 'Usuń' } = {}) {
+    if (pending.value) pending.value.resolve(false)
     return new Promise(resolve => {
       pending.value = { message, resolve, confirmLabel }
     })

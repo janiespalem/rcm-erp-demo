@@ -1,79 +1,59 @@
 # FactoryFlow ERP Demo
 
-Sanitized public demo of an internal ERP/CPQ system for a small manufacturing workflow.
-
-The original private project was built for production use. This repository keeps the architecture, workflow, migrations, tests, and UI structure, but removes or replaces all real company data, customer information, prices, drawings, generated PDFs, photos, deployment history, and internal documents.
+A sanitized portfolio version of a production-oriented ERP/CPQ application for a small manufacturing company. The interface is in Polish because it models a real shop-floor workflow; every record, identity, price, contact, and document in this repository is synthetic.
 
 ```text
-office request -> triage -> quote -> production sheet -> production -> delivery -> history
+request → triage → quotation → approval → production → delivery → history
 ```
 
-## What It Shows
+[![CI](https://github.com/fearlesstilted/rcm-erp-demo/actions/workflows/ci.yml/badge.svg)](https://github.com/fearlesstilted/rcm-erp-demo/actions/workflows/ci.yml)
 
-- FastAPI backend with SQLAlchemy models, Alembic migrations, role-based access, and modular routers.
-- Vue 3 + Vite frontend with role-aware navigation and production/order workspaces.
-- CPQ-style quoting: basic and structured quote modes, material/labor calculations, margins, overhead, and transport.
-- Production document generation through Jinja2 and WeasyPrint.
-- Product/template catalog with operations, BOM-like materials, project grouping, and PDF output.
-- Order workflow with triage, quote approval, production state changes, delivery, history, and analytics.
-- Test coverage for backend API behavior, quote calculations, imports, uploads, workflow baseline, and settings validation.
+## Product tour
 
-## Demo Roles
-
-| Role | Purpose |
+| Orders and role-aware work queue | Order workspace and audit history |
 | --- | --- |
-| `biuro` | Creates requests, answers questions, approves quotes, tracks orders |
-| `technolog` | Reviews non-standard requests, prepares quotes, manages catalog data |
-| `ceo` | Reads analytics, schedules, benchmarks, and financial summaries |
-| `dyrektor_produkcji` | Oversees production, catalog, materials, operations, and profitability |
+| ![Orders](docs/screenshots/orders.png) | ![Order workspace](docs/screenshots/order-workspace.png) |
 
-Demo PINs are fixed for local/demo use only:
+| Structured quotation | Demo login |
+| --- | --- |
+| ![Quotation](docs/screenshots/quote.png) | ![Login](docs/screenshots/login.png) |
 
-```text
-biuro: 1111
-technolog: 2222
-ceo: 3333
-dyrektor_produkcji: 4444
-```
+## What it demonstrates
 
-## Tech Stack
+- Role-based workflows for `biuro`, `technolog`, and `ceo`.
+- Order intake with materials, dimensions, weight, delivery details, and restricted-project marking.
+- Technical triage and a simplified order lifecycle with clear next actions.
+- CPQ quotation by materials, operations, weight, overhead, margin, and transport.
+- Internal orders calculated at cost and external orders requiring office approval.
+- Production sheets and commercial offers generated from Jinja2 templates with WeasyPrint.
+- Attachments with signature/MIME validation, controlled download, and audit attribution.
+- Order history, archive/restore, production queue, schedule, analytics, and XLSX export.
+- Alembic migrations, database-backed bcrypt PIN authentication, JWT authorization, and role checks.
+
+## Demo access
+
+The local seed creates three public demonstration identities:
+
+| Role | PIN | Typical view |
+| --- | --- | --- |
+| `biuro` | `1111` | New requests, approvals, customer communication |
+| `technolog` | `2222` | Triage, quotation, production and catalogs |
+| `ceo` | `3333` | Analytics, schedule and all orders |
+
+These credentials are intentionally public and must never be reused outside this demo.
+
+## Stack
 
 | Layer | Technology |
 | --- | --- |
-| Backend | FastAPI, SQLAlchemy |
-| Database | SQLite locally, PostgreSQL via `DATABASE_URL` |
+| Backend | Python 3.11, FastAPI, SQLAlchemy 2 |
+| Database | SQLite for local demo, PostgreSQL-compatible configuration |
 | Migrations | Alembic |
-| Frontend | Vue 3 SFC, Vite |
-| PDF | Jinja2, WeasyPrint, pypdf |
-| Imports | openpyxl |
-| Tests | pytest, FastAPI TestClient |
-| Deploy shape | Render-compatible config |
+| Frontend | Vue 3, Vite, Lucide icons |
+| Documents | Jinja2, WeasyPrint, pypdf, openpyxl |
+| Verification | pytest, frontend production build, GitHub Actions |
 
-## Project Structure
-
-```text
-backend/
-  main.py                  FastAPI app, auth, startup, static frontend serving
-  models.py                SQLAlchemy domain model
-  schemas.py               Pydantic API schemas
-  routers/                 Orders, quotes, catalog, templates, analytics, settings
-  services/                Pricing, order workflow, templates, materials
-  pdf_gen.py               PDF rendering helpers
-
-frontend-vite/
-  src/
-    components/            App shell, login, order workspace, tabs, modals
-    composables/           Shared Vue state and API wrappers
-    utils/                 Formatting and workflow helpers
-
-migrations/                Alembic revisions
-templates/                 PDF templates
-tests/                     Backend and workflow tests
-```
-
-## Local Start
-
-Use Python 3.11.
+## Run locally
 
 ```bash
 python3.11 -m venv .venv
@@ -87,46 +67,43 @@ cd ..
 
 APP_ENV=dev python -m alembic upgrade head
 cd backend
-APP_ENV=dev uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+APP_ENV=dev uvicorn main:app --host 127.0.0.1 --port 8000
 ```
 
-Open `http://localhost:8000`.
+Open <http://127.0.0.1:8000>. On first start, the application creates only the synthetic records defined in `backend/seed.py`.
 
-For frontend hot reload:
+Docker is also supported:
 
 ```bash
-cd frontend-vite
-npm run dev
+JWT_SECRET="$(openssl rand -hex 32)" docker compose up --build
 ```
 
-## Tests
+## Verification
 
 ```bash
+cd frontend-vite && npm ci && npm run build && cd ..
 APP_ENV=test DISABLE_STARTUP_SEED=1 python -m pytest -q
+DATABASE_URL=sqlite:////tmp/factoryflow-migration.db APP_ENV=test python -m alembic upgrade head
 ```
 
-Some smoke tests require a built frontend. Run `npm run build` in `frontend-vite/` first.
+## Architecture
 
-## Docker Compose
-
-```bash
-export JWT_SECRET=$(openssl rand -hex 32)
-docker compose up -d
+```text
+backend/
+  main.py                 FastAPI composition, login, health, SPA serving
+  models.py               SQLAlchemy domain model
+  routers/                Orders, quotes, documents, catalogs, analytics
+  services/               Workflow and pricing rules
+  seed.py                 Synthetic portfolio dataset
+frontend-vite/src/
+  components/             Role-aware application and workspaces
+  composables/            API, auth and shared state
+  utils/                  Formatting and workflow presentation
+migrations/               Alembic revision chain
+templates/                Production sheet and quotation HTML
+tests/                    API, security, pricing, workflow and migration checks
 ```
 
-The container runs Alembic migrations on startup. Local SQLite data is persisted in `./data/factoryflow_demo.db`.
+## Sanitization boundary
 
-## Sanitization Notes
-
-This repo intentionally excludes:
-
-- real database files;
-- generated production PDFs;
-- uploaded drawings and attachments;
-- company logos and photos;
-- real customer/company names;
-- real addresses, prices, and business documents;
-- original git history;
-- private deployment notes and operational docs.
-
-If this project is used as a portfolio sample, treat it as a code and architecture demo, not as a live product clone.
+This repository intentionally contains no real customer records, company identifiers, prices, drawings, PDFs, uploads, database files, credentials, deployment configuration, server details, audit reports, or private repository history. Screenshots are generated locally from the same synthetic seed used by the code.

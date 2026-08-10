@@ -20,26 +20,33 @@ export function biuroTemplatePriceLabel(t) {
 }
 
 export function isOverdue(deadline) {
-  return deadline && deadline < new Date().toISOString().slice(0, 10)
+  return deadline && deadline < localDate(new Date())
 }
 
 export function defaultDeadline() {
   const d = new Date()
   d.setDate(d.getDate() + 14)
-  return d.toISOString().slice(0, 10)
+  return localDate(d)
 }
 
+function localDate(date) {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+// User-facing status labels. Deliberately coarser than the backend vocabulary:
+// users think in stages, not in triage branches. `in_production` covers the
+// whole shop-floor phase (from confirm until the order is marked gotowe).
 export const STATUS_PL = {
-  draft:         'Szkic',
-  triage:        'Triage',
+  draft:         'Nowe',
   standard:      'Standard',
-  niestandard:   'Niestandardowy',
-  rejected:      'Odrzucony',
-  quoted:        'Wyceniony',
+  niestandard:   'Do wyceny',
+  rejected:      'Odrzucone',
+  quoted:        'Wycenione',
   in_production: 'W produkcji',
-  w_trakcie:     'W trakcie',
   gotowe:        'Gotowe',
   wydane:        'Wydane',
-  done:          'Zakończone',
-  odrzut:        'Odrzut',
+  odrzut:        'Odrzucone',
 }

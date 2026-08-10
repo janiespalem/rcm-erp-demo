@@ -1,28 +1,5 @@
-# FactoryFlow ERP Demo Frontend
+# Vue 3 + Vite
 
-Vue 3 + Vite frontend for the FactoryFlow ERP Demo.
+This template should help get you started developing with Vue 3 in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
 
-The app is built as a role-aware internal tool UI:
-
-- PIN login by role;
-- tab navigation based on role permissions;
-- order list and order workspace;
-- quote, materials, catalog, analytics, and production views;
-- shared state through composables instead of a global store library.
-
-## Development
-
-```bash
-npm ci
-npm run dev
-```
-
-The dev server proxies `/api` to the FastAPI backend.
-
-## Build
-
-```bash
-npm run build
-```
-
-The backend serves the built files from `frontend-vite/dist/`.
+Learn more about IDE Support for Vue in the [Vue Docs Scaling up Guide](https://vuejs.org/guide/scaling-up/tooling.html#ide-support).

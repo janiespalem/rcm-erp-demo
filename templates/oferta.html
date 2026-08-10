@@ -273,11 +273,11 @@
 <!-- ═══ NAGŁÓWEK ═══════════════════════════════════════════ -->
 <div class="header">
   <div class="logo-block">
-    <div class="company">DemoCo</div>
-    <div class="tagline">Sp. z o.o. &nbsp;·&nbsp; Konstrukcje Stalowe &amp; Naprawa</div>
+    <div class="company">{{ company.name }}</div>
+    <div class="tagline">{{ company.tagline }}</div>
     <div class="address">
-      ul. Testowa 1, 00-000 Demo City<br>
-      NIP: 000-000-00-00 &nbsp;|&nbsp; REGON: 000000000
+      {{ company.address }}<br>
+      NIP: {{ company.nip }} &nbsp;|&nbsp; REGON: {{ company.regon }}
     </div>
   </div>
   <div class="doc-block">
@@ -288,7 +288,7 @@
 </div>
 
 {% if order.is_defence %}
-<div class="defence-banner">⚠️ PROJEKT ZBROJENIOWY / MON — DOKUMENT POUFNY</div>
+<div class="defence-banner">⚠️ PROJEKT ZASTRZEŻONY — DOKUMENT POUFNY</div>
 {% endif %}
 
 <!-- ═══ KARTA KLIENTA ════════════════════════════════════════ -->
@@ -309,6 +309,16 @@
       {% if order.quantity and order.quantity > 1 %}
       <div class="client-meta-item">
         Ilość: <strong>{{ order.quantity }} szt.</strong>
+      </div>
+      {% endif %}
+      {% if order.delivery_address %}
+      <div class="client-meta-item">
+        Adres dostawy: <strong>{{ order.delivery_address }}</strong>
+      </div>
+      {% endif %}
+      {% if order.contact %}
+      <div class="client-meta-item">
+        Kontakt: <strong>{{ order.contact }}</strong>
       </div>
       {% endif %}
     </div>
@@ -384,12 +394,12 @@
       <span class="val">{{ netto | round(2) }} PLN</span>
     </div>
     <div class="price-row vat">
-      <span>VAT (23%):</span>
-      <span class="val">{{ (netto * 0.23) | round(2) }} PLN</span>
+      <span>VAT ({{ vat_pct }}%):</span>
+      <span class="val">{{ (netto * vat_rate) | round(2) }} PLN</span>
     </div>
     <div class="price-row total">
       <span>Razem brutto:</span>
-      <span class="val">{{ (netto * 1.23) | round(2) }} PLN</span>
+      <span class="val">{{ (netto * (1 + vat_rate)) | round(2) }} PLN</span>
     </div>
     {% elif sop_template and sop_template.base_price_pln %}
     {% set netto = ((sop_template.base_price_pln | float) * (1 + (sop_template.margin_pct | float)) * (order.quantity or 1)) | round(2) %}
@@ -398,12 +408,12 @@
       <span class="val">{{ netto }} PLN</span>
     </div>
     <div class="price-row vat">
-      <span>VAT (23%):</span>
-      <span class="val">{{ (netto * 0.23) | round(2) }} PLN</span>
+      <span>VAT ({{ vat_pct }}%):</span>
+      <span class="val">{{ (netto * vat_rate) | round(2) }} PLN</span>
     </div>
     <div class="price-row total">
       <span>Razem brutto:</span>
-      <span class="val">{{ (netto * 1.23) | round(2) }} PLN</span>
+      <span class="val">{{ (netto * (1 + vat_rate)) | round(2) }} PLN</span>
     </div>
     {% else %}
     <div class="price-row total">
@@ -418,7 +428,7 @@
 <div class="terms">
   <div class="terms-title">Warunki oferty</div>
   Oferta ważna <strong>14 dni</strong> od daty wystawienia.
-  Ceny netto, do których należy doliczyć podatek VAT 23%.
+  Ceny netto, do których należy doliczyć podatek VAT {{ vat_pct }}%.
   Realizacja po wpłacie zaliczki 50% lub po podpisaniu umowy.
   Płatność przelewem — termin 14 dni od daty FV.
   Koszty transportu wyceniane osobno.
@@ -427,7 +437,7 @@
 <!-- ═══ PODPISY ══════════════════════════════════════════════ -->
 <div class="signatures">
   <div class="sig-box">
-    <div class="sig-role">Wystawił — Biuro Demo</div>
+    <div class="sig-role">Wystawił — Biuro</div>
     ___________________________<br>
     Data: {{ today }}
   </div>
@@ -440,7 +450,7 @@
 
 <!-- ═══ STOPKA ═══════════════════════════════════════════════ -->
 <div class="footer">
-  <span>Demo Manufacturing Sp. z o.o. | ul. Testowa 1, 00-000 Demo City | NIP: 000-000-00-00</span>
+  <span>{{ company.name }} | {{ company.address }} | NIP: {{ company.nip }}</span>
   <span>OF/{{ order.order_number or order.id }}/{{ today[-4:] }}</span>
 </div>
 

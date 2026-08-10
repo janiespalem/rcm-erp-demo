@@ -2,8 +2,10 @@
 Product templates (SOP catalog), project arkusze, drawing upload/extract.
 """
 import io
+import os
 import pathlib
 import time
+import uuid
 from collections import defaultdict, deque
 from typing import List, Optional
 
@@ -16,8 +18,8 @@ from types import SimpleNamespace
 
 from database import get_db
 from drawing_extract import extract_drawing_pdf
-from models import Order, ProductTemplate, TechCard
-from pdf_gen import generate_arkusz_pdf
+from models import ProductTemplate
+from pdf_gen import _safe_filename_part, generate_arkusz_pdf
 from auth import require_role
 from schemas import TemplateCreate, TemplateOut, TemplatePatch
 from services import template_service
@@ -25,8 +27,8 @@ from utils import save_upload_file_chunked
 
 router = APIRouter()
 
-_ALL  = require_role("biuro", "technolog", "ceo", "dyrektor_produkcji")
-_TECH = require_role("technolog", "dyrektor_produkcji")
+_ALL  = require_role("biuro", "technolog", "ceo")
+_TECH = require_role("technolog")
 
 TEMPLATES_UPLOAD_ROOT = pathlib.Path(__file__).parent.parent / "uploads" / "templates"
 TEMPLATES_UPLOAD_ROOT.mkdir(parents=True, exist_ok=True)
@@ -58,13 +60,6 @@ def _template_drawing_abs_path(tmpl: ProductTemplate) -> pathlib.Path:
     return abs_path
 
 
-def _detach_template_references(template_id: int, db: Session) -> None:
-    for order in db.query(Order).filter(Order.template_id == template_id).all():
-        order.template_id = None
-    for card in db.query(TechCard).filter(TechCard.template_id == template_id).all():
-        card.template_id = None
-
-
 # ── Template CRUD ─────────────────────────────────────────────────────────────
 
 @router.get("/api/templates", response_model=List[TemplateOut])
@@ -94,12 +89,7 @@ def patch_template(
 
 @router.delete("/api/templates/{template_id}", status_code=204)
 def delete_template(template_id: int, db: Session = Depends(get_db), _: dict = _TECH):
-    tmpl = db.get(ProductTemplate, template_id)
-    if not tmpl:
-        raise HTTPException(status_code=404, detail="Szablon nie znaleziony")
-    _detach_template_references(template_id, db)
-    db.delete(tmpl)
-    db.commit()
+    template_service.archive_template(db, template_id)
 
 
 @router.patch("/api/templates/{template_id}/restore", response_model=TemplateOut)
@@ -126,7 +116,16 @@ async def upload_template_drawing(
     dest_dir.mkdir(exist_ok=True)
     safe_name = f"rysunek_{template_id}.pdf"
     dest_path = dest_dir / safe_name
-    await save_upload_file_chunked(file, dest_path)
+    pending_path = dest_dir / f".{safe_name}.{uuid.uuid4().hex}.upload"
+    try:
+        await save_upload_file_chunked(file, pending_path)
+        with pending_path.open("rb") as source:
+            is_pdf = source.read(5) == b"%PDF-"
+        if not is_pdf:
+            raise HTTPException(status_code=415, detail="Zawartość pliku nie jest PDF")
+        os.replace(pending_path, dest_path)
+    finally:
+        pending_path.unlink(missing_ok=True)
 
     tmpl.drawing_path = f"uploads/templates/{template_id}/{safe_name}"
     db.commit()
@@ -247,7 +246,10 @@ def get_project_arkusze(project_code: str, db: Session = Depends(get_db), _: dic
     return Response(
         content=out.getvalue(),
         media_type="application/pdf",
-        headers={"Content-Disposition": f'attachment; filename="{project_code}_arkusze.pdf"'},
+        headers={
+            "Content-Disposition":
+            f'attachment; filename="{_safe_filename_part(project_code, "projekt")}_arkusze.pdf"'
+        },
     )
 
 
@@ -281,7 +283,7 @@ def get_template_arkusz(template_id: int, db: Session = Depends(get_db), _: dict
     arkusz_bytes = generate_arkusz_pdf(fake_order, tmpl, fake_quote)
     if arkusz_bytes[:4] != b"%PDF":
         raise HTTPException(status_code=503, detail="WeasyPrint niedostępny")
-    fname = f"{tmpl.position_nr or tmpl.id}_arkusz.pdf"
+    fname = f"{_safe_filename_part(tmpl.position_nr or tmpl.id, str(tmpl.id))}_arkusz.pdf"
     return Response(
         content=arkusz_bytes,
         media_type="application/pdf",

@@ -93,6 +93,7 @@ def generate_order_number(db: Session) -> str:
                 db.rollback()
                 continue
 
+        counter.next_seq = max(counter.next_seq, _legacy_max_seq(db, year) + 1)
         seq = counter.next_seq
         counter.next_seq += 1
         db.flush()
@@ -105,6 +106,27 @@ def get_order_or_404(db: Session, order_id: int) -> Order:
     order = db.get(Order, order_id)
     if not order:
         raise HTTPException(status_code=404, detail="Zlecenie nie znalezione")
+    return order
+
+
+def get_mutable_order_or_404(db: Session, order_id: int) -> Order:
+    order = get_order_or_404(db, order_id)
+    if order.archived_at:
+        raise HTTPException(status_code=409, detail="Zarchiwizowane zlecenie jest tylko do odczytu")
+    return order
+
+
+def get_mutable_order_for_update(db: Session, order_id: int) -> Order:
+    order = (
+        db.query(Order)
+        .filter(Order.id == order_id)
+        .with_for_update()
+        .first()
+    )
+    if not order:
+        raise HTTPException(status_code=404, detail="Zlecenie nie znalezione")
+    if order.archived_at:
+        raise HTTPException(status_code=409, detail="Zarchiwizowane zlecenie jest tylko do odczytu")
     return order
 
 
@@ -160,6 +182,7 @@ def create_order(db: Session, payload: OrderCreate, user: Optional[dict] = None)
             deadline=payload.deadline,
             approved_material_id=payload.approved_material_id,
             material=payload.material,
+            materials_json=payload.materials_json,
             has_drawing=payload.has_drawing,
             notes=payload.notes,
             purpose=payload.purpose,
@@ -171,6 +194,12 @@ def create_order(db: Session, payload: OrderCreate, user: Optional[dict] = None)
             template_id=payload.template_id,
             quantity=payload.quantity,
             is_defence=payload.is_defence,
+            is_internal=payload.is_internal,
+            weight_kg=payload.weight_kg,
+            drawing_number=payload.drawing_number,
+            dimensions=payload.dimensions,
+            delivery_address=payload.delivery_address,
+            contact=payload.contact,
             status=OrderStatus.draft,
         )
         db.add(order)
@@ -188,8 +217,15 @@ def create_order(db: Session, payload: OrderCreate, user: Optional[dict] = None)
     raise HTTPException(status_code=500, detail="Nie udało się wygenerować unikalnego numeru zlecenia")
 
 
-def list_orders(db: Session, status: Optional[str] = None, branch: Optional[str] = None) -> list[Order]:
-    query = db.query(Order)
+def list_orders(
+    db: Session,
+    status: Optional[str] = None,
+    branch: Optional[str] = None,
+    archived: bool = False,
+) -> list[Order]:
+    query = db.query(Order).filter(
+        Order.archived_at.isnot(None) if archived else Order.archived_at.is_(None)
+    )
     if status:
         query = query.filter(Order.status == status)
     if branch:
@@ -197,8 +233,38 @@ def list_orders(db: Session, status: Optional[str] = None, branch: Optional[str]
     return query.order_by(Order.created_at.desc()).all()
 
 
-def update_order(db: Session, order_id: int, payload: OrderUpdate) -> Order:
-    order = get_order_or_404(db, order_id)
+_FIELD_LABELS_PL = {
+    "client": "klient",
+    "deadline": "termin",
+    "material": "materiał",
+    "quantity": "ilość",
+    "description": "opis",
+    "weight_kg": "masa",
+    "notes": "uwagi",
+    "order_type": "typ zlecenia",
+    "sop_name": "usługa",
+    "purpose": "przeznaczenie",
+    "has_drawing": "rysunek",
+    "requires_visit": "wizyta",
+    "drawing_number": "nr rysunku",
+    "dimensions": "wymiary",
+    "delivery_address": "adres dostawy",
+    "contact": "kontakt",
+    "estimated_value": "szacunkowa wartość",
+    "order_number": "numer zlecenia",
+}
+
+# Fields that don't warrant a note entry (internal/system fields)
+_SKIP_EDIT_FIELDS = {"approved_material_id", "template_id", "is_defence"}
+
+
+def update_order(
+    db: Session,
+    order_id: int,
+    payload: OrderUpdate,
+    user: Optional[dict] = None,
+) -> Order:
+    order = get_mutable_order_or_404(db, order_id)
     update_data = payload.model_dump(exclude_unset=True)
     if "order_number" in update_data and update_data["order_number"] is not None:
         update_data["order_number"] = ensure_order_number_available(
@@ -209,20 +275,69 @@ def update_order(db: Session, order_id: int, payload: OrderUpdate) -> Order:
 
     for field, value in update_data.items():
         setattr(order, field, value)
-    db.commit()
+
+    meaningful_keys = [k for k in update_data if k not in _SKIP_EDIT_FIELDS]
+    if meaningful_keys:
+        labels = [_FIELD_LABELS_PL.get(k, k) for k in meaningful_keys]
+        _log_event(db, order, "edited", user=user, note=", ".join(labels))
+
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=409, detail="Numer zlecenia jest już używany")
     db.refresh(order)
     return order
 
 
-def archive_order(db: Session, order_id: int) -> None:
-    order = get_order_or_404(db, order_id)
+def delete_order(db: Session, order_id: int) -> None:
+    order = get_mutable_order_or_404(db, order_id)
+    if order.status != OrderStatus.draft:
+        raise HTTPException(status_code=409, detail="Usunąć można tylko pusty szkic zlecenia")
+    dependent_models = (
+        OrderOperation,
+        Quote,
+        OrderAttachment,
+        ParameterRequest,
+        MaterialRequest,
+        QualityCard,
+        StockMovement,
+        ComponentContainer,
+    )
+    if any(
+        db.query(model).filter(model.order_id == order.id).first()
+        for model in dependent_models
+    ):
+        raise HTTPException(status_code=409, detail="Szkic ma powiązane dane — zamiast usuwać, odrzuć go")
     delete_order_dependents(db, order)
     db.delete(order)
     db.commit()
 
 
-def confirm_order(db: Session, order_id: int, user: Optional[dict] = None) -> Order:
+def archive_order(db: Session, order_id: int, user: Optional[dict] = None) -> Order:
     order = get_order_or_404(db, order_id)
+    if order.status not in (OrderStatus.wydane, OrderStatus.rejected):
+        raise HTTPException(status_code=409, detail="Archiwizować można tylko zakończone lub odrzucone zlecenie")
+    if not order.archived_at:
+        order.archived_at = _now()
+        _log_event(db, order, "archived", user=user)
+        db.commit()
+        db.refresh(order)
+    return order
+
+
+def restore_order(db: Session, order_id: int, user: Optional[dict] = None) -> Order:
+    order = get_order_or_404(db, order_id)
+    if order.archived_at:
+        order.archived_at = None
+        _log_event(db, order, "restored", user=user)
+        db.commit()
+        db.refresh(order)
+    return order
+
+
+def confirm_order(db: Session, order_id: int, user: Optional[dict] = None) -> Order:
+    order = get_mutable_order_for_update(db, order_id)
     if order.status != OrderStatus.quoted:
         raise HTTPException(status_code=409, detail="Tylko zlecenia w statusie 'quoted' można zatwierdzić")
 
@@ -248,44 +363,51 @@ def confirm_order(db: Session, order_id: int, user: Optional[dict] = None) -> Or
     order.status = OrderStatus.in_production
     if not order.quoted_at:
         order.quoted_at = _now()
+    # Confirming now puts the order straight into production (the separate
+    # "start production" step was merged away), so record started_at here.
+    if not order.started_at:
+        order.started_at = _now()
     _log_event(db, order, "confirmed", old_status=old_status, new_status="in_production", user=user)
     db.commit()
     db.refresh(order)
     return order
 
 
-def start_order(db: Session, order_id: int, user: Optional[dict] = None) -> Order:
-    order = get_order_or_404(db, order_id)
-    if order.status != OrderStatus.in_production:
-        raise HTTPException(status_code=409, detail="Tylko zlecenia 'in_production' można rozpocząć")
-    old_status = order.status.value
-    order.status = OrderStatus.w_trakcie
-    order.started_at = _now()
-    _log_event(db, order, "started", old_status=old_status, new_status="w_trakcie", user=user)
-    db.commit()
-    db.refresh(order)
-    return order
+def _emit_material_rozchod(db: Session, order: Order) -> None:
+    """Automatyczny rozchód materiału przy zamknięciu produkcji (z katalogu)."""
+    if not order.approved_material_id:
+        return
+    if db.query(StockMovement).filter(
+        StockMovement.order_id == order.id,
+        StockMovement.material_id == order.approved_material_id,
+        StockMovement.doc_type == DocType.rozchod,
+    ).first():
+        return
+    quote = db.query(Quote).filter(Quote.order_id == order.id).first()
+    material_weight = float(
+        (quote.material_weight_kg or quote.weight_kg or 0) if quote else 0
+    )
+    if material_weight <= 0:
+        return
+    db.add(
+        StockMovement(
+            doc_type=DocType.rozchod,
+            order_id=order.id,
+            item_name=f"Automatyczny rozchod materialow dla zlecenia: {order.order_number}",
+            qty=material_weight,
+            unit="kg",
+            material_id=order.approved_material_id,
+        )
+    )
 
 
 def complete_order(db: Session, order_id: int, user: Optional[dict] = None) -> Order:
-    order = get_order_or_404(db, order_id)
-    if order.status != OrderStatus.w_trakcie:
-        raise HTTPException(status_code=409, detail="Tylko zlecenia 'w_trakcie' można oznaczyć jako gotowe")
+    """Legacy: in_production → gotowe. Nowy przepływ zamyka jednym krokiem (deliver)."""
+    order = get_mutable_order_for_update(db, order_id)
+    if order.status != OrderStatus.in_production:
+        raise HTTPException(status_code=409, detail="Tylko zlecenia 'in_production' można oznaczyć jako gotowe")
 
-    if order.approved_material_id and any(operation.catalog_id for operation in order.operations):
-        quote = db.query(Quote).filter(Quote.order_id == order.id).first()
-        material_weight = float(quote.material_weight_kg) if (quote and quote.material_weight_kg) else 1.0
-        db.add(
-            StockMovement(
-                doc_type=DocType.rozchod,
-                order_id=order.id,
-                item_name=f"Automatyczny rozchod materialow dla zlecenia: {order.order_number}",
-                qty=material_weight,
-                unit="kg",
-                material_id=order.approved_material_id,
-            )
-        )
-
+    _emit_material_rozchod(db, order)
     old_status = order.status.value
     order.status = OrderStatus.gotowe
     order.completed_at = _now()
@@ -296,10 +418,18 @@ def complete_order(db: Session, order_id: int, user: Optional[dict] = None) -> O
 
 
 def deliver_order(db: Session, order_id: int, user: Optional[dict] = None) -> Order:
-    order = get_order_or_404(db, order_id)
-    if order.status != OrderStatus.gotowe:
-        raise HTTPException(status_code=409, detail="Tylko zlecenia 'gotowe' można oznaczyć jako wydane")
+    """Zakończenie zlecenia → wydane. Jeden krok z produkcji (in_production) LUB
+    z legacy 'gotowe'. Z produkcji dodatkowo robi rozchód materiału i completed_at."""
+    order = get_mutable_order_for_update(db, order_id)
+    if order.status not in (OrderStatus.gotowe, OrderStatus.in_production):
+        raise HTTPException(status_code=409, detail="Tylko zlecenia 'gotowe' lub 'in_production' można zakończyć")
     old_status = order.status.value
+    if order.status == OrderStatus.in_production:
+        if not user or user.get("role") != "technolog":
+            raise HTTPException(status_code=403, detail="Zlecenie w produkcji może zakończyć tylko technolog")
+        _emit_material_rozchod(db, order)
+        if not order.completed_at:
+            order.completed_at = _now()
     order.status = OrderStatus.wydane
     order.delivered_at = _now()
     _log_event(db, order, "delivered", old_status=old_status, new_status="wydane", user=user)

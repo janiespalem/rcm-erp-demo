@@ -5,7 +5,8 @@ const emit = defineEmits(['logout'])
 </script>
 
 <template>
-  <header>
+  <header class="app-header">
+    <span class="header-mark" aria-hidden="true">FF</span>
     <span class="header-wordmark">FactoryFlow ERP Demo</span>
     <span class="header-divider" aria-hidden="true"></span>
     <span class="role-badge">{{ user?.name }}</span>
@@ -17,6 +18,17 @@ const emit = defineEmits(['logout'])
 </template>
 
 <style scoped>
+.header-mark {
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border-radius: 6px;
+  background: rgba(255,255,255,0.13);
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 850;
+}
 .header-wordmark {
   font-weight: 700;
   font-size: 0.95rem;

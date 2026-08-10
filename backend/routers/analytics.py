@@ -28,9 +28,9 @@ from utils import DEFAULT_LABOR_RATE_PLN
 
 router = APIRouter()
 
-_ALL     = require_role("biuro", "technolog", "ceo", "dyrektor_produkcji")
-_MGMT    = require_role("ceo", "dyrektor_produkcji")
-_TECH_UP = require_role("technolog", "ceo", "dyrektor_produkcji")
+_ALL     = require_role("biuro", "technolog", "ceo")
+_MGMT    = require_role("ceo", "technolog")
+_TECH_UP = require_role("technolog", "ceo")
 
 RENTOWNOSC_LIMIT    = 50
 BENCHMARK_MIN_SAMPLES = 3
@@ -39,7 +39,7 @@ SERVICE_HISTORY_MAX = 500
 
 @router.get("/api/production")
 def get_production_queue(db: Session = Depends(get_db), _: dict = _TECH_UP):
-    active_statuses = [OrderStatus.in_production, OrderStatus.w_trakcie, OrderStatus.gotowe]
+    active_statuses = [OrderStatus.in_production, OrderStatus.gotowe]
     orders_with_quotes = (
         db.query(Order, Quote)
         .outerjoin(Quote, Quote.order_id == Order.id)
@@ -74,7 +74,7 @@ def get_rentownosc(db: Session = Depends(get_db), _: dict = _MGMT):
 
     orders = (
         db.query(Order)
-        .filter(Order.status.in_([OrderStatus.in_production, OrderStatus.w_trakcie, OrderStatus.gotowe, OrderStatus.wydane]))
+        .filter(Order.status.in_([OrderStatus.in_production, OrderStatus.gotowe, OrderStatus.wydane]))
         .order_by(Order.created_at.desc())
         .limit(RENTOWNOSC_LIMIT)
         .all()
@@ -124,15 +124,14 @@ def get_analytics(db: Session = Depends(get_db), _: dict = _MGMT):
     standard     = db.query(func.count(Order.id)).filter(Order.triage_branch == "standard").scalar()
     niestandard  = db.query(func.count(Order.id)).filter(Order.triage_branch == "niestandard").scalar()
     in_prod      = db.query(func.count(Order.id)).filter(
-        Order.status.in_([OrderStatus.in_production, OrderStatus.w_trakcie, OrderStatus.gotowe])
+        Order.status.in_([OrderStatus.in_production, OrderStatus.gotowe])
     ).scalar()
-    done         = db.query(func.count(Order.id)).filter(Order.status.in_([OrderStatus.done, OrderStatus.wydane])).scalar()
+    done         = db.query(func.count(Order.id)).filter(Order.status == OrderStatus.wydane).scalar()
     avg_margin   = db.query(func.avg(Quote.margin_pct)).scalar()
 
     quote_by_order = {q.order_id: q for q in db.query(Quote).all()}
     production_statuses = [
-        OrderStatus.w_trakcie, OrderStatus.gotowe, OrderStatus.wydane,
-        OrderStatus.done, OrderStatus.in_production,
+        OrderStatus.gotowe, OrderStatus.wydane, OrderStatus.in_production,
     ]
     cutoff = datetime.combine(date.today() - timedelta(days=REVENUE_HISTORY_DAYS), datetime.min.time())
     monthly = defaultdict(lambda: {"orders": 0, "revenue": 0.0})
@@ -163,7 +162,7 @@ def get_analytics(db: Session = Depends(get_db), _: dict = _MGMT):
     today = date.today()
     overdue = (
         db.query(Order)
-        .filter(Order.deadline < today, Order.status.notin_([OrderStatus.done, OrderStatus.wydane, OrderStatus.rejected]))
+        .filter(Order.deadline < today, Order.status.notin_([OrderStatus.wydane, OrderStatus.rejected]))
         .order_by(Order.deadline.asc())
         .all()
     )
@@ -230,7 +229,7 @@ def export_xlsx(db: Session = Depends(get_db), _: dict = _MGMT):
 
     wb = Workbook()
     ws = wb.active
-    ws.title = "Zlecenia Demo"
+    ws.title = "Demo orders"
 
     headers     = ["Nr", "Klient", "Status", "Gałąź", "Termin", "Wartość netto (PLN)", "Utworzono"]
     header_font = Font(bold=True, color="FFFFFF")
@@ -260,7 +259,7 @@ def export_xlsx(db: Session = Depends(get_db), _: dict = _MGMT):
     return StreamingResponse(
         buf,
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        headers={"Content-Disposition": "attachment; filename=zlecenia_rcm.xlsx"},
+        headers={"Content-Disposition": "attachment; filename=demo_orders.xlsx"},
     )
 
 
@@ -268,7 +267,7 @@ def export_xlsx(db: Session = Depends(get_db), _: dict = _MGMT):
 def get_harmonogram(db: Session = Depends(get_db), _: dict = _TECH_UP):
     orders = (
         db.query(Order)
-        .filter(Order.status.notin_(["rejected", "done"]))
+        .filter(Order.status != OrderStatus.rejected)
         .order_by(Order.deadline.asc())
         .all()
     )
@@ -336,7 +335,7 @@ def get_price_per_kg_benchmark(
 @router.get("/api/service-history")
 def list_service_history(limit: int = 100, db: Session = Depends(get_db), _: dict = _ALL):
     query = db.query(PriceHistory)
-    preferred_source = "Kopia Lista zleceń usługi.xlsx"
+    preferred_source = "synthetic_service_history.json"
     if query.filter(PriceHistory.source == preferred_source).first():
         query = query.filter(PriceHistory.source == preferred_source)
 

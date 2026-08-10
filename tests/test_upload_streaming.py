@@ -44,9 +44,11 @@ async def test_save_upload_file_chunked_deletes_partial_file_on_limit(tmp_path, 
     monkeypatch.setattr(utils_module, "MAX_UPLOAD_BYTES", 4)
     upload = FakeUpload([b"a" * 3, b"b" * 2])
     dest = tmp_path / "upload.bin"
+    dest.write_bytes(b"previous")
 
     with pytest.raises(HTTPException) as exc_info:
         await save_upload_file_chunked(upload, dest)
 
     assert exc_info.value.status_code == 413
-    assert not dest.exists()
+    assert dest.read_bytes() == b"previous"
+    assert list(tmp_path.iterdir()) == [dest]

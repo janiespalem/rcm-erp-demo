@@ -14,8 +14,8 @@ from services import material_service
 
 router = APIRouter()
 
-_ALL = require_role("biuro", "technolog", "ceo", "dyrektor_produkcji")
-_DIR = require_role("dyrektor_produkcji")
+_ALL = require_role("biuro", "technolog", "ceo")
+_DIR = require_role("technolog")
 
 # Numeric constraints for known setting keys: (min_inclusive, max_inclusive)
 _NUMERIC_SETTINGS: dict = {

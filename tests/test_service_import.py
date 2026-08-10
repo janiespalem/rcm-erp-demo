@@ -53,7 +53,7 @@ def test_build_service_import_records_maps_excel_to_existing_catalog_shape(tmp_p
     worksheet.append([
         "1.",
         "24/03/2026 - 06/26",
-        "DBK",
+        "Example Client",
         None,
         None,
         None,

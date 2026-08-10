@@ -24,7 +24,7 @@ def make_test_db() -> Session:
 
 def make_order(db: Session) -> Order:
     order = Order(
-        client="DemoCo Test",
+        client="Demo Client",
         deadline=date(2026, 6, 30),
         material="S235",
         order_type="remont",
@@ -89,6 +89,41 @@ def test_materials_override_legacy_single_fields():
         labor_rate=90.0,
     )
     assert result.material_total == pytest.approx(100.0)
+
+
+def test_kalkulacja_does_not_stack_weight_component():
+    """In kalkulacja, weight pricing is ignored to avoid double counting."""
+    result = calc_structured_quote(
+        processes=[],
+        materials=[MaterialLine(name="S235", qty_kg=10.0, price_per_kg=10.0)],
+        weight_kg=120.0,
+        weight_rate_pln_kg=8.0,
+        overhead_pct=0.0,
+        margin_pct=0.0,
+        labor_rate=90.0,
+    )
+    assert result.weight_total == pytest.approx(0.0)
+    assert result.base == pytest.approx(100.0)
+
+
+def test_od_masy_replaces_materials_and_operations():
+    """od_masy is an alternative all-in method, not an additive component."""
+    result = calc_structured_quote(
+        method="od_masy",
+        processes=[ProcessItem(name="Cięcie", hours=2.0, rate_per_hour=90.0)],
+        materials=[MaterialLine(name="S235", qty_kg=10.0, price_per_kg=10.0)],
+        weight_kg=120.0,
+        weight_rate_pln_kg=8.0,
+        overhead_pct=0.50,
+        margin_pct=0.50,
+        transport_cost=40.0,
+        labor_rate=90.0,
+    )
+    assert result.ops_total == pytest.approx(180.0)
+    assert result.material_total == pytest.approx(100.0)
+    assert result.weight_total == pytest.approx(960.0)
+    assert result.base == pytest.approx(960.0)
+    assert result.total_net == pytest.approx(1000.0)
 
 
 # ─── Section B: structured router persistence/round-trip ─────────────────────

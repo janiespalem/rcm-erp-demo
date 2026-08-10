@@ -17,6 +17,7 @@ from utils import DEFAULT_LABOR_RATE_PLN
 logger = logging.getLogger(__name__)
 
 MAX_EXTRACT_PAGES = 20
+DRAWING_NO_PATTERN = r"[A-Z]{2,8}-\d{5}-\d{3}"
 
 PROFILE_PATTERNS = [
     re.compile(r"\b(?:RHS|SHS|CHS)\s+[0-9]+(?:[,.][0-9]+)?x[0-9]+(?:[,.][0-9]+)?x[0-9]+(?:[,.][0-9]+)?\b", re.IGNORECASE),
@@ -60,7 +61,7 @@ def _extract_title_value(lines: list[str], title: str) -> str | None:
 
 
 def _drawing_no_from_filename(pdf_path: Path) -> str | None:
-    match = re.search(r"\bPK1-\d{5}-\d{3}\b", pdf_path.stem, re.IGNORECASE)
+    match = re.search(rf"\b{DRAWING_NO_PATTERN}\b", pdf_path.stem, re.IGNORECASE)
     return match.group(0).upper() if match else None
 
 
@@ -108,7 +109,7 @@ def _parse_bom_lines(lines: list[str]) -> list[dict[str, Any]]:
         if not match:
             continue
         body = _clean(match.group("body"))
-        part_match = re.match(r"(?P<part_no>PK1-\d{5}-\d{3})\s+(?P<desc>.+)", body)
+        part_match = re.match(rf"(?P<part_no>{DRAWING_NO_PATTERN})\s+(?P<desc>.+)", body)
         part_no = part_match.group("part_no") if part_match else None
         desc = _clean(part_match.group("desc") if part_match else body)
         rows.append({
@@ -187,7 +188,7 @@ def extract_drawing_pdf(path: str | Path, max_pages: int = MAX_EXTRACT_PAGES, de
 
     drawing_no = None
     for line in all_lines:
-        if re.fullmatch(r"PK1-\d{5}-\d{3}", line):
+        if re.fullmatch(DRAWING_NO_PATTERN, line):
             drawing_no = line
             break
     if not drawing_no:

@@ -1,9 +1,4 @@
-"""
-Import usług z historycznego arkusza Excel.
-
-Źródło zostaje mapowane na istniejące ProductTemplate + PriceHistory, bez
-tworzenia osobnego obiegu poza Biuro.
-"""
+"""Import generic service rows from an operator-supplied spreadsheet."""
 from __future__ import annotations
 
 import re
@@ -136,7 +131,7 @@ def build_service_import_records(path: str | Path) -> list[ServiceImportRecord]:
             })
 
         notes_parts = [
-            f"Źródło: Lista zleceń usługi, wiersz {row_index}",
+            f"Źródło: arkusz demonstracyjny, wiersz {row_index}",
             f"Numer zlecenia: {order_number}" if order_number else "",
             f"Klient: {client}" if client else "",
             f"Status: {status}" if status else "",

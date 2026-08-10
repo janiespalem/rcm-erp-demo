@@ -40,11 +40,11 @@ async function remove(op) {
 
 <template>
   <div>
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-      <h2 style="font-size:1rem;font-weight:700;color:var(--rcm-blue)">Operacje, wydziały i stawki</h2>
-      <button class="btn btn-outline btn-sm" @click="load()">🔄 Odśwież</button>
+    <div class="tab-toolbar">
+      <span></span>
+      <button class="btn btn-outline btn-sm" @click="load()">Odśwież</button>
     </div>
-    <div class="card" style="margin-bottom:14px">
+    <div class="card">
       <div style="font-weight:700;margin-bottom:10px;color:var(--rcm-blue)">Dodaj operację</div>
       <div class="manager-form-grid">
         <div class="form-group"><label>Nazwa operacji</label><input v-model="draft.name" placeholder="np. Cięcie plazmą"></div>
@@ -52,25 +52,24 @@ async function remove(op) {
         <div class="form-group"><label>PLN/h</label><input type="number" v-model.number="draft.default_rate" min="0" step="5"></div>
         <button class="btn btn-primary" @click="save()">Dodaj</button>
       </div>
-    </div>
-    <div class="card">
+      <div class="section-sep"></div>
       <div v-if="!operationCatalog.length" style="padding:18px;color:var(--muted);text-align:center">Brak operacji</div>
       <div v-else class="manager-table-wrap">
-        <table class="manager-table" style="width:100%;border-collapse:collapse;font-size:0.84rem">
+        <table class="manager-table">
           <thead>
-            <tr style="background:var(--surface2);text-align:left">
-              <th style="padding:8px 10px">Operacja</th>
-              <th style="padding:8px 10px">Wydział</th>
-              <th style="padding:8px 10px;width:110px">PLN/h</th>
-              <th style="padding:8px 10px;width:120px;text-align:right">Akcje</th>
+            <tr>
+              <th>Operacja</th>
+              <th>Wydział</th>
+              <th class="num" style="width:110px">PLN/h</th>
+              <th class="num" style="width:120px">Akcje</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="op in operationCatalog" :key="op.id" style="border-bottom:1px solid var(--surface2)">
-              <td style="padding:7px 10px"><input v-model="op.name" style="font-size:0.82rem"></td>
-              <td style="padding:7px 10px"><input v-model="op.department" style="font-size:0.82rem"></td>
-              <td style="padding:7px 10px"><input type="number" v-model.number="op.default_rate" min="0" step="5" style="font-size:0.82rem"></td>
-              <td style="padding:7px 10px;text-align:right;white-space:nowrap">
+            <tr v-for="op in operationCatalog" :key="op.id">
+              <td><input v-model="op.name"></td>
+              <td><input v-model="op.department"></td>
+              <td class="num"><input type="number" v-model.number="op.default_rate" min="0" step="5"></td>
+              <td class="num" style="white-space:nowrap">
                 <button class="btn btn-outline btn-sm" @click="save(op)">Zapisz</button>
                 <button class="btn btn-outline btn-sm" style="color:var(--rcm-red)" @click="remove(op)">Usuń</button>
               </td>

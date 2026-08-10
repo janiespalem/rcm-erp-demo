@@ -2,16 +2,38 @@
 Focused tests for PATCH /api/settings/{key} validation.
 Direct router function calls — no TestClient.
 """
+import os
+import sys
+
 import pytest
 
-from fastapi import HTTPException
+os.environ.setdefault("APP_ENV", "test")
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "backend"))
 
-from models import Setting
+from fastapi import HTTPException
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session
+from sqlalchemy.pool import StaticPool
+
+from models import Base, Setting
 from schemas import SettingUpdate
 from routers.settings import update_setting, _validate_setting
-from tests.helpers import TEST_USERS, make_test_db
 
-_MOCK_USER = TEST_USERS["director"]
+_MOCK_USER = {"id": "1", "role": "technolog", "name": "Dyrektor"}
+
+
+def _make_db(seed: dict | None = None) -> Session:
+    engine = create_engine(
+        "sqlite:///:memory:",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    Base.metadata.create_all(engine)
+    db = Session(engine)
+    for k, v in (seed or {}).items():
+        db.add(Setting(key=k, value=v))
+    db.commit()
+    return db
 
 
 # ─── _validate_setting unit tests ─────────────────────────────────────────────
@@ -65,7 +87,7 @@ def test_validate_min_order_value_zero_ok():
 # ─── Router integration tests ─────────────────────────────────────────────────
 
 def test_update_setting_valid_labor_rate():
-    db = make_test_db({"labor_rate_pln": "80.0"})
+    db = _make_db({"labor_rate_pln": "80.0"})
     try:
         result = update_setting("labor_rate_pln", SettingUpdate(value="95.0"), db=db, _=_MOCK_USER)
         assert result["value"] == "95.0"
@@ -76,7 +98,7 @@ def test_update_setting_valid_labor_rate():
 
 
 def test_update_setting_invalid_labor_rate_returns_422():
-    db = make_test_db({"labor_rate_pln": "80.0"})
+    db = _make_db({"labor_rate_pln": "80.0"})
     try:
         with pytest.raises(HTTPException) as exc:
             update_setting("labor_rate_pln", SettingUpdate(value="abc"), db=db, _=_MOCK_USER)
@@ -88,7 +110,7 @@ def test_update_setting_invalid_labor_rate_returns_422():
 
 
 def test_update_setting_negative_margin_returns_422():
-    db = make_test_db({"default_margin_pct": "0.20"})
+    db = _make_db({"default_margin_pct": "0.20"})
     try:
         with pytest.raises(HTTPException) as exc:
             update_setting("default_margin_pct", SettingUpdate(value="-0.5"), db=db, _=_MOCK_USER)
@@ -98,7 +120,7 @@ def test_update_setting_negative_margin_returns_422():
 
 
 def test_update_setting_unknown_key_404():
-    db = make_test_db()
+    db = _make_db()
     try:
         with pytest.raises(HTTPException) as exc:
             update_setting("nonexistent", SettingUpdate(value="123"), db=db, _=_MOCK_USER)

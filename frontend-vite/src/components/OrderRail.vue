@@ -4,8 +4,8 @@ import { api, openPdf } from '@/composables/useApi'
 import { useAuth } from '@/composables/useAuth'
 import { useToast } from '@/composables/useToast'
 import { useConfirm } from '@/composables/useConfirm'
+import { useNotifications } from '@/composables/useNotifications'
 import { STATUS_PL } from '@/utils/format'
-import { stageForStatus } from '@/utils/orderWorkflow'
 
 const props = defineProps({
   order: Object,
@@ -14,6 +14,7 @@ const props = defineProps({
 const { currentUser } = useAuth()
 const { show } = useToast()
 const { confirm } = useConfirm()
+const { loadPytania } = useNotifications()
 
 const order = computed(() => props.order || {})
 const role = computed(() => currentUser.value?.role)
@@ -22,9 +23,12 @@ const attachments = ref([])
 const params = ref([])
 const uploading = ref(false)
 const questionDraft = ref('')
+const answerDrafts = ref({})
 const railTab = ref('dokumenty')
 
-const API_BASE = `${location.origin}/api`
+// Biuro answers technolog questions right here, not only in the Pytania tab
+const canAnswer = computed(() => ['biuro', 'technolog'].includes(role.value))
+
 const MAX_UPLOAD_BYTES = 100 * 1024 * 1024
 
 const PARAM_QUESTIONS = [
@@ -43,9 +47,36 @@ const EVENT_LABELS = {
   started: 'Produkcja rozpoczęta',
   completed: 'Produkcja zakończona',
   delivered: 'Wydano klientowi',
+  edited: 'Edytowano',
+  quote_saved: 'Zapisano wycenę',
+  file_added: 'Dodano plik',
+  file_removed: 'Usunięto plik',
+  question_asked: 'Zadano pytanie',
+  question_answered: 'Odpowiedziano',
 }
 
 const pendingParams = computed(() => params.value.filter(p => p.status !== 'answered').length)
+
+function statusLabel(status) {
+  return STATUS_PL[status] || status
+}
+
+// Coarse user-facing labels can collapse distinct backend statuses (draft→triage
+// is just "Nowe"→"Nowe"); skip the transition line when it says nothing.
+function eventTransition(event) {
+  const from = event.old_status ? statusLabel(event.old_status) : ''
+  const to = event.new_status ? statusLabel(event.new_status) : ''
+  if (!from && !to) return ''
+  if (from && to) return from === to ? '' : `${from} → ${to}`
+  return from || to
+}
+
+function fmtActor(event) {
+  if (event.user_name && event.user_role) return `${event.user_role} ${event.user_name}`
+  if (event.user_name) return event.user_name
+  if (event.user_role) return event.user_role
+  return ''
+}
 
 function fmtDateTime(iso) {
   if (!iso) return ''
@@ -54,10 +85,10 @@ function fmtDateTime(iso) {
     + ' ' + d.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' })
 }
 
-// Open the rail to the section most relevant to the current stage: drawings/files
-// while the order is still new, documents (oferta/arkusz) once it is moving.
+// Default to Pytania when there are unanswered questions so the action item
+// is immediately visible; otherwise default to Dokumenty (oferta/arkusz).
 function defaultRailTab() {
-  return stageForStatus(order.value.status) === 'nowe' ? 'pliki' : 'dokumenty'
+  return pendingParams.value > 0 ? 'pytania' : 'dokumenty'
 }
 
 async function loadEvents() {
@@ -118,14 +149,7 @@ async function uploadAttachment(event) {
   try {
     const fd = new FormData()
     fd.append('file', file)
-    const stored = localStorage.getItem('rcm_user')
-    const token = stored ? JSON.parse(stored).token : null
-    const headers = token ? { Authorization: `Bearer ${token}` } : {}
-    const res = await fetch(`${API_BASE}/orders/${order.value.id}/attachments`, { method: 'POST', body: fd, headers })
-    if (!res.ok) {
-      show('Błąd uploadu pliku')
-      return
-    }
+    await api(`/orders/${order.value.id}/attachments`, { method: 'POST', body: fd })
     await loadAttachments()
   } finally {
     uploading.value = false
@@ -143,6 +167,16 @@ async function openAttachment(att) {
   await openPdf(`/attachments/${att.id}/download`)
 }
 
+async function submitAnswer(param) {
+  const text = (answerDrafts.value[param.id] || '').trim()
+  if (!text) return
+  await api(`/params/${param.id}/answer`, { method: 'PATCH', body: { answer_text: text } })
+  answerDrafts.value[param.id] = ''
+  await loadParams()
+  if (role.value === 'biuro') loadPytania().catch(() => {})
+  show('Odpowiedź wysłana do Technologa')
+}
+
 async function submitQuestion() {
   const question = questionDraft.value.trim()
   if (!question) return
@@ -155,15 +189,23 @@ async function submitQuestion() {
   show('Pytanie wysłane do Biuro')
 }
 
+// An unanswered question is biuro's real next step on this order — surface it.
+function focusPendingQuestions() {
+  if (canAnswer.value && pendingParams.value > 0) railTab.value = 'pytania'
+}
+
 watch(() => props.order?.id, async () => {
   railTab.value = defaultRailTab()
   questionDraft.value = ''
+  answerDrafts.value = {}
   await loadRailData()
+  focusPendingQuestions()
 })
 
 onMounted(async () => {
   railTab.value = defaultRailTab()
   await loadRailData()
+  focusPendingQuestions()
 })
 
 defineExpose({ reload })
@@ -183,7 +225,7 @@ defineExpose({ reload })
     </nav>
 
     <section v-if="railTab === 'dokumenty'" class="rail-panel">
-      <button type="button" @click="openPdf('/orders/' + order.id + '/oferta')">Oferta dla klienta</button>
+      <button v-if="!order.is_internal" type="button" @click="openPdf('/orders/' + order.id + '/oferta')">Oferta dla klienta</button>
       <button type="button" @click="openPdf('/orders/' + order.id + '/pdf')">Arkusz produkcyjny</button>
       <button type="button" @click="openPdf('/orders/' + order.id + '/pdf/split')">Arkusze operacji ZIP</button>
     </section>
@@ -225,11 +267,25 @@ defineExpose({ reload })
           </div>
           <strong>{{ param.question_text }}</strong>
           <p v-if="param.answer_text">{{ param.answer_text }}</p>
+          <div v-else-if="canAnswer" class="answer-box">
+            <input
+              v-model="answerDrafts[param.id]"
+              placeholder="Wpisz odpowiedź dla Technologa..."
+              @keyup.enter="submitAnswer(param)"
+            >
+            <button
+              type="button"
+              :disabled="!(answerDrafts[param.id] || '').trim()"
+              @click="submitAnswer(param)"
+            >
+              Wyślij
+            </button>
+          </div>
           <p v-else>Biuro jeszcze nie odpowiedziało.</p>
         </div>
       </div>
       <p v-else class="empty-rail">Brak pytań</p>
-      <div v-if="['technolog', 'dyrektor_produkcji'].includes(role)" class="question-box">
+      <div v-if="role === 'technolog'" class="question-box">
         <div class="question-presets">
           <button
             v-for="question in PARAM_QUESTIONS"
@@ -251,12 +307,8 @@ defineExpose({ reload })
           <span class="event-dot"></span>
           <div>
             <strong>{{ EVENT_LABELS[event.event_type] || event.event_type }}</strong>
-            <p v-if="event.old_status || event.new_status">
-              <span v-if="event.old_status">{{ STATUS_PL[event.old_status] || event.old_status }}</span>
-              <span v-if="event.old_status && event.new_status"> → </span>
-              <span v-if="event.new_status">{{ STATUS_PL[event.new_status] || event.new_status }}</span>
-            </p>
-            <small>{{ [event.user_name, event.note, fmtDateTime(event.created_at)].filter(Boolean).join(' · ') }}</small>
+            <p v-if="eventTransition(event)">{{ eventTransition(event) }}</p>
+            <small>{{ [fmtActor(event), event.note, fmtDateTime(event.created_at)].filter(Boolean).join(' · ') }}</small>
           </div>
         </div>
       </div>
@@ -274,37 +326,37 @@ defineExpose({ reload })
 
 .rail-tabs {
   display: flex;
-  gap: 4px;
+  gap: 3px;
   border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--sl-50);
-  padding: 4px;
+  border-radius: 7px;
+  background: var(--sl-100);
+  padding: 3px;
 }
 
 .rail-tabs button {
   flex: 1;
   border: none;
-  border-radius: 6px;
+  border-radius: 5px;
   background: transparent;
   color: var(--muted);
-  padding: 7px 6px;
+  padding: 5px 4px;
   cursor: pointer;
-  font-size: 0.78rem;
-  font-weight: 800;
+  font-size: 0.75rem;
+  font-weight: 700;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 5px;
+  gap: 4px;
 }
 
 .rail-tabs button:hover {
-  color: var(--sl-800);
+  color: var(--sl-700);
 }
 
 .rail-tabs button.active {
   background: #fff;
   color: var(--rcm-blue);
-  box-shadow: var(--sh-sm);
+  box-shadow: var(--sh-xs);
 }
 
 .rail-count {
@@ -324,24 +376,25 @@ defineExpose({ reload })
 
 .rail-panel {
   border: 1px solid var(--border);
-  border-radius: 8px;
-  background: #fff;
-  padding: 15px;
+  border-radius: 7px;
+  background: var(--sl-50);
+  padding: 11px;
   display: grid;
-  gap: 8px;
+  gap: 7px;
 }
+
 
 .rail-panel > button,
 .question-box > button {
   width: 100%;
   border: 1px solid var(--border);
   border-radius: 7px;
-  background: var(--sl-50);
+  background: #fff;
   color: var(--sl-800);
-  padding: 9px 10px;
+  padding: 8px 10px;
   text-align: left;
   cursor: pointer;
-  font-weight: 750;
+  font-weight: 700;
 }
 
 .rail-panel > button:hover,
@@ -359,8 +412,8 @@ defineExpose({ reload })
 .file-row {
   border: 1px solid var(--border-soft);
   border-radius: 7px;
-  background: var(--sl-50);
-  padding: 8px;
+  background: #fff;
+  padding: 7px 8px;
   display: grid;
   gap: 3px;
 }
@@ -392,7 +445,7 @@ defineExpose({ reload })
 .upload-control {
   border: 1px dashed var(--border);
   border-radius: 7px;
-  background: var(--sl-50);
+  background: #fff;
   color: var(--sl-700);
   padding: 10px;
   cursor: pointer;
@@ -408,8 +461,8 @@ defineExpose({ reload })
 .param-row {
   border-left: 3px solid var(--rcm-warn);
   border-radius: 0 7px 7px 0;
-  background: var(--sl-50);
-  padding: 8px 10px;
+  background: #fff;
+  padding: 7px 10px;
   display: grid;
   gap: 4px;
 }
@@ -447,6 +500,40 @@ defineExpose({ reload })
 .question-box {
   display: grid;
   gap: 8px;
+}
+
+.answer-box {
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.answer-box input {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: #fff;
+  color: var(--text);
+  padding: 7px 9px;
+  font: inherit;
+  font-size: 0.8rem;
+}
+
+.answer-box button {
+  border: 1px solid var(--rcm-blue);
+  border-radius: 7px;
+  background: var(--rcm-blue);
+  color: #fff;
+  padding: 7px 11px;
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.answer-box button:disabled {
+  opacity: 0.5;
+  cursor: default;
 }
 
 .question-presets {

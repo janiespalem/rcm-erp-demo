@@ -3,7 +3,7 @@ import { onMounted, computed } from 'vue'
 import { useNotifications } from '@/composables/useNotifications'
 import { useOrders } from '@/composables/useOrders'
 
-const { pytania, answerDraft, loadPytania, submitAnswer } = useNotifications()
+const { pytania, answerDraft, submittingAnswers, loadPytania, submitAnswer } = useNotifications()
 const { orders } = useOrders()
 
 onMounted(loadPytania)
@@ -35,7 +35,7 @@ function isUrgent(order) {
           </span>
         </template>
         <span v-if="p.status==='pending' && isUrgent(orderFor(p.order_id))" class="badge-pilne">PILNE</span>
-        <span :class="p.status === 'pending' ? 'param-badge' : 'badge badge-done'" style="margin-left:auto">
+        <span :class="p.status === 'pending' ? 'param-badge' : 'badge badge-answered'" style="margin-left:auto">
           {{ p.status === 'pending' ? '⏳ Czeka na odpowiedź' : '✓ Odpowiedziano' }}
         </span>
       </div>
@@ -49,7 +49,11 @@ function isUrgent(order) {
       <div v-if="p.status === 'pending'" class="pytanie-reply">
         <input v-model="answerDraft[p.id]" placeholder="Wpisz odpowiedź..."
                @keyup.enter="submitAnswer(p.id)">
-        <button class="btn btn-success btn-sm" @click="submitAnswer(p.id)" :disabled="!answerDraft[p.id]">
+        <button
+          class="btn btn-success btn-sm"
+          @click="submitAnswer(p.id)"
+          :disabled="!answerDraft[p.id]?.trim() || submittingAnswers.has(p.id)"
+        >
           Wyślij
         </button>
       </div>

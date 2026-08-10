@@ -1,25 +1,23 @@
-"""
-FactoryFlow ERP Demo — FastAPI Backend
-Uruchomienie: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
-"""
+"""FactoryFlow ERP public demo backend."""
 import logging
 import os
 import pathlib
 import time
 from collections import defaultdict, deque
 from contextlib import asynccontextmanager
+from typing import Literal
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from auth import login as auth_login
+from auth import authenticate_user
 from database import get_db, BACKEND_DIR
-from models import ApprovedMaterial
 from routers import orders, catalog
 from routers.quotes import router as quotes_router
 from routers.order_resources import router as order_resources_router
@@ -27,36 +25,13 @@ from routers.templates import router as templates_router
 from routers.analytics import router as analytics_router
 from routers.settings import router as settings_router
 from routers.documents import router as documents_router
-from service_seed import seed_service_history_from_builtin
-
-
-def _ensure_zbrojenie_materials(db: Session) -> None:
-    if db.query(ApprovedMaterial).count() == 0:
-        return
-    defaults = [
-        ("S355JR zbrojeniowy Ø12/Ø6", "zbrojenie", 4.50, "Łuk LEGO: pręty Ø12 i Ø6"),
-        ("Pręt żebrowany B500SP Ø6",  "zbrojenie", 4.50, "Typowy pręt zbrojeniowy"),
-        ("Pręt żebrowany B500SP Ø8",  "zbrojenie", 4.50, "Typowy pręt zbrojeniowy"),
-        ("Pręt żebrowany B500SP Ø10", "zbrojenie", 4.50, "Typowy pręt zbrojeniowy"),
-        ("Pręt żebrowany B500SP Ø12", "zbrojenie", 4.50, "Typowy pręt zbrojeniowy"),
-        ("Drut wiązałkowy",           "zbrojenie", 6.00, "Materiał pomocniczy do montażu"),
-    ]
-    existing = {name for (name,) in db.query(ApprovedMaterial.name).all()}
-    rows = [
-        ApprovedMaterial(name=name, category=category, default_rate_pln_kg=rate, notes=notes)
-        for name, category, rate, notes in defaults
-        if name not in existing
-    ]
-    if rows:
-        db.add_all(rows)
-        db.commit()
+from seed import seed_demo_data
 
 
 # ─── App ──────────────────────────────────────────────────────────────────────
 
 def _run_startup_tasks(db: Session) -> None:
-    seed_service_history_from_builtin(db)
-    _ensure_zbrojenie_materials(db)
+    seed_demo_data(db)
 
 
 def _startup_seed_disabled() -> bool:
@@ -73,7 +48,7 @@ async def lifespan(app: FastAPI):
     if _startup_seed_disabled():
         logger.info("Startup: seed skipped")
     else:
-        logger.info("Startup: seeding users and service history")
+        logger.info("Startup: seeding synthetic demo data")
         db_provider = app.dependency_overrides.get(get_db, get_db)
         db_gen      = db_provider()
         db          = next(db_gen)
@@ -82,12 +57,16 @@ async def lifespan(app: FastAPI):
         finally:
             db_gen.close()
         logger.info("Startup complete.")
+    # Rozgrzej WeasyPrint w tle — pierwszy arkusz nie płaci importu/fontów (~10s).
+    import threading
+    import pdf_gen
+    threading.Thread(target=pdf_gen.warmup, daemon=True).start()
     yield
 
 
 app = FastAPI(
     title="FactoryFlow ERP Demo",
-    description="System CPQ/ERP dla Demo Manufacturing Sp. z o.o. — Demo City",
+    description="Sanitized CPQ/ERP portfolio demo for a manufacturing workflow",
     version="0.1.0",
     lifespan=lifespan,
 )
@@ -100,10 +79,6 @@ app.include_router(templates_router)
 app.include_router(analytics_router)
 app.include_router(settings_router)
 app.include_router(documents_router)
-
-# ─── Static mounts ────────────────────────────────────────────────────────────
-
-app.mount("/static", StaticFiles(directory=str(BACKEND_DIR / "static")), name="static")
 
 _VITE_DIST   = BACKEND_DIR.parent / "frontend-vite" / "dist"
 _VITE_ASSETS = _VITE_DIST / "assets"
@@ -195,19 +170,26 @@ def icons_svg():
 
 
 @app.get("/api/health")
-def health():
+def health(db: Session = Depends(get_db)):
+    db.execute(text("SELECT 1"))
     return {"status": "ok", "system": "FactoryFlow ERP Demo"}
 
 
+@app.get("/api/ping")
+def ping():
+    # ponytail: keepalive must wake the web service, not wait on DB cold start.
+    return {"status": "ok"}
+
+
 class LoginRequest(BaseModel):
-    role: str
+    role: Literal["biuro", "technolog", "ceo"]
     pin: str
 
 
 @app.post("/api/auth/login")
-def api_login(payload: LoginRequest, request: Request):
+def api_login(payload: LoginRequest, request: Request, db: Session = Depends(get_db)):
     _check_login_rate_limit(request, payload.role)
-    result = auth_login(payload.role, payload.pin)
+    result = authenticate_user(db, payload.role, payload.pin)
     if not result:
         raise HTTPException(status_code=401, detail="Nieprawidłowy PIN lub rola")
     return result
@@ -219,8 +201,3 @@ def serve_frontend():
     if vite_index.exists():
         return _no_store_file(vite_index)
     raise HTTPException(status_code=500, detail="Frontend build not found — run: cd frontend-vite && npm run build")
-
-
-@app.get("/kalkulator-lego", response_class=FileResponse)
-def serve_kalkulator_lego():
-    return FileResponse(str(BACKEND_DIR.parent / "frontend" / "masonry-kalk.html"))

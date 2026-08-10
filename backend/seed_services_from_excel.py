@@ -2,10 +2,10 @@
 Dry-run/import historycznych usług z Excela do katalogu usług.
 
 Domyślnie tylko pokazuje wynik:
-    python backend/seed_services_from_excel.py "/path/Lista.xlsx"
+    python backend/seed_services_from_excel.py "/path/demo-services.xlsx"
 
 Zapis do bazy dopiero z flagą:
-    python backend/seed_services_from_excel.py "/path/Lista.xlsx" --apply
+    python backend/seed_services_from_excel.py "/path/demo-services.xlsx" --apply
 """
 from __future__ import annotations
 
