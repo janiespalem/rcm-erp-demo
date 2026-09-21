@@ -3,10 +3,11 @@ SQLAlchemy models — Single Source of Truth dla schematu bazy.
 Używamy SQLite dla MVP. Wszystkie JSONB → JSON w SQLite.
 """
 import enum
+from datetime import datetime, timezone
 
 from sqlalchemy import (
     Column, Integer, String, Text, Boolean, Numeric,
-    DateTime, Date, Enum, ForeignKey, JSON,
+    DateTime, Date, Enum, ForeignKey, JSON, CheckConstraint, UniqueConstraint, Index, text,
 )
 from sqlalchemy.orm import DeclarativeBase, relationship
 
@@ -31,6 +32,7 @@ class TriageBranch(str, enum.Enum):
     niestandard = "niestandard"
 
 class UserRole(str, enum.Enum):
+    produkcja    = "produkcja"
     biuro        = "biuro"
     technolog    = "technolog"
     dyrektor     = "dyrektor"   # legacy — zachowane dla istniejących rekordów
@@ -69,6 +71,50 @@ class User(Base):
     role     = Column(Enum(UserRole), nullable=False)
     pin      = Column(String(10))   # legacy plaintext; cleared by migration
     pin_hash = Column(String(128))  # null means login disabled
+    default_shift = Column(String(2))
+
+
+class ShiftReport(Base):
+    __tablename__ = "shift_reports"
+    __table_args__ = (
+        Index("uq_shift_report_active_date_shift", "report_date", "shift", unique=True,
+              postgresql_where=text("deleted_at IS NULL"), sqlite_where=text("deleted_at IS NULL")),
+        CheckConstraint("shift IN ('I', 'II')", name="ck_shift_report_shift"),
+        CheckConstraint("status IN ('draft', 'finalized', 'corrected')", name="ck_shift_report_status"),
+        CheckConstraint("version_id > 0", name="ck_shift_report_version"),
+        CheckConstraint("(status = 'draft' AND finalized_at IS NULL) OR (status <> 'draft' AND finalized_at IS NOT NULL)", name="ck_shift_report_finalized"),
+    )
+    id = Column(Integer, primary_key=True)
+    report_date = Column(Date, nullable=False)
+    shift = Column(String(2), nullable=False)
+    author_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    author_name = Column(String(100), nullable=False)
+    status = Column(String(12), nullable=False, default="draft")
+    version_id = Column(Integer, nullable=False, default=1)
+    __mapper_args__ = {"version_id_col": version_id}
+    # Fixed, validated ShiftFields document; never a generic quality card.
+    schema_version = Column(Integer, nullable=False, default=1, server_default="1")
+    fields = Column(JSON, nullable=False)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
+    finalized_at = Column(DateTime(timezone=True))
+    finalized_by_id = Column(Integer, ForeignKey("users.id"))
+    finalized_by_name = Column(String(100))
+    correction_count = Column(Integer, nullable=False, default=0)
+    deleted_at = Column(DateTime(timezone=True))
+
+
+class ShiftReportAudit(Base):
+    __tablename__ = "shift_report_audit"
+    id = Column(Integer, primary_key=True)
+    report_id = Column(Integer, ForeignKey("shift_reports.id", ondelete="CASCADE"), nullable=False, index=True)
+    actor_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    actor_name = Column(String(100), nullable=False)
+    action = Column(String(20), nullable=False)
+    reason = Column(Text)
+    before = Column(JSON)
+    after = Column(JSON, nullable=False)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
 
 
 # =============================================================================
@@ -77,6 +123,9 @@ class User(Base):
 # =============================================================================
 class Order(Base):
     __tablename__ = "orders"
+
+    version_id = Column(Integer, nullable=False, default=1, server_default="1")
+    __mapper_args__ = {"version_id_col": version_id}
 
     id            = Column(Integer, primary_key=True)
     order_number  = Column(String(20), unique=True)   # np. "22/2026"

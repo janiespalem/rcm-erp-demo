@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "test:lego": "node --test src/utils/legoCalculator.test.js",
+    "test:tetrapod": "node --test src/utils/tetrapodCalculator.test.js",
     "preview": "vite preview"
   },
   "dependencies": {

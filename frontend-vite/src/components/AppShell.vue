@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, defineAsyncComponent } from 'vue'
+import { ref, onMounted, defineAsyncComponent, provide } from 'vue'
 import HeaderBar          from './HeaderBar.vue'
 import TabNav             from './TabNav.vue'
 import ToastNotifications from './ToastNotifications.vue'
@@ -24,6 +24,8 @@ const OperationsTab   = defineAsyncComponent(() => import('./tabs/OperationsTab.
 const MaterialsTab    = defineAsyncComponent(() => import('./tabs/MaterialsTab.vue'))
 const ProjectsTab     = defineAsyncComponent(() => import('./tabs/ProjectsTab.vue'))
 const RentownoscTab   = defineAsyncComponent(() => import('./tabs/RentownoscTab.vue'))
+const CalculatorsTab  = defineAsyncComponent(() => import('./tabs/CalculatorsTab.vue'))
+const ShiftReportsTab = defineAsyncComponent(() => import('./tabs/ShiftReportsTab.vue'))
 
 const { currentUser, logout } = useAuth()
 const { loadOrders }          = useOrders()
@@ -38,7 +40,7 @@ const initLoading = ref(true)
 
 // ── Tab state ─────────────────────────────────────────────────────────────────
 const DEFAULT_TAB = {
-  biuro: 'wizard', technolog: 'orders', ceo: 'analytics',
+  biuro: 'wizard', technolog: 'orders', ceo: 'analytics', produkcja: 'shift_reports',
 }
 const tab = ref(DEFAULT_TAB[currentUser.value?.role] || 'wizard')
 
@@ -52,6 +54,7 @@ function switchTab(name) {
 // materiały, ustawienia, pytania) hydratuje się z cache natychmiast i
 // rewaliduje w tle — nie trzyma ekranu na spinnerze.
 onMounted(async () => {
+  if (currentUser.value?.role === 'produkcja') { initLoading.value = false; return }
   loadTemplates().catch(() => {})
   loadApprovedMaterials().catch(() => {})
   loadSettings().catch(() => {})
@@ -65,8 +68,20 @@ onMounted(async () => {
   }
 })
 
-function handleLogout() {
-  logout()
+let logoutGuard = null
+const loggingOut = ref(false)
+provide('registerLogoutGuard', guard => {
+  logoutGuard = guard
+  return () => { if (logoutGuard === guard) logoutGuard = null }
+})
+async function handleLogout() {
+  if (loggingOut.value) return
+  loggingOut.value = true
+  try {
+    if (!logoutGuard || await logoutGuard()) logout()
+  } finally {
+    loggingOut.value = false
+  }
 }
 
 function reloadPage() {
@@ -103,6 +118,8 @@ function reloadPage() {
     <MaterialsTab     v-if="tab==='materials'" />
     <ProjectsTab      v-if="tab==='projects'" />
     <RentownoscTab    v-if="tab==='rentownosc'" />
+    <CalculatorsTab   v-if="tab==='calculators'" />
+    <KeepAlive><ShiftReportsTab v-if="tab==='shift_reports'" /></KeepAlive>
   </main>
 
   <ConfirmDialog />

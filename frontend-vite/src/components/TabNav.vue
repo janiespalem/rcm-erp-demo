@@ -2,7 +2,7 @@
 import {
   Plus, List, HelpCircle, BookOpen,
   FolderOpen, LayoutDashboard, Calendar, BarChart2,
-  Settings2, Package, Archive, TrendingUp,
+  Settings2, Package, Archive, TrendingUp, Calculator,
 } from 'lucide-vue-next'
 
 defineProps({
@@ -15,6 +15,9 @@ const emit = defineEmits(['switch'])
 
 <template>
   <nav>
+    <button v-if="['produkcja', 'technolog', 'ceo', 'biuro'].includes(role)" :class="{active: activeTab==='shift_reports'}" @click="emit('switch','shift_reports')">
+      <List :size="15" /> Raporty zmianowe
+    </button>
     <!-- BIURO: główna ścieżka = Nowe zlecenie / Zlecenia / Pytania -->
     <template v-if="role === 'biuro'">
       <button :class="{active: activeTab==='wizard'}"  @click="emit('switch','wizard')">
@@ -32,6 +35,9 @@ const emit = defineEmits(['switch'])
       <button class="nav-secondary" :class="{active: activeTab==='biuro_katalog'}" @click="emit('switch','biuro_katalog')">
         <BookOpen :size="14" /> Katalog
       </button>
+      <button class="nav-secondary" :class="{active: activeTab==='calculators'}" @click="emit('switch','calculators')">
+        <Calculator :size="14" /> Kalkulatory
+      </button>
     </template>
 
     <!-- TECHNOLOG: główna ścieżka = Zlecenia + Nowe zlecenie; Admin = Operacje/Materiały/Katalog PK/Rentowność -->
@@ -46,6 +52,9 @@ const emit = defineEmits(['switch'])
       <span class="nav-sep" aria-hidden="true"></span>
       <button class="nav-secondary" :class="{active: activeTab==='templates'}" @click="emit('switch','templates')">
         <FolderOpen :size="14" /> Katalog SOP
+      </button>
+      <button class="nav-secondary" :class="{active: activeTab==='calculators'}" @click="emit('switch','calculators')">
+        <Calculator :size="14" /> Kalkulatory
       </button>
 
       <span class="nav-sep" aria-hidden="true"></span>

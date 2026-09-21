@@ -76,7 +76,7 @@ export async function api(path, opts = {}) {
   const isFormData = typeof FormData !== 'undefined' && opts.body instanceof FormData
   const headers = isFormData ? {} : { 'Content-Type': 'application/json' }
   if (token) headers['Authorization'] = `Bearer ${token}`
-  const { body, headers: extraHeaders, ...requestOptions } = opts
+  const { body, headers: extraHeaders, preserveAuth = false, ...requestOptions } = opts
 
   try {
     const res = await fetch(BASE + path, {
@@ -89,12 +89,15 @@ export async function api(path, opts = {}) {
       let msg = `Błąd ${res.status}`
       try { const e = JSON.parse(raw); msg = e.detail || JSON.stringify(e) }
       catch { msg = raw || msg }
-      if (res.status === 401) {
+      if (res.status === 401 && !preserveAuth) {
         clearAuthSession()
         location.reload()
         throw new Error('Sesja wygasła')
       }
-      throw new Error(msg)
+      const error = new Error(msg)
+      error.status = res.status
+      try { error.detail = JSON.parse(raw).detail } catch { /* text response */ }
+      throw error
     }
     if (res.status === 204) return null
     return res.json()

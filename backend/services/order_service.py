@@ -4,6 +4,7 @@ from typing import Optional
 from fastapi import HTTPException
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
+from sqlalchemy.orm.exc import StaleDataError
 
 from models import (
     ComponentContainer,
@@ -121,6 +122,7 @@ def get_mutable_order_for_update(db: Session, order_id: int) -> Order:
         db.query(Order)
         .filter(Order.id == order_id)
         .with_for_update()
+        .populate_existing()
         .first()
     )
     if not order:
@@ -265,7 +267,11 @@ def update_order(
     user: Optional[dict] = None,
 ) -> Order:
     order = get_mutable_order_or_404(db, order_id)
-    update_data = payload.model_dump(exclude_unset=True)
+    if payload.version_id != order.version_id:
+        raise HTTPException(status_code=409, detail="Zlecenie zostało zmienione. Twoje zmiany nie zostały zapisane. Otwórz aktualną wersję i porównaj dane.")
+    update_data = payload.model_dump(exclude_unset=True, exclude={"version_id"})
+    # Consume the version even for a no-op PATCH; only one request may use it.
+    order.version_id += 1
     if "order_number" in update_data and update_data["order_number"] is not None:
         update_data["order_number"] = ensure_order_number_available(
             db,
@@ -283,6 +289,9 @@ def update_order(
 
     try:
         db.commit()
+    except StaleDataError:
+        db.rollback()
+        raise HTTPException(status_code=409, detail="Zlecenie zostało zmienione. Twoje zmiany nie zostały zapisane. Otwórz aktualną wersję i porównaj dane.")
     except IntegrityError:
         db.rollback()
         raise HTTPException(status_code=409, detail="Numer zlecenia jest już używany")

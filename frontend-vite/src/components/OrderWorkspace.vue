@@ -40,6 +40,7 @@ const { show: showToast } = useToast()
 
 const order = ref({ ...props.order })
 const editMode = ref(false)
+const editConflict = ref(false)
 const confirmDel = ref(false)
 const deleteError = ref('')
 const form = ref({})
@@ -154,7 +155,10 @@ const materialNeedsReview = computed(() => {
 
 watch(() => props.order, (next, previous) => {
   order.value = { ...next }
-  editMode.value = false
+  if (next?.id !== previous?.id) {
+    editMode.value = false
+    editConflict.value = false
+  }
   confirmDel.value = false
   deleteError.value = ''
 }, { deep: false })
@@ -182,8 +186,10 @@ async function runStatusAction(key, fn, nextStatus) {
 
 
 function startEdit() {
+  editConflict.value = false
   const o = order.value
   form.value = {
+    version_id: o.version_id,
     order_number: o.order_number || '',
     client: o.client || '',
     order_type: o.order_type || 'remont',
@@ -207,6 +213,7 @@ function startEdit() {
 }
 
 function cancelEdit() {
+  editConflict.value = false
   editMode.value = false
   confirmDel.value = false
   deleteError.value = ''
@@ -218,7 +225,7 @@ async function saveEdit() {
     showToast('Klient i termin są wymagane', 'error')
     return
   }
-  const payload = {}
+  const payload = { version_id: f.version_id }
   payload.order_number = f.order_number?.trim() || order.value.order_number
   payload.client = f.client.trim()
   if (f.order_type) payload.order_type = f.order_type
@@ -237,7 +244,19 @@ async function saveEdit() {
   payload.delivery_address = f.delivery_address || null
   payload.contact = f.contact || null
 
-  const updated = await api(`/orders/${order.value.id}`, { method: 'PATCH', body: payload })
+  let updated
+  try {
+    updated = await api(`/orders/${order.value.id}`, { method: 'PATCH', body: payload })
+  } catch (error) {
+    // api() displays the server error; keep the draft and its original version.
+    if (error.status === 409) {
+      editConflict.value = true
+      try {
+        order.value = await api(`/orders/${order.value.id}`)
+      } catch { /* Keep the draft even if reloading fails. */ }
+    }
+    return
+  }
   order.value = updated
   editMode.value = false
   await loadOrders()
@@ -368,6 +387,10 @@ async function confirmDelete() {
               <button class="inline-action" type="button" @click="emit('open-quote')">Edytuj wycenę</button>
             </div>
             <div v-if="editMode" class="inline-edit">
+              <p v-if="editConflict" role="alert" class="delete-error">
+                Nie zapisano zmian. Zachowaj swój tekst, wybierz „Anuluj”, a następnie
+                „Edytuj”, aby porównać i poprawić aktualną wersję zlecenia.
+              </p>
               <div class="edit-grid">
                 <label>
                   <span>Nr zlecenia</span>

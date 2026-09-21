@@ -20,12 +20,13 @@ const { loginRole, loginPin, loginError, login } = useAuth()
           <option value="biuro">Biuro</option>
           <option value="technolog">Technolog</option>
           <option value="ceo">CEO</option>
+          <option value="produkcja">Produkcja</option>
         </select>
       </div>
       <div class="form-group" style="margin-bottom:20px">
         <label>PIN</label>
         <input
-          type="password" v-model="loginPin" placeholder="••••"
+          type="password" inputmode="numeric" pattern="[0-9]*" v-model="loginPin" placeholder="••••"
           @keyup.enter="login" maxlength="4"
           style="font-size:1.4rem;letter-spacing:0.3em;text-align:center"
         >
@@ -33,7 +34,7 @@ const { loginRole, loginPin, loginError, login } = useAuth()
       <button class="btn btn-primary" style="width:100%;justify-content:center;padding:11px" @click="login">
         Zaloguj się
       </button>
-      <p class="demo-access">Demo PIN: Biuro 1111 · Technolog 2222 · CEO 3333</p>
+      <p class="demo-access">Dane fikcyjne · Demo PIN: Biuro 1111 · Technolog 2222 · CEO 3333<br>Produkcja: zmiana I 4444 · zmiana II 5555</p>
       <p v-if="loginError" style="color:var(--rcm-red);text-align:center;margin-top:10px;font-size:0.85rem;font-weight:600">
         Błędny PIN — spróbuj ponownie
       </p>

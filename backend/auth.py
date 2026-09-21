@@ -27,7 +27,7 @@ JWT_SECRET    = _raw_secret
 JWT_ALGORITHM = "HS256"
 JWT_TTL_HOURS = 1
 
-_LOGIN_ROLES = (UserRole.biuro, UserRole.technolog, UserRole.ceo)
+_LOGIN_ROLES = (UserRole.biuro, UserRole.technolog, UserRole.ceo, UserRole.produkcja)
 
 _bearer = HTTPBearer(auto_error=False)
 
@@ -74,6 +74,8 @@ def authenticate_user(db: Session, role: str, pin: str) -> Optional[dict]:
         "token_type": "bearer",
         "role": user.role.value,
         "name": user.name,
+        "id": user.id,
+        "default_shift": user.default_shift,
     }
 
 

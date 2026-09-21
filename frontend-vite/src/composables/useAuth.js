@@ -36,7 +36,7 @@ export function useAuth() {
       if (!res.ok) { loginError.value = true; return }
       const data = await res.json()
       if (generation !== loginGeneration) return
-      const user = { role: data.role, name: data.name, token: data.access_token }
+      const user = { id: data.id, role: data.role, name: data.name, default_shift: data.default_shift, token: data.access_token }
       currentUser.value = user
       loginPin.value = ''
     } catch {

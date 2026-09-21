@@ -9,11 +9,12 @@ from typing import Literal
 
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, Response
+from fastapi.responses import FileResponse, Response, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from sqlalchemy import text
 from sqlalchemy.orm import Session
+from sqlalchemy.orm.exc import StaleDataError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from auth import authenticate_user
@@ -25,6 +26,7 @@ from routers.templates import router as templates_router
 from routers.analytics import router as analytics_router
 from routers.settings import router as settings_router
 from routers.documents import router as documents_router
+from routers.shift_reports import router as shift_reports_router
 from seed import seed_demo_data
 
 
@@ -79,6 +81,15 @@ app.include_router(templates_router)
 app.include_router(analytics_router)
 app.include_router(settings_router)
 app.include_router(documents_router)
+app.include_router(shift_reports_router)
+
+
+@app.exception_handler(StaleDataError)
+async def stale_order_handler(request: Request, exc: StaleDataError):
+    # The request-scoped session closes/rolls back; never retry stale user intent.
+    return JSONResponse(status_code=409, content={
+        "detail": "Zlecenie zostało zmienione. Odśwież dane i spróbuj ponownie."
+    })
 
 _VITE_DIST   = BACKEND_DIR.parent / "frontend-vite" / "dist"
 _VITE_ASSETS = _VITE_DIST / "assets"
@@ -111,6 +122,14 @@ def _no_store_file(path: pathlib.Path) -> FileResponse:
     response.headers["Pragma"] = "no-cache"
     response.headers["Expires"] = "0"
     return response
+
+
+@app.get("/kalkulator-lego", response_class=FileResponse, include_in_schema=False)
+def serve_kalkulator_lego():
+    path = _VITE_DIST / "calculators" / "lego.html"
+    if path.exists():
+        return _no_store_file(path)
+    raise HTTPException(status_code=500, detail="Kalkulator LEGO not found — run frontend build")
 
 
 _app_env_cors = os.getenv("APP_ENV", "prod").lower()
@@ -182,7 +201,7 @@ def ping():
 
 
 class LoginRequest(BaseModel):
-    role: Literal["biuro", "technolog", "ceo"]
+    role: Literal["biuro", "technolog", "ceo", "produkcja"]
     pin: str
 
 

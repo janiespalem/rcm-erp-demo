@@ -42,7 +42,7 @@ def test_archived_order_is_read_only():
             order_service.update_order(
                 db,
                 order.id,
-                OrderUpdate(client="Changed"),
+                OrderUpdate(client="Changed", version_id=order.version_id),
                 user=TEST_USERS["technologist"],
             )
     finally:

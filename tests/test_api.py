@@ -82,6 +82,7 @@ def live_server_url():
         app,
         log_level="error",
         lifespan="off",
+        proxy_headers=False,
     ))
     thread = threading.Thread(
         target=server.run,
@@ -196,6 +197,11 @@ class TestHealth:
         resp = client.get("/api/health")
         assert resp.status_code == 200
         assert resp.json()["status"] == "ok"
+
+    def test_lego_calculator_is_served_from_vite_build(self, client):
+        resp = client.get("/kalkulator-lego")
+        assert resp.status_code == 200
+        assert "Kalkulator bloczków LEGO" in resp.text
 
 
 # ─── Order CRUD ───────────────────────────────────────────────────────────────
@@ -671,7 +677,8 @@ class TestPatchOrder:
     def test_patch_updates_client(self, client, db_session):
         """PATCH /api/orders/{id} — zmiana klienta."""
         order_id = create_order(client).json()["id"]
-        resp = client.patch(f"/api/orders/{order_id}", json={"client": "Nowy Klient S.A."})
+        version = client.get(f"/api/orders/{order_id}").json()["version_id"]
+        resp = client.patch(f"/api/orders/{order_id}", json={"client": "Nowy Klient S.A.", "version_id": version})
         assert resp.status_code == 200
         assert resp.json()["client"] == "Nowy Klient S.A."
 
@@ -679,14 +686,14 @@ class TestPatchOrder:
         """PATCH nie nadpisuje pól których nie wysłaliśmy."""
         order_id = create_order(client).json()["id"]
         original = client.get(f"/api/orders/{order_id}").json()
-        client.patch(f"/api/orders/{order_id}", json={"notes": "Pilne!"})
+        client.patch(f"/api/orders/{order_id}", json={"notes": "Pilne!", "version_id": original["version_id"]})
         updated = client.get(f"/api/orders/{order_id}").json()
         assert updated["notes"] == "Pilne!"
         assert updated["client"] == original["client"]   # niezmieniony
 
     def test_patch_404(self, client):
         """PATCH nieistniejącego zlecenia → 404."""
-        resp = client.patch("/api/orders/9999", json={"client": "X"})
+        resp = client.patch("/api/orders/9999", json={"client": "X", "version_id": 1})
         assert resp.status_code == 404
 
 

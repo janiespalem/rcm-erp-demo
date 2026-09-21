@@ -1,0 +1,13 @@
+{
+  "1": [
+    {"id":"forms_ready","label":"Formy przed zalaniem były czyste, prawidłowo złożone i pozamykane."},
+    {"id":"planned_pour","label":"Wszystkie zaplanowane formy zostały prawidłowo zalane."},
+    {"id":"settlement_check","label":"Po ok. 20 minutach sprawdzono osiadanie betonu i uzupełniono braki."},
+    {"id":"top_surface","label":"Górne powierzchnie wyrównano i zagładzono."},
+    {"id":"steel_ears","label":"Uszy stalowe są kompletne i ustawione na właściwej głębokości oraz w odpowiednim położeniu."},
+    {"id":"form_locks","label":"Zamki i połączenia form są domknięte; brak wycieków i rozparcia form."},
+    {"id":"form_edges","label":"Boki i krawędzie form oczyszczono ze świeżego betonu."},
+    {"id":"yard_clean","label":"Plac po zalewaniu uprzątnięto; beton i odpady usunięto."},
+    {"id":"tools_stored","label":"Narzędzia, wibratory i przedłużacze sprawne odłożono na miejsce; usterki zgłoszono."}
+  ]
+}

@@ -13,7 +13,7 @@ from fastapi.responses import StreamingResponse
 from openpyxl import Workbook
 from openpyxl.styles import Alignment, Font, PatternFill
 from sqlalchemy import func
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from auth import require_role
 from database import get_db
@@ -74,6 +74,7 @@ def get_rentownosc(db: Session = Depends(get_db), _: dict = _MGMT):
 
     orders = (
         db.query(Order)
+        .options(selectinload(Order.quote), selectinload(Order.operations))
         .filter(Order.status.in_([OrderStatus.in_production, OrderStatus.gotowe, OrderStatus.wydane]))
         .order_by(Order.created_at.desc())
         .limit(RENTOWNOSC_LIMIT)
@@ -81,7 +82,7 @@ def get_rentownosc(db: Session = Depends(get_db), _: dict = _MGMT):
     )
     result = []
     for o in orders:
-        quote = db.query(Quote).filter(Quote.order_id == o.id).first()
+        quote = o.quote
         if not quote:
             continue
         cena = float(quote.total_net or 0)

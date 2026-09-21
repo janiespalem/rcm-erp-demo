@@ -8,3 +8,4 @@ pytest==9.0.3
 # anyio pytest plugin is shipped as pytest-anyio stub that registers anyio.pytest_plugin
 pytest-anyio==0.0.0
 httpx==0.28.1   # integration tests call a real local Uvicorn socket
+playwright==1.62.0  # Chromium workflows; python -m playwright install chromium

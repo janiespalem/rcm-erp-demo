@@ -1,0 +1,877 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FactoryFlow Demo - Kalkulator LEGO</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<style>
+:root{--bg:#0b0b0c;--panel:#161616;--line:#2b2b2d;--text:#f0ece5;--muted:#898989;--orange:#f97316}
+*{box-sizing:border-box}body{margin:0;background:#0b0b0c;color:var(--text);font-family:Barlow,system-ui,sans-serif}
+.wrap{max-width:1220px;margin:0 auto;padding:32px 22px 80px}
+.title-row{display:flex;align-items:flex-start;justify-content:space-between;gap:18px}.title-row>div{min-width:0}
+h1{font-size:34px;margin:0 0 8px}.lead{color:var(--muted);margin:0 0 24px;line-height:1.5}
+.grid{display:grid;grid-template-columns:360px 1fr;gap:18px}.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px}
+label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);font-weight:800;margin:12px 0 7px}
+input,select{width:100%;padding:12px;border-radius:9px;border:1px solid #333;background:#101010;color:var(--text);font:15px ui-monospace,monospace}
+button{margin-top:18px;width:100%;padding:13px 18px;border:0;border-radius:10px;background:var(--orange);color:#fff;font-weight:800;cursor:pointer}
+button.secondary{background:#242424;border:1px solid #3a3a3a;color:var(--muted);margin-top:8px}
+button.secondary:hover{border-color:var(--orange);color:#ffb071}
+button:disabled{cursor:not-allowed;opacity:.45}
+.cart-open{width:auto;margin:0;padding:10px 14px;background:rgba(249,115,22,.08);border:1px solid rgba(249,115,22,.45);color:#ffb071;white-space:nowrap}
+.cart-open:hover{border-color:var(--orange);color:#fff}
+.fixes{display:grid;gap:8px;margin-top:12px}.fix{border:1px solid rgba(249,115,22,.28);background:rgba(249,115,22,.07);border-radius:10px;padding:10px}.fix-title{font-size:12px;color:#ffb071;margin-bottom:8px}.fix-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}.fix button{margin:0;padding:9px;background:#242424;border:1px solid #3a3a3a}.fix button:hover{border-color:var(--orange);color:#ffb071}
+.dims{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}.summary{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+.stat{border:1px solid var(--line);border-radius:12px;padding:14px;background:#111}.stat b{display:block;font-size:26px;color:var(--orange)}.stat span{font-size:12px;color:var(--muted)}
+.stat.cost{border-color:rgba(249,115,22,.4);background:rgba(249,115,22,.06)}
+.wall{margin:16px 0 24px}.wall h2{font-size:18px;margin:0 0 8px}.wall-note{font-size:12px;color:var(--muted);margin-bottom:8px}
+.course{position:relative;height:34px;margin:4px 0;background:#0f0f10;border-radius:5px;overflow:hidden}
+.block{position:absolute;top:3px;height:28px;border:1px solid #090909;border-radius:3px;color:#120a04;font-size:11px;font-weight:900;display:flex;align-items:center;justify-content:center;box-shadow:inset 0 8px 14px rgba(255,255,255,.12), inset 0 -8px 12px rgba(0,0,0,.22)}
+.b180{background:#e74c3c}.b120{background:#f39c12}.b90{background:#9b59b6;color:white}.b60{background:#95a5a6}.b240{background:#3498db}.b200{background:#2ecc71}.b160{background:#1abc9c}.b80{background:#2980b9}.b40{background:#7f8c8d;color:white}
+.row-label{position:absolute;left:6px;top:9px;color:rgba(255,255,255,.35);font-size:10px;z-index:3}.table{width:100%;border-collapse:collapse;margin-top:12px}.table th,.table td{border-bottom:1px solid var(--line);padding:9px;text-align:left}.table th{font-size:11px;text-transform:uppercase;color:var(--muted)}
+.table td.price{color:#ffb071}.table tr.total td{color:var(--orange);font-weight:800;border-top:2px solid var(--line)}
+.warn{border:1px solid rgba(249,115,22,.35);background:rgba(249,115,22,.08);color:#ffb071;border-radius:10px;padding:12px;margin-top:14px;font-size:13px;line-height:1.45}
+#view3d{height:360px;border:1px solid var(--line);border-radius:14px;background:#050509;margin-bottom:16px;overflow:hidden;position:relative}
+#view3d:after{content:'LPM: obracaj · scroll: zoom';position:absolute;right:12px;bottom:10px;color:rgba(255,255,255,.25);font:10px ui-monospace,monospace;pointer-events:none}
+.boksy-plan{margin-bottom:16px;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#050509;padding:16px}
+.boksy-plan svg{display:block;max-width:100%}
+dialog.cart-dialog{width:min(520px,calc(100% - 24px));height:100dvh;max-height:none;margin:0 0 0 auto;padding:0;border:0;border-left:1px solid #3a3a3d;border-radius:14px 0 0 14px;background:#121213;color:var(--text);box-shadow:-20px 0 50px rgba(0,0,0,.6)}
+dialog.cart-dialog::backdrop{background:rgba(0,0,0,.62)}
+.cart-inner{min-height:100%;padding:24px;display:flex;flex-direction:column}
+.cart-header{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:18px}.cart-header h2{font-size:22px;margin:0 0 5px}.cart-header p{font-size:13px;color:var(--muted);margin:0}
+.cart-close{width:auto;margin:0;padding:9px 12px;background:#242424;border:1px solid #3a3a3a;color:var(--text)}
+.cart-add{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;margin-bottom:18px}.cart-add select{margin:0}.cart-add button{width:auto;margin:0;padding:11px 18px;background:#242424;border:1px solid #3a3a3a;color:#ffb071}
+.cart-add button:hover,.cart-close:hover{border-color:var(--orange)}
+.cart-list{display:grid;gap:9px}.cart-empty{padding:28px 12px;border:1px dashed #3a3a3a;border-radius:10px;text-align:center;color:var(--muted);font-size:14px}
+.cart-line{padding:13px;border:1px solid var(--line);border-radius:10px;background:#181818}.cart-line-head{display:flex;justify-content:space-between;gap:10px}.cart-line-title{font-size:14px;font-weight:800}.cart-line-price{font-size:14px;color:#ffb071;font-weight:800;white-space:nowrap}.cart-line-meta{margin-top:5px;color:var(--muted);font-size:13px;line-height:1.45}.cart-line-incomplete{margin-top:6px;color:#ffb071;font-size:13px}
+.cart-line-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:11px}.cart-qty{display:flex;align-items:center;gap:8px;font-size:14px}.cart-qty button,.cart-remove{width:auto;margin:0;padding:6px 10px;background:#242424;border:1px solid #3a3a3a;color:var(--text)}.cart-remove{color:var(--muted)}
+.cart-summary{margin-top:auto;padding-top:20px}.cart-total{padding:14px;border:1px solid rgba(249,115,22,.4);border-radius:10px;background:rgba(249,115,22,.07)}.cart-total-row{display:flex;justify-content:space-between;gap:12px;margin:7px 0;font-size:15px}.cart-total-row b{color:var(--orange);font-size:17px}.cart-warning{margin-top:10px;color:#ffb071;font-size:13px;line-height:1.45}.cart-clear{background:transparent;border:1px solid #3a3a3a;color:var(--muted);margin-top:10px}
+@media(max-width:850px){.grid{grid-template-columns:1fr}.summary{grid-template-columns:1fr 1fr}.dims{grid-template-columns:1fr}.title-row{display:block}.cart-open{margin:0 0 18px}.lead{margin-bottom:14px}dialog.cart-dialog{inset:0;width:100vw;max-width:none;margin:0;border-left:0;border-radius:0}.cart-inner{padding:18px}.cart-add{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="title-row">
+    <div>
+      <h1>Kalkulator bloczków LEGO</h1>
+      <p class="lead">Układ warstw, waga, koszt. Ceny demonstracyjne — nie stanowią oferty handlowej.</p>
+    </div>
+    <button type="button" class="cart-open" id="cartOpen" onclick="openCart()">Zamówienie · 0</button>
+  </div>
+  <div class="grid">
+    <div class="card">
+      <label>Seria</label>
+      <select id="series" onchange="runCalc()">
+        <option value="lego60std">LEGO 60 — bloki 60×60×(60/90/120/180 cm), C20/25</option>
+        <option value="lego60full">LEGO 60 — bloki 60×60×(60/90/120/180/240 cm), C20/25</option>
+        <option value="lego60wzor">LEGO 60 z wzorem — 60×60×(60÷180 cm), C20/25</option>
+        <option value="lego80c20">LEGO 80 — bloki 80×80×(40÷160 cm), C20/25</option>
+        <option value="lego80c30">LEGO 80 — bloki 80×80×(40÷160 cm), C30/37 REI240</option>
+        <option value="lego4090">LEGO 40×90 — bloki 40×90×(200÷240 cm), C20/25 ⚠ brak bloku 40cm</option>
+        <option value="lego40" selected>LEGO 40×40 — bloki 40×40×(120/240 cm), C20/25</option>
+      </select>
+      <label>Kształt</label>
+      <select id="shape" onchange="onShapeChange()">
+        <option value="prosta">Prosta</option>
+        <option value="L">L</option>
+        <option value="U">U</option>
+        <option value="boksy" selected>Boksy (rząd otwartych U)</option>
+      </select>
+
+      <div id="boksy-extra">
+        <label>Liczba boksów</label>
+        <input id="nbox" type="number" value="8" min="1" max="50" step="1" oninput="runCalc()">
+      </div>
+
+      <div id="arch-wrap" style="display:none;border-top:1px solid #2b2b2d;margin-top:14px;padding-top:14px">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:13px;font-weight:600;color:var(--text);margin:0">
+          <input type="checkbox" id="withArch" onchange="onArchToggle()" style="width:16px;height:16px;accent-color:var(--orange);flex-shrink:0">
+          Dach łukowy (łuk LEGO 540×60×60 cm)
+        </label>
+        <div id="archPriceWrap" style="display:none">
+          <label>Cena łuku / szt. (PLN netto)</label>
+          <input id="archPrice" type="number" value="0" min="0" step="100" oninput="runCalc()">
+        </div>
+      </div>
+
+      <div class="dims">
+        <div><label id="lbl0">Szerokość boksu (m)</label><input id="d0" type="number" value="5.0" step="0.1" oninput="runCalc()"></div>
+        <div><label id="lbl1">Głębokość boksu (m)</label><input id="d1" type="number" value="7.2" step="0.1" oninput="runCalc()"></div>
+        <div id="d2wrap" style="display:none"><label>Prawa</label><input id="d2" type="number" value="15" step="0.1" oninput="runCalc()"></div>
+      </div>
+      <label>Wysokość (m)</label><input id="height" type="number" value="1.6" step="0.1" oninput="runCalc()">
+      <button onclick="runCalc()">Oblicz układ</button>
+      <button type="button" class="secondary" id="addToCart" onclick="addCurrentResult()" disabled>Dodaj wynik do zamówienia</button>
+      <div class="warn" id="warn" style="display:none"></div>
+      <div class="fixes" id="fixes"></div>
+    </div>
+    <div>
+      <div class="summary" id="summary"></div>
+      <div id="plan3d-wrap" style="display:none" class="boksy-plan"><canvas id="planCanvas"></canvas></div>
+      <div id="view3d"></div>
+      <div class="card" id="walls"></div>
+    </div>
+  </div>
+</div>
+<dialog class="cart-dialog" id="cartDialog" aria-labelledby="cartTitle">
+  <div class="cart-inner">
+    <div class="cart-header">
+      <div><h2 id="cartTitle">Zamówienie łączone</h2><p>LEGO i prefabrykaty w jednym podsumowaniu.</p></div>
+      <button type="button" class="cart-close" onclick="closeCart()">Zamknij</button>
+    </div>
+    <div class="cart-add">
+      <select id="fixedProductSelect" aria-label="Wybierz prefabrykat">
+        <option value="" selected disabled>Wybierz prefabrykat</option>
+        <optgroup label="Mury i płyty">
+          <option value="wallSmall">Mur oporowy L · 100×100×160×12 cm</option>
+          <option value="roadPlate">Płyta drogowa · 300×150×15 cm</option>
+        </optgroup>
+        <optgroup label="Pływaki i kotwice">
+          <option value="float237x200">Pływak · 237×200×75 cm</option>
+          <option value="float237x300">Pływak · 237×300×75 cm</option>
+          <option value="anchorSmall">Kotwica mała</option>
+          <option value="anchorLarge">Kotwica duża</option>
+        </optgroup>
+        <optgroup label="Piwniczki i zbiorniki">
+          <option value="cellar">Piwniczka betonowa</option>
+          <option value="stairs">Schody do piwniczki</option>
+          <option value="rainTank">Zbiornik na deszczówkę</option>
+        </optgroup>
+      </select>
+      <button type="button" onclick="addSelectedProduct()">Dodaj</button>
+    </div>
+    <div class="cart-list" id="cartList"></div>
+    <div class="cart-summary" id="cartSummary"></div>
+  </div>
+</dialog>
+<script>
+const SERIES={
+  lego60std: {depth:60,rowH:60,blocks:[180,120,90,60],   weights:{180:1.5,120:1,90:.75,60:.5}},
+  lego60full:{depth:60,rowH:60,blocks:[240,180,120,90,60],weights:{240:2,180:1.5,120:1,90:.75,60:.5}},
+  lego60wzor:{depth:60,rowH:60,blocks:[180,120,60],        weights:{180:1.5,120:1,60:.5}},
+  lego80c20: {depth:80,rowH:80,blocks:[160,120,80,40],    weights:{160:2.3,120:1.73,80:1.15,40:.58}},
+  lego80c30: {depth:80,rowH:80,blocks:[160,120,80,40],    weights:{160:2.3,120:1.73,80:1.15,40:.58}},
+  lego4090:  {depth:40,rowH:90,blocks:[240,200],          weights:{240:2.07,200:1.62}},
+  lego40:    {depth:40,rowH:40,blocks:[240,120],weights:{240:.92,120:.46}}
+};
+// Synthetic demonstration prices in PLN; not a commercial price list.
+const PRICES={
+  lego60std: {180:125,120:150,90:175,60:200},
+  lego60full:{240:225,180:250,120:275,90:300,60:325},
+  lego60wzor:{180:350,120:375,60:400},
+  lego80c20: {160:425,120:450,80:475,40:500},
+  lego80c30: {160:525,120:550,80:575,40:600},
+  lego4090:  {240:625,200:650},
+  lego40:    {240:675,120:700}
+};
+const COLORS={240:0x3498db,200:0x2ecc71,180:0xe74c3c,160:0x1abc9c,120:0xf39c12,90:0x9b59b6,80:0x2980b9,60:0x95a5a6,40:0x7f8c8d};
+// Łuk dachowy: rozpiętość 5318 mm, element 600×600 mm, strzałka 521 mm, krawędź 131 mm
+const ARCH={span:540,depth:60,rise:52.1,edgeH:13.1}; // w cm
+let currentResult=null;
+const CART_KEY='factoryflow-demo-lego-order-v1';
+const FIXED_PRODUCTS={
+  wallSmall:{type:'fixed',kind:'wallSmall',name:'Mur oporowy typu L',details:'100×100×160×12 cm · C20/25',unitWeight:.69,unitKnownNet:600,complete:true},
+  roadPlate:{type:'fixed',kind:'roadPlate',name:'Płyta drogowa',details:'300×150×15 cm · C30/37',unitWeight:1.5,unitKnownNet:800,complete:true},
+  float237x200:{type:'fixed',kind:'float237x200',name:'Pływak siatkobetonowy',details:'237×200×75 cm · C30/37',unitWeight:2,unitKnownNet:1000,complete:true},
+  float237x300:{type:'fixed',kind:'float237x300',name:'Pływak siatkobetonowy',details:'237×300×75 cm · C30/37',unitWeight:3,unitKnownNet:1200,complete:true},
+  anchorSmall:{type:'fixed',kind:'anchorSmall',name:'Kotwica mała',details:'C30/37',unitWeight:1.2,unitKnownNet:1400,complete:true},
+  anchorLarge:{type:'fixed',kind:'anchorLarge',name:'Kotwica duża',details:'C30/37',unitWeight:2.2,unitKnownNet:1600,complete:true},
+  cellar:{type:'fixed',kind:'cellar',name:'Piwniczka betonowa',details:'C30/37 · wew. 280×220×240 cm · zew. 300×240×260 cm',unitWeight:8.4,unitKnownNet:1800,complete:true},
+  stairs:{type:'fixed',kind:'stairs',name:'Schody do piwniczki',details:'C30/37 · wejście wew. 185×90 cm',unitWeight:1.95,unitKnownNet:2000,complete:true},
+  rainTank:{type:'fixed',kind:'rainTank',name:'Zbiornik na deszczówkę',details:'C30/37 · wew. 280×220×163 cm · zew. 300×240×190 cm',unitWeight:9,unitKnownNet:2200,complete:true},
+};
+const SERIES_NAMES={
+  lego60std:'LEGO 60 standard',lego60full:'LEGO 60 pełne',lego60wzor:'LEGO 60 z wzorem',
+  lego80c20:'LEGO 80 C20/25',lego80c30:'LEGO 80 C30/37',lego4090:'LEGO 40×90',lego40:'LEGO 40×40',
+};
+const SHAPE_NAMES={prosta:'Prosta',L:'L',U:'U',boksy:'Boksy'};
+let cart=[];
+const gcd=(a,b)=>b?gcd(b,a%b):a;
+const seams=seq=>{let p=0,out=[];for(let i=0;i<seq.length-1;i++){p+=seq[i];out.push(p)}return out};
+
+
+function onArchToggle(){
+  const on=document.getElementById('withArch').checked;
+  document.getElementById('archPriceWrap').style.display=on?'':'none';
+  if(on){document.getElementById('d0').value='5.40';}
+  runCalc();
+}
+
+function onShapeChange(){
+  const s=document.getElementById('shape').value;
+  const isBoksy=s==='boksy';
+  document.getElementById('boksy-extra').style.display=isBoksy?'':'none';
+  document.getElementById('d2wrap').style.display=(s==='U')?'':'none';
+  document.getElementById('arch-wrap').style.display=(s==='U'||s==='boksy')?'':'none';
+  document.getElementById('lbl0').textContent=isBoksy?'Szerokość boksu (m)':'Lewa / A';
+  document.getElementById('lbl1').textContent=isBoksy?'Głębokość boksu (m)':'Tylna / B';
+  if(!isBoksy&&s!=='U'){document.getElementById('withArch').checked=false;document.getElementById('archPriceWrap').style.display='none';}
+  runCalc();
+}
+
+function activeDimCount(shape){return shape==='prosta'?1:shape==='L'?2:shape==='U'?3:2}
+function applyDim(id,cm){document.getElementById(id).value=(cm/100).toFixed(2).replace(/\.?0+$/,'');runCalc()}
+
+function showFixes(raw,shape,step){
+  const labels=['Lewa / A','Tylna / B','Prawa'];
+  let html='';
+  raw.slice(0,activeDimCount(shape)).forEach((v,i)=>{
+    if(v%step===0)return;
+    const down=Math.floor(v/step)*step,up=Math.ceil(v/step)*step;
+    html+=`<div class="fix"><div class="fix-title">${labels[i]}: ${(v/100).toFixed(2)} m nie leży w module ${step} cm</div><div class="fix-actions"><button onclick="applyDim('d${i}',${down})">${(down/100).toFixed(2)} m</button><button onclick="applyDim('d${i}',${up})">${(up/100).toFixed(2)} m</button></div></div>`;
+  });
+  fixes.innerHTML=html;
+}
+
+function courseLengthIssues(shape,raw,series,step){
+  const d=series.depth,issues=[];
+  const add=(label,len)=>{if(len<=0||len%step!==0)issues.push(`${label}: ${(len/100).toFixed(2)} m`)};
+  if(shape==='prosta'){add('Prosta',raw[0]);}
+  else if(shape==='L'){add('A-narożny',raw[0]);add('A-cofnięty',raw[0]-d);add('B-narożny',raw[1]);add('B-cofnięty',raw[1]-d);}
+  else if(shape==='U'){add('L/P-narożny',raw[0]);add('L/P-cofnięty',raw[0]-d);add('Tylna-narożna',raw[1]);add('Tylna-cofnięta',raw[1]-2*d);add('P-narożny',raw[2]);add('P-cofnięty',raw[2]-d);}
+  return issues;
+}
+
+function optimize(len,blocks,prevAbs,offset){
+  const prev=new Set(prevAbs||[]);
+  const dp=Array(len+1).fill(null);dp[0]={score:0,seq:[]};
+  for(let pos=0;pos<=len;pos++){
+    if(!dp[pos])continue;
+    for(const b of blocks){
+      const next=pos+b;if(next>len)continue;
+      const abs=offset+next;let penalty=0;
+      if(next<len){if(prev.has(abs))penalty+=100000;}
+      const edge=(pos===0||next===len)?(blocks[0]-b)*6:0;
+      const score=dp[pos].score+1000+penalty+edge-b;
+      if(!dp[next]||score<dp[next].score)dp[next]={score,seq:[...dp[pos].seq,b]};
+    }
+  }
+  return dp[len]?.seq||null;
+}
+function makeCourse(len,blocks,prevAbs,offset){return optimize(len,blocks,prevAbs,offset)||[]}
+
+function push(courses,key,row,offset,len,series,prev){
+  if(len<=0)return prev[key]||[];
+  const seq=makeCourse(len,series.blocks,prev[key]||[],offset);
+  courses.push({key,row,offset,len,seq});
+  prev[key]=seams(seq).map(x=>x+offset);
+  return prev[key];
+}
+
+function layout(shape,raw,height,series){
+  const rows=Math.ceil(height*100/series.rowH),d=series.depth,courses=[],prev={};
+  for(let r=0;r<rows;r++){
+    const sideOwns=r%2===1;
+    if(shape==='prosta') push(courses,'prosta',r,0,raw[0],series,prev);
+    else if(shape==='L'){
+      const A=raw[0],B=raw[1];
+      if(sideOwns){push(courses,'B',r,0,B,series,prev);push(courses,'A',r,d,Math.max(A-d,d),series,prev)}
+      else{push(courses,'A',r,0,A,series,prev);push(courses,'B',r,d,Math.max(B-d,d),series,prev)}
+    }else{
+      const L=raw[0],B=raw[1],R=raw[2];
+      if(sideOwns){push(courses,'Lewa',r,0,L,series,prev);push(courses,'Prawa',r,0,R,series,prev);push(courses,'Tylna',r,d,Math.max(B-2*d,d),series,prev)}
+      else{push(courses,'Tylna',r,0,B,series,prev);push(courses,'Lewa',r,d,Math.max(L-d,d),series,prev);push(courses,'Prawa',r,d,Math.max(R-d,d),series,prev)}
+    }
+  }
+  return courses;
+}
+
+// Boksy layout: narożniki zewnętrzne alternują jak w U (ta sama logika co layout())
+// Rząd parzysty: tylna idzie na całą długość, boczne zewnętrzne = D
+// Rząd nieparzysty: boczne zewnętrzne "wychodzą" za tylną o d → D+d; tylna skrócona o 2d
+// Wewnętrzne przegrody (T-złącze): zawsze D — bloki przytykają do tylnej bez alternacji
+function layoutBoksy(N,W,D,height,series){
+  const d=series.depth;
+  const backLen=N*W+(N+1)*d;
+  const rows=Math.ceil(height*100/series.rowH);
+  const courses=[],prev={};
+  for(let r=0;r<rows;r++){
+    const sideOwns=r%2===1;
+    if(sideOwns){
+      // boczne zewnętrzne ogibają narożnik → D+d
+      push(courses,'Boczna_1',   r,0,D+d,series,prev);
+      push(courses,`Boczna_${N+1}`,r,0,D+d,series,prev);
+      // tylna skrócona (narożnik "zajęty" przez boczne)
+      push(courses,'Tylna',r,d,Math.max(backLen-2*d,d),series,prev);
+    }else{
+      // tylna idzie na całą długość
+      push(courses,'Tylna',r,0,backLen,series,prev);
+      // boczne zewnętrzne normalnie = D
+      push(courses,'Boczna_1',   r,0,D,series,prev);
+      push(courses,`Boczna_${N+1}`,r,0,D,series,prev);
+    }
+    // wewnętrzne przegrody (T-złącze) — zawsze D, brak narożnika
+    for(let i=2;i<=N;i++){
+      push(courses,`Boczna_${i}`,r,0,D,series,prev);
+    }
+  }
+  return courses;
+}
+
+function renderWall(name,courses,series){
+  if(!courses.length)return'';
+  const max=Math.max(...courses.map(c=>c.offset+c.len));
+  let html=`<div class="wall"><h2>${name}</h2>`;
+  for(const c of courses){
+    html+=`<div class="course"><span class="row-label">r${c.row+1}</span>`;
+    let p=c.offset;
+    for(const b of c.seq){
+      html+=`<div class="block b${b}" style="left:${p/max*100}%;width:${b/max*100}%">${b}</div>`;
+      p+=b;
+    }
+    html+='</div>';
+  }
+  return html+'</div>';
+}
+
+// 3D engine (unchanged)
+let scene,camera,renderer,controls,meshes=[];
+function init3d(){
+  const el=view3d;if(renderer)return;
+  scene=new THREE.Scene();scene.background=new THREE.Color(0x050509);
+  camera=new THREE.PerspectiveCamera(45,el.clientWidth/Math.max(el.clientHeight,1),1,100000);
+  renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(devicePixelRatio);renderer.setSize(el.clientWidth,el.clientHeight);el.appendChild(renderer.domElement);
+  controls=new THREE.OrbitControls(camera,renderer.domElement);controls.enableDamping=true;
+  scene.add(new THREE.AmbientLight(0xffffff,.62));
+  const a=new THREE.DirectionalLight(0xfff1dc,.9);a.position.set(1200,1600,900);scene.add(a);
+  const b=new THREE.DirectionalLight(0xc8dcff,.35);b.position.set(-900,800,-900);scene.add(b);
+  addEventListener('resize',()=>{if(!renderer)return;renderer.setSize(el.clientWidth,el.clientHeight);camera.aspect=el.clientWidth/Math.max(el.clientHeight,1);camera.updateProjectionMatrix()});
+  (function loop(){requestAnimationFrame(loop);controls.update();renderer.render(scene,camera)})();
+}
+
+function courseToBlocks(shape,courses,series){
+  const d=series.depth,rowH=series.rowH,out=[];
+  const map={prosta:{axis:'x',x:0,z:0},A:{axis:'x',x:0,z:0},B:{axis:'z',x:0,z:0},
+    Tylna:{axis:'x',x:0,z:0},Lewa:{axis:'z',x:0,z:0},Prawa:{axis:'z',x:null,z:0}};
+  const backLen=Math.max(...courses.filter(c=>c.key==='Tylna').map(c=>c.offset+c.len),0);
+  for(const c of courses){
+    const cfg={...map[c.key]};
+    if(c.key==='Prawa')cfg.x=Math.max(backLen-d,0);
+    let p=c.offset;
+    for(const len of c.seq){
+      const axis=cfg.axis;
+      out.push({len,row:c.row,px:axis==='x'?p:cfg.x,py:c.row*rowH,pz:axis==='z'?p:cfg.z,dx:axis==='x'?len:d,dy:rowH,dz:axis==='z'?len:d});
+      p+=len;
+    }
+  }
+  return out;
+}
+
+// Boksy: back wall along X at z=D, side walls along Z at x=i*(W+d)
+function courseToBlocksBoksy(courses,series,N,W,D){
+  const d=series.depth,rowH=series.rowH,out=[];
+  for(const c of courses){
+    if(c.key==='Tylna'){
+      let p=c.offset;
+      for(const len of c.seq){
+        out.push({len,row:c.row,px:p,py:c.row*rowH,pz:D,dx:len,dy:rowH,dz:d});
+        p+=len;
+      }
+    } else if(c.key.startsWith('Boczna_')){
+      const idx=parseInt(c.key.split('_')[1])-1;
+      const xPos=idx*(W+d);
+      let p=c.offset;
+      for(const len of c.seq){
+        out.push({len,row:c.row,px:xPos,py:c.row*rowH,pz:p,dx:d,dy:rowH,dz:len});
+        p+=len;
+      }
+    }
+  }
+  return out;
+}
+
+function drawBlocks3d(blocks){
+  init3d();
+  meshes.forEach(m=>{scene.remove(m);m.geometry.dispose();m.material.dispose()});meshes=[];
+  const gap=2;
+  let cx=0,cy=0,cz=0;
+  for(const b of blocks){
+    const geom=new THREE.BoxGeometry(Math.max(1,b.dx-gap),Math.max(1,b.dy-gap),Math.max(1,b.dz-gap));
+    const mat=new THREE.MeshStandardMaterial({color:COLORS[b.len]||0xffffff,roughness:.78});
+    const mesh=new THREE.Mesh(geom,mat);
+    mesh.position.set(b.px+b.dx/2,b.py+b.dy/2,b.pz+b.dz/2);
+    mesh.add(new THREE.LineSegments(new THREE.EdgesGeometry(geom),new THREE.LineBasicMaterial({color:0x050505,transparent:true,opacity:.85})));
+    scene.add(mesh);meshes.push(mesh);cx+=mesh.position.x;cy+=mesh.position.y;cz+=mesh.position.z;
+  }
+  if(!meshes.length)return;
+  const center=new THREE.Vector3(cx/meshes.length,cy/meshes.length,cz/meshes.length);
+  const maxX=Math.max(...blocks.map(b=>b.px+b.dx)),maxZ=Math.max(...blocks.map(b=>b.pz+b.dz));
+  const dist=Math.max(maxX,maxZ)*1.6;
+  controls.target.copy(center);
+  camera.position.set(center.x-dist*.45,center.y+dist*.65,center.z+dist*.9);
+  camera.updateProjectionMatrix();controls.update();
+}
+
+function addArchMeshes3d(xOffset, spanCm, depthCm, wallH, legW){
+  const eH=ARCH.edgeH;        // 13.1 cm
+  const rOuter=ARCH.rise;     // 52.1 cm — extrados crown rise above eH
+  const rInner=34.3;          // cm — soffit crown rise above leg base
+  if(legW===undefined) legW=eH;
+  const innerSpan=spanCm-2*legW;
+  const unitD=ARCH.depth;
+  const numArches=Math.ceil(depthCm/unitD);
+  const segs=32;
+  for(let i=0;i<numArches;i++){
+    const z0=i*unitD;
+    const az=Math.min(unitD, depthCm-z0);
+    const shape=new THREE.Shape();
+    // left leg bottom
+    shape.moveTo(0, 0);
+    shape.lineTo(legW, 0);
+    // soffit arc: (legW,0) → crown → (spanCm-legW,0)
+    for(let s=0;s<=segs;s++){
+      const t=s/segs; const u=2*t-1;
+      shape.lineTo(legW + t*innerSpan, rInner*(1-u*u));
+    }
+    // right leg
+    shape.lineTo(spanCm, 0);
+    shape.lineTo(spanCm, eH);
+    // extrados arc: (spanCm,eH) → crown → (0,eH)
+    for(let s=segs;s>=0;s--){
+      const t=s/segs; const u=2*t-1;
+      shape.lineTo(t*spanCm, eH + rOuter*(1-u*u));
+    }
+    shape.closePath();
+    const geom=new THREE.ExtrudeGeometry(shape,{steps:1,depth:az,bevelEnabled:false});
+    const mat=new THREE.MeshStandardMaterial({color:0xc8cfd6,roughness:0.88,metalness:0.03});
+    const mesh=new THREE.Mesh(geom,mat);
+    mesh.position.set(xOffset,wallH,z0);
+    mesh.add(new THREE.LineSegments(new THREE.EdgesGeometry(geom),new THREE.LineBasicMaterial({color:0x222222,transparent:true,opacity:0.35})));
+    scene.add(mesh);meshes.push(mesh);
+  }
+}
+
+function render3d(shape,courses,series,N,W,D,raw,heightM){
+  document.getElementById('view3d').style.display='';
+  const blocks=shape==='boksy'
+    ? courseToBlocksBoksy(courses,series,N,W,D)
+    : courseToBlocks(shape,courses,series);
+  drawBlocks3d(blocks);
+
+  const withArch=document.getElementById('withArch')?.checked;
+  if(!withArch)return;
+  const wallH=Math.ceil((heightM||0)*100/series.rowH)*series.rowH;
+  if(shape==='U'&&raw){
+    const d=series.depth;
+    const fullSpan=raw[1];         // total wall-to-wall width (legs sit on walls)
+    const depthMm=raw[0];
+    if(fullSpan>0) addArchMeshes3d(0, fullSpan, depthMm, wallH, d);
+  } else if(shape==='boksy'){
+    for(let i=0;i<=N;i++){
+      const xPos=i*(W+series.depth);
+      addArchMeshes3d(xPos, W, D, wallH, series.depth);
+    }
+  }
+}
+
+// Top-down SVG plan for boksy
+function renderBoksyPlan(N,W,D,series){
+  const d=series.depth;
+  const totalX=N*W+(N+1)*d, totalZ=D+d;
+  const maxW=700, maxH=220;
+  const scale=Math.min(maxW/totalX, maxH/totalZ, 1);
+  const svgW=Math.round(totalX*scale), svgH=Math.round(totalZ*scale);
+  let svg=`<svg width="${svgW}" height="${svgH}" style="max-width:100%;height:auto" viewBox="0 0 ${svgW} ${svgH}">`;
+  // back wall
+  svg+=`<rect x="0" y="${Math.round(D*scale)}" width="${svgW}" height="${Math.round(d*scale)}" fill="#f97316" opacity=".75"/>`;
+  // side walls
+  for(let i=0;i<=N;i++){
+    const x=Math.round(i*(W+d)*scale);
+    svg+=`<rect x="${x}" y="0" width="${Math.round(d*scale)}" height="${svgH}" fill="#f97316" opacity=".75"/>`;
+  }
+  // box labels
+  for(let i=0;i<N;i++){
+    const bx=Math.round((i*(W+d)+d+W/2)*scale);
+    const by=Math.round(D/2*scale);
+    const area=((W/100)*(D/100)).toFixed(0);
+    svg+=`<text x="${bx}" y="${by-8}" text-anchor="middle" fill="#f0ece5" font-size="14" font-family="Barlow,system-ui,sans-serif" font-weight="700">B${i+1}</text>`;
+    svg+=`<text x="${bx}" y="${by+10}" text-anchor="middle" fill="#898989" font-size="11" font-family="Barlow,system-ui,sans-serif">${area} m²</text>`;
+  }
+  svg+='</svg>';
+  return svg;
+}
+
+function countBlocks(courses,series,seriesKey){
+  const prices=PRICES[seriesKey]||{};
+  const counts={};let qty=0,totalW=0,totalCost=0;
+  const missingPrices=new Set();
+  courses.forEach(c=>c.seq.forEach(b=>{
+    counts[b]=(counts[b]||0)+1;qty++;
+    totalW+=series.weights[b]||0;
+    if(Object.hasOwn(prices,b))totalCost+=prices[b];
+    else missingPrices.add(b);
+  }));
+  return{counts,qty,totalW,totalCost,missingPrices:[...missingPrices].sort((a,b)=>b-a)};
+}
+
+function buildTable(counts,series,prices){
+  let table='<table class="table"><tr><th>Bloczek</th><th>Ilość</th><th>Waga</th><th>Cena jedn.</th><th>Wartość</th></tr>';
+  let totalVal=0,totalW=0,complete=true;
+  Object.keys(counts).sort((a,b)=>b-a).forEach(b=>{
+    const w=(series.weights[b]||0)*counts[b];
+    const priced=Object.hasOwn(prices,b);
+    const val=priced?prices[b]*counts[b]:0;
+    if(!priced)complete=false;
+    totalVal+=val;totalW+=w;
+    table+=`<tr><td>${b} cm</td><td>${counts[b]}</td><td>${w.toFixed(1)} t</td><td class="price">${priced?prices[b]+' zł':'brak ceny'}</td><td class="price">${priced?val.toLocaleString('pl-PL')+' zł':'—'}</td></tr>`;
+  });
+  table+=`<tr class="total"><td colspan="2">${complete?'RAZEM':'ZNANA SUMA'}</td><td>${totalW.toFixed(1)} t</td><td></td><td>${totalVal.toLocaleString('pl-PL')} zł${complete?'':' *'}</td></tr>`;
+  return table+'</table>';
+}
+
+function priceWarningHtml(missingPrices,missingArch=false){
+  const missing=missingPrices.map(b=>`bloczek ${b} cm`);
+  if(missingArch)missing.push('łuk dachowy');
+  return missing.length
+    ?`<div class="warn">Niepełna wycena — brak ceny: ${missing.join(', ')}. Pokazana kwota to znana suma netto.</div>`
+    :'';
+}
+
+function setWarn(msg){
+  const el=document.getElementById('warn');
+  if(msg){el.textContent=msg;el.style.display='';}
+  else el.style.display='none';
+}
+
+function setCurrentResult(result){
+  currentResult=result;
+  document.getElementById('addToCart').disabled=!result;
+}
+
+function createLocalId(){
+  const values=crypto.getRandomValues(new Uint32Array(4));
+  return [...values].map(value=>value.toString(16).padStart(8,'0')).join('-');
+}
+
+function normalizeCartLine(line){
+  if(!line||typeof line!=='object')return null;
+  const id=typeof line.id==='string'&&/^[a-zA-Z0-9-]{1,64}$/.test(line.id)?line.id:createLocalId();
+  const quantity=Math.min(999,Math.max(1,Math.trunc(Number(line.quantity)||1)));
+  if(line.type==='fixed'&&FIXED_PRODUCTS[line.kind])return{...FIXED_PRODUCTS[line.kind],id,quantity};
+  if(line.type!=='lego'||!SERIES[line.seriesKey]||!SHAPE_NAMES[line.shape])return null;
+  const unitWeight=Number(line.unitWeight),unitKnownNet=Number(line.unitKnownNet);
+  const blockCount=Math.trunc(Number(line.blockCount));
+  if(!Number.isFinite(unitWeight)||unitWeight<0||!Number.isFinite(unitKnownNet)||unitKnownNet<0||blockCount<1)return null;
+  const missingPrices=Array.isArray(line.missingPrices)
+    ?line.missingPrices.map(Number).filter(b=>SERIES[line.seriesKey].blocks.includes(b)&&!Object.hasOwn(PRICES[line.seriesKey],b))
+    :[];
+  const missingArch=line.missingArch===true;
+  const complete=line.complete===true&&missingPrices.length===0&&!missingArch;
+  let dimensions;
+  if(line.shape==='boksy'){
+    const boxes=Math.trunc(Number(line.dimensions?.boxes));
+    const widthCm=Number(line.dimensions?.widthCm),depthCm=Number(line.dimensions?.depthCm),heightM=Number(line.dimensions?.heightM);
+    if(boxes<1||![widthCm,depthCm,heightM].every(v=>Number.isFinite(v)&&v>0))return null;
+    dimensions={boxes,widthCm,depthCm,heightM};
+  }else{
+    const valuesCm=Array.isArray(line.dimensions?.valuesCm)?line.dimensions.valuesCm.map(Number):[];
+    const heightM=Number(line.dimensions?.heightM);
+    if(valuesCm.length!==activeDimCount(line.shape)||!valuesCm.every(v=>Number.isFinite(v)&&v>0)||!Number.isFinite(heightM)||heightM<=0)return null;
+    dimensions={valuesCm,heightM};
+  }
+  return{type:'lego',id,quantity,seriesKey:line.seriesKey,shape:line.shape,dimensions,blockCount,unitWeight,unitKnownNet,complete,missingPrices,missingArch};
+}
+
+function loadCart(){
+  try{
+    const saved=JSON.parse(localStorage.getItem(CART_KEY)||'[]');
+    return Array.isArray(saved)?saved.slice(0,100).map(normalizeCartLine).filter(Boolean):[];
+  }catch{return[];}
+}
+
+function saveCart(){
+  try{localStorage.setItem(CART_KEY,JSON.stringify(cart));}catch{}
+}
+
+const formatMoney=value=>`${value.toLocaleString('pl-PL',{maximumFractionDigits:2})} zł`;
+const formatWeight=value=>`${value.toLocaleString('pl-PL',{minimumFractionDigits:2,maximumFractionDigits:2})} t`;
+const formatMeters=value=>(value/100).toLocaleString('pl-PL',{minimumFractionDigits:2,maximumFractionDigits:2});
+
+function legoDetails(line){
+  if(line.shape==='boksy'){
+    const d=line.dimensions;
+    return `${d.boxes} boksów · ${formatMeters(d.widthCm)} × ${formatMeters(d.depthCm)} m · h ${d.heightM.toLocaleString('pl-PL')} m · ${line.blockCount} bloczków`;
+  }
+  const d=line.dimensions;
+  return `${SHAPE_NAMES[line.shape]} · ${d.valuesCm.map(formatMeters).join(' × ')} m · h ${d.heightM.toLocaleString('pl-PL')} m · ${line.blockCount} bloczków`;
+}
+
+function lineMissingPrices(line){
+  if(line.complete)return'';
+  const missing=(line.missingPrices||[]).map(b=>`bloczek ${b} cm`);
+  if(line.missingArch)missing.push('łuk dachowy');
+  return missing.length?`Niepełna wycena — brak ceny: ${missing.join(', ')}`:'Niepełna wycena';
+}
+
+function renderCart(){
+  document.getElementById('cartOpen').textContent=`Zamówienie · ${cart.length}`;
+  const list=document.getElementById('cartList');
+  if(!cart.length){
+    list.innerHTML='<div class="cart-empty">Zamówienie jest puste.</div>';
+    document.getElementById('cartSummary').innerHTML='';
+    return;
+  }
+  list.innerHTML=cart.map(line=>{
+    const title=line.type==='fixed'?line.name:`${SERIES_NAMES[line.seriesKey]} · ${SHAPE_NAMES[line.shape]}`;
+    const details=line.type==='fixed'?line.details:legoDetails(line);
+    const lineWeight=line.unitWeight*line.quantity;
+    const lineNet=line.unitKnownNet*line.quantity;
+    return`<div class="cart-line">
+      <div class="cart-line-head"><div class="cart-line-title">${title}</div><div class="cart-line-price">${line.complete?'':'znana suma '}${formatMoney(lineNet)}</div></div>
+      <div class="cart-line-meta">${details}<br>${formatWeight(lineWeight)}</div>
+      ${line.complete?'':`<div class="cart-line-incomplete">${lineMissingPrices(line)}</div>`}
+      <div class="cart-line-foot">
+        <div class="cart-qty"><button type="button" aria-label="Zmniejsz ilość" onclick="changeQuantity('${line.id}',-1)">−</button><b>${line.quantity}</b><button type="button" aria-label="Zwiększ ilość" onclick="changeQuantity('${line.id}',1)">+</button></div>
+        <button type="button" class="cart-remove" onclick="removeCartLine('${line.id}')">Usuń</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  const totalWeight=cart.reduce((sum,line)=>sum+line.unitWeight*line.quantity,0);
+  const knownNet=cart.reduce((sum,line)=>sum+line.unitKnownNet*line.quantity,0);
+  const complete=cart.every(line=>line.complete);
+  const trips=totalWeight?Math.ceil(totalWeight/27):0;
+  const missing=[...new Set(cart.flatMap(line=>{
+    if(line.complete)return[];
+    const items=(line.missingPrices||[]).map(b=>`bloczek ${b} cm`);
+    if(line.missingArch)items.push('łuk dachowy');
+    return items;
+  }))];
+  document.getElementById('cartSummary').innerHTML=`
+    <div class="cart-total">
+      <div class="cart-total-row"><span>${complete?'Razem netto':'Znana suma netto'}</span><b>${formatMoney(knownNet)}</b></div>
+      <div class="cart-total-row"><span>Masa łączna</span><b>${formatWeight(totalWeight)}</b></div>
+      <div class="cart-total-row"><span>Minimum kursów przy 27 t</span><b>${trips}</b></div>
+      ${complete?'':`<div class="cart-warning">Niepełna wycena${missing.length?` — brak cen: ${missing.join(', ')}`:''}. Pełna suma nie jest dostępna.</div>`}
+    </div>
+    <button type="button" class="cart-clear" onclick="clearCart()">Wyczyść zamówienie</button>`;
+}
+
+function addCurrentResult(){
+  if(!currentResult)return;
+  const line=normalizeCartLine({...currentResult,type:'lego',id:createLocalId(),quantity:1});
+  if(!line)return;
+  cart.push(line);saveCart();renderCart();openCart();
+}
+
+function addSelectedProduct(){
+  const kind=document.getElementById('fixedProductSelect').value;
+  if(kind)addFixedProduct(kind);
+}
+
+function addFixedProduct(kind){
+  const existing=cart.find(line=>line.type==='fixed'&&line.kind===kind);
+  if(existing)existing.quantity=Math.min(999,existing.quantity+1);
+  else if(FIXED_PRODUCTS[kind])cart.push({...FIXED_PRODUCTS[kind],id:createLocalId(),quantity:1});
+  saveCart();renderCart();
+}
+
+function changeQuantity(id,delta){
+  const line=cart.find(item=>item.id===id);
+  if(!line)return;
+  line.quantity=Math.min(999,Math.max(1,line.quantity+Math.trunc(delta)));
+  saveCart();renderCart();
+}
+
+function removeCartLine(id){cart=cart.filter(line=>line.id!==id);saveCart();renderCart();}
+function clearCart(){if(cart.length&&confirm('Wyczyścić całe zamówienie?')){cart=[];saveCart();renderCart();}}
+function openCart(){document.getElementById('cartDialog').showModal();}
+function closeCart(){document.getElementById('cartDialog').close();}
+
+function runCalc(){
+  setCurrentResult(null);
+  const seriesKey=document.getElementById('series').value;
+  const series=SERIES[seriesKey],shape=document.getElementById('shape').value;
+  const raw=[+d0.value,+d1.value,+d2.value].map(v=>Math.round(v*100));
+  const step=series.blocks.reduce((a,b)=>gcd(a,b));
+  const prices=PRICES[seriesKey]||{};
+  document.getElementById('plan3d-wrap').style.display='none';
+
+  if(shape==='boksy'){
+    const N=Math.max(1,parseInt(document.getElementById('nbox').value)||1);
+    const W=raw[0],D=raw[1];
+    const d=series.depth;
+    const backLen=N*W+(N+1)*d;
+    const issues=[];
+    if(backLen%step!==0)        issues.push(`Tylna (pełna) ${(backLen/100).toFixed(2)} m poza modułem ${step} cm`);
+    if((backLen-2*d)%step!==0)  issues.push(`Tylna (skrócona o 2×${d}cm) ${((backLen-2*d)/100).toFixed(2)} m poza modułem ${step} cm`);
+    if(D%step!==0)              issues.push(`Głębokość boksu ${(D/100).toFixed(2)} m poza modułem ${step} cm`);
+    if((D+d)%step!==0)          issues.push(`Głębokość boksu + grubość ściany ${((D+d)/100).toFixed(2)} m (naroże zewn.) poza modułem ${step} cm`);
+    if(issues.length){
+      setWarn('Uwaga: '+issues.join('; '));
+      summary.innerHTML=`<div class="stat"><b>—</b><span>popraw wymiary</span></div>`;
+      walls.innerHTML=`<p style="color:var(--muted);font-size:13px">${issues.join('<br>')}</p>`;
+      return;
+    }
+    setWarn('');
+    const withArch=document.getElementById('withArch')?.checked;
+    const archPriceUnit=withArch?Math.max(0,+(document.getElementById('archPrice')?.value||0)):0;
+    const H=+height.value;
+    const courses=layoutBoksy(N,W,D,H,series);
+    const {counts,qty,totalW,totalCost,missingPrices}=countBlocks(courses,series,seriesKey);
+    const rows=Math.ceil(H*100/series.rowH);
+    const actualH=(rows*series.rowH/100).toFixed(2);
+
+    const mbPerRow=(backLen+(N+1)*D)/100;
+    const mbTotal=(mbPerRow*rows).toFixed(1);
+    const m3=(totalW/2.4).toFixed(1);
+
+    // Łuk calculation
+    let archQty=0,archCost=0,archWarnHtml='';
+    if(withArch){
+      if(W!==ARCH.span*10){
+        archWarnHtml=`<div class="warn" style="margin-top:8px">⚠ Łuk wymaga szerokości boksu = ${(ARCH.span/100).toFixed(2)} m (ustawiono ${(W/100).toFixed(2)} m)</div>`;
+      }
+      archQty=N*Math.ceil(D/(ARCH.depth*10));
+      archCost=archQty*archPriceUnit;
+    }
+
+    const missingArch=withArch&&archPriceUnit<=0;
+    const totalMaterialCost=totalCost+archCost;
+    summary.style.gridTemplateColumns=`repeat(${withArch?8:6},1fr)`;
+    summary.innerHTML=`
+      <div class="stat"><b>${qty}</b><span>szt. bloczków</span></div>
+      <div class="stat"><b>${totalW.toFixed(1)} t</b><span>waga łącznie</span></div>
+      <div class="stat"><b>${m3} m³</b><span>kubatura betonu</span></div>
+      <div class="stat"><b>${Math.ceil(totalW/27)}</b><span>kursy 27 t</span></div>
+      <div class="stat"><b>${mbTotal} m</b><span>m.p. ścian</span></div>
+      ${withArch?`<div class="stat"><b>${archQty}</b><span>łuków dachowych</span></div>`:''}
+      <div class="stat cost"><b>${totalCost.toLocaleString('pl-PL')} zł${missingPrices.length?' *':''}</b><span>${missingPrices.length?'znana cena bloczków':'cena bloczków'}</span></div>
+      ${withArch?`<div class="stat cost"><b>${missingArch?'—':archCost.toLocaleString('pl-PL')+' zł'}</b><span>${missingArch?'brak ceny łuków':'cena łuków'}</span></div>`:''}`;
+
+    const planWrap=document.getElementById('plan3d-wrap');
+    planWrap.innerHTML=renderBoksyPlan(N,W,D,series);
+    planWrap.style.display='';
+
+    const boczne_mb=((N+1)*D/100).toFixed(2);
+    const tylna_mb=(backLen/100).toFixed(2);
+    const cornerNote=`naroże zewn.: ${(D/100).toFixed(2)} / ${((D+d)/100).toFixed(2)} m`;
+    const tylnaCourses=courses.filter(c=>c.key==='Tylna');
+    const boczna1=courses.filter(c=>c.key==='Boczna_1');
+
+    const archSectionHtml=withArch?`
+      <div class="wall">
+        <h2>Łuk dachowy</h2>
+        <div class="wall-note" style="line-height:1.8">
+          <b>Element:</b> ${(ARCH.span/100).toFixed(2)} m rozpiętości × ${(ARCH.depth/100).toFixed(2)} m szer. × 0.60 m wys. &nbsp;|&nbsp;
+          <b>Strzałka:</b> ${ARCH.rise} cm &nbsp;|&nbsp; <b>Krawędź:</b> ${ARCH.edgeH} cm<br>
+          <b>Łuków / boks:</b> ${Math.ceil(D/(ARCH.depth*10))} szt. &nbsp;|&nbsp;
+          <b>Łącznie (${N} boksów):</b> ${archQty} szt.<br>
+          <b>Uwaga:</b> tylna ściana (Tylna) nie jest nakryta łukiem — należy domurować szczyt bloczkami
+          wg profilu łuku (maks. strzałka ~${ARCH.rise} cm ponad poziom ścian bocznych).
+        </div>
+        ${archWarnHtml}
+      </div>`:''
+
+    walls.innerHTML=`
+      ${priceWarningHtml(missingPrices,missingArch)}
+      <div class="wall-note" style="line-height:1.8">
+        <b>Tylna:</b> ${tylna_mb} m &nbsp;|&nbsp;
+        <b>Boczne (${N+1} szt.):</b> ${boczne_mb} m łącznie &nbsp;|&nbsp;
+        ${cornerNote}<br>
+        <b>Razem / rząd:</b> ${mbPerRow.toFixed(2)} m &nbsp;|&nbsp;
+        <b>Razem wszystkie rzędy (×${rows}):</b> ${mbTotal} m &nbsp;|&nbsp;
+        <b>h:</b> ${actualH} m
+      </div>
+      ${renderWall('Tylna (pełna długość)',tylnaCourses,series)}
+      ${renderWall(`Boczna (×${N+1} szt.)`,boczna1,series)}
+      ${buildTable(counts,series,prices)}
+      ${archSectionHtml}`;
+
+    setCurrentResult({
+      seriesKey,shape,
+      dimensions:{boxes:N,widthCm:W,depthCm:D,heightM:H},
+      blockCount:qty,
+      unitWeight:totalW,
+      unitKnownNet:totalMaterialCost,
+      complete:missingPrices.length===0&&!missingArch,
+      missingPrices,
+      missingArch,
+    });
+    render3d(shape,courses,series,N,W,D,null,H);
+    return;
+  }
+
+  // --- prosta / L / U ---
+  const withArchU=shape==='U'&&(document.getElementById('withArch')?.checked);
+  const archPriceUnitU=withArchU?Math.max(0,+(document.getElementById('archPrice')?.value||0)):0;
+
+  summary.style.gridTemplateColumns='';
+  const rawBad=raw.filter((v,i)=>shape==='prosta'?i===0:shape==='L'?i<2:true).filter(v=>v%step!==0);
+  const courseBad=courseLengthIssues(shape,raw,series,step);
+  if(rawBad.length||courseBad.length){
+    setWarn(`Uwaga: wymiar albo odcinek po złożeniu narożnika nie leży w module ${step} cm. Skoryguj wymiar.`);
+  } else {
+    setWarn('');
+  }
+  showFixes(raw,shape,step);
+  if(courseBad.length)fixes.innerHTML+=`<div class="fix"><div class="fix-title">Odcinki poza modułem: ${courseBad.join(', ')}</div></div>`;
+  if(rawBad.length||courseBad.length){
+    summary.innerHTML=`<div class="stat"><b>—</b><span>popraw wymiary</span></div><div class="stat"><b>${step} cm</b><span>moduł</span></div>`;
+    walls.innerHTML='<div style="color:var(--muted);font-size:13px">Wybierz korektę wymiaru po lewej stronie.</div>';
+    if(renderer){meshes.forEach(m=>{scene.remove(m);m.geometry.dispose();m.material.dispose()});meshes=[];}
+    return;
+  }
+  const courses=layout(shape,raw,+height.value,series);
+  const {counts,qty,totalW,totalCost,missingPrices}=countBlocks(courses,series,seriesKey);
+
+  // Arch for U-shape: arch spans Tylna (raw[1]), multiple arches along Lewa depth (raw[0])
+  let uArchQty=0,uArchCost=0,uArchWarnHtml='',uArchSectionHtml='';
+  if(withArchU){
+    const tylnaInternal=raw[1]-2*series.depth; // internal Tylna width
+    if(Math.abs(tylnaInternal-ARCH.span*10)>series.blocks[series.blocks.length-1]){
+      uArchWarnHtml=`<div class="warn" style="margin-top:8px">⚠ Łuk wymaga Tylna wewn. = ${(ARCH.span/100).toFixed(2)} m (masz ${(tylnaInternal/100).toFixed(2)} m)</div>`;
+    }
+    const depthCm=raw[0]; // Lewa = depth of the U-box
+    uArchQty=Math.ceil(depthCm/(ARCH.depth*10));
+    uArchCost=uArchQty*archPriceUnitU;
+    uArchSectionHtml=`
+      <div class="wall">
+        <h2>Łuk dachowy</h2>
+        <div class="wall-note" style="line-height:1.8">
+          <b>Element:</b> ${(ARCH.span/100).toFixed(2)} m rozpiętości × ${(ARCH.depth/100).toFixed(2)} m szer. × 0.60 m wys. &nbsp;|&nbsp;
+          <b>Strzałka:</b> ${ARCH.rise} cm &nbsp;|&nbsp; <b>Krawędź:</b> ${ARCH.edgeH} cm<br>
+          <b>Łuków na głębokość ${(raw[0]/100).toFixed(2)} m:</b> ${uArchQty} szt.<br>
+          <b>Uwaga:</b> tylna ściana (Tylna) nie jest nakryta łukiem — należy domurować szczyt
+          bloczkami wg profilu łuku (maks. ~${ARCH.rise} cm ponad poziom ścian bocznych).
+        </div>
+        ${uArchWarnHtml}
+      </div>`;
+  }
+
+  const missingArch=withArchU&&archPriceUnitU<=0;
+  const totalMaterialCost=totalCost+uArchCost;
+  summary.style.gridTemplateColumns=withArchU?'repeat(6,1fr)':'';
+  summary.innerHTML=`
+    <div class="stat"><b>${qty}</b><span>szt. bloczków</span></div>
+    <div class="stat"><b>${totalW.toFixed(1)} t</b><span>waga</span></div>
+    <div class="stat"><b>${Math.ceil(totalW/27)}</b><span>kursy 27 t</span></div>
+    ${withArchU?`<div class="stat"><b>${uArchQty}</b><span>łuków dachowych</span></div>`:''}
+    <div class="stat cost"><b>${totalCost.toLocaleString('pl-PL')} zł${missingPrices.length?' *':''}</b><span>${missingPrices.length?'znana cena bloczków':'cena bloczków'}</span></div>
+    ${withArchU?`<div class="stat cost"><b>${missingArch?'—':uArchCost.toLocaleString('pl-PL')+' zł'}</b><span>${missingArch?'brak ceny łuków':'cena łuków'}</span></div>`:''}`;
+  const groups=[...new Set(courses.map(c=>c.key))];
+  walls.innerHTML=priceWarningHtml(missingPrices,missingArch)+groups.map(g=>renderWall(g,courses.filter(c=>c.key===g),series)).join('')+buildTable(counts,series,prices)+uArchSectionHtml;
+  setCurrentResult({
+    seriesKey,shape,
+    dimensions:{valuesCm:raw.slice(0,activeDimCount(shape)),heightM:+height.value},
+    blockCount:qty,
+    unitWeight:totalW,
+    unitKnownNet:totalMaterialCost,
+    complete:missingPrices.length===0&&!missingArch,
+    missingPrices,
+    missingArch,
+  });
+  render3d(shape,courses,series,0,0,0,raw,+height.value);
+}
+
+cart=loadCart();
+saveCart();
+renderCart();
+document.getElementById('cartDialog').addEventListener('click',event=>{
+  if(event.target===event.currentTarget)closeCart();
+});
+onShapeChange(); // initialize boksy mode on load
+</script>
+</body>
+</html>

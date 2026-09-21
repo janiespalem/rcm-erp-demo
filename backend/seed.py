@@ -21,9 +21,11 @@ from models import (
 
 
 _DEMO_USERS = (
-    ("Demo Office", UserRole.biuro, "1111"),
-    ("Demo Technologist", UserRole.technolog, "2222"),
-    ("Demo CEO", UserRole.ceo, "3333"),
+    ("Demo Office", UserRole.biuro, "1111", None),
+    ("Demo Technologist", UserRole.technolog, "2222", None),
+    ("Demo CEO", UserRole.ceo, "3333", None),
+    ("Demo Shift I", UserRole.produkcja, "4444", "I"),
+    ("Demo Shift II", UserRole.produkcja, "5555", "II"),
 )
 
 
@@ -33,11 +35,10 @@ def _pin_hash(pin: str) -> str:
 
 def seed_demo_data(db: Session) -> None:
     """Populate an empty database with idempotent, entirely fictional records."""
-    if db.query(User).count() == 0:
-        db.add_all(
-            User(name=name, role=role, pin_hash=_pin_hash(pin))
-            for name, role, pin in _DEMO_USERS
-        )
+    # Add new demo identities on upgrades without resetting existing credentials.
+    for name, role, pin, shift in _DEMO_USERS:
+        if not db.query(User).filter_by(name=name, role=role).first():
+            db.add(User(name=name, role=role, pin_hash=_pin_hash(pin), default_shift=shift))
 
     settings = (
         ("labor_rate_pln", "95", "Stawka robocizny (PLN/h)"),

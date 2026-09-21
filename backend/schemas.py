@@ -50,6 +50,7 @@ class OrderCreate(BaseModel):
 
 
 class OrderOut(BaseModel):
+    version_id: int
     id:            int
     order_number:  Optional[str]
     approved_material_id: Optional[int] = None
@@ -95,6 +96,7 @@ class OrderOut(BaseModel):
 
 class OrderUpdate(BaseModel):
     """Частичное обновление заказа (PATCH). Передаём только изменённые поля."""
+    version_id: int = Field(ge=1)
     order_number:    Optional[str]   = None
     client:          Optional[str]   = None
     deadline:        Optional[date]  = None

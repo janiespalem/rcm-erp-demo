@@ -10,6 +10,38 @@ permissions:
   contents: read
 
 jobs:
+  postgres-concurrency:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: rcm_erp_test
+          POSTGRES_USER: rcm_test
+          POSTGRES_PASSWORD: test-only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U rcm_test -d rcm_erp_test"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      APP_ENV: test
+      DISABLE_STARTUP_SEED: "1"
+      TEST_DATABASE_URL: postgresql+psycopg://rcm_test:test-only@127.0.0.1:5432/rcm_erp_test
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install dependencies
+        run: |
+          grep -vE '^weasyprint|^pydyf' requirements.txt > /tmp/ci-req.txt
+          pip install -r /tmp/ci-req.txt -r requirements-dev.txt
+      - name: PostgreSQL migration and concurrent HTTP requests
+        run: python -m pytest tests/test_postgres_concurrency.py -v
+
   test:
     runs-on: ubuntu-latest
     steps:
@@ -24,7 +56,7 @@ jobs:
 
       - name: Build Vite frontend
         # tests/test_build.py always checks for frontend-vite/dist/index.html
-        run: cd frontend-vite && npm ci && npm run build
+        run: cd frontend-vite && npm ci && npm run test:lego && npm run test:tetrapod && npm run build
 
       - name: Set up Python 3.11
         uses: actions/setup-python@v7
@@ -43,6 +75,31 @@ jobs:
           APP_ENV: test
           DISABLE_STARTUP_SEED: "1"
         run: python -m pytest -q
+
+      - name: Install Chromium for report workflows
+        run: python -m playwright install --with-deps chromium
+
+      - name: Browser report workflows (desktop, phone, A4, logout)
+        env:
+          APP_ENV: test
+          DISABLE_STARTUP_SEED: "1"
+          RUN_SHIFT_BROWSER: "1"
+        run: python -m pytest tests/test_shift_reports.py -q
+
+  frontend-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Node 20
+        uses: actions/setup-node@v7
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend-vite/package-lock.json
+
+      - name: Build Vite frontend
+        run: cd frontend-vite && npm ci && npm run build
 
   migration-check:
     runs-on: ubuntu-latest
