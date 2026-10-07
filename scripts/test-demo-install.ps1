@@ -138,6 +138,8 @@ try {
     } until ($demo.MainWindowHandle -ne 0 -or [DateTime]::UtcNow -gt $deadline)
     if ($demo.MainWindowHandle -eq 0) { throw 'Installed FactoryFlow did not display a native window' }
     Start-Sleep -Seconds 5
+    $demo.Refresh()
+    if ($demo.HasExited -or $demo.MainWindowHandle -eq 0 -or $demo.MainWindowTitle -notlike 'FactoryFlow*') { throw 'Installed FactoryFlow did not keep its branded native window open' }
     Record-IdentityObservation 'after-factoryflow-startup'
     if ($listener.Pending()) { throw 'Demo contacted an RCM production environment endpoint' }
     if ($rcm.HasExited) { throw 'RCM did not remain running beside FactoryFlow' }
