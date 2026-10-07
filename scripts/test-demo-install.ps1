@@ -27,12 +27,9 @@ if ($realRcm) {
 $rcmExe = Join-Path $rcmDirectory 'current/Rcm.Desktop.exe'
 $demoExe = Join-Path $demoDirectory 'current/FactoryFlow.exe'
 $identity = Join-Path $rcmDirectory 'identity'
-New-Item -ItemType Directory -Path $identity -Force | Out-Null
 $sentinel = Join-Path $identity ("synthetic-preservation-" + [Guid]::NewGuid().ToString('N') + '.bin')
-[IO.File]::WriteAllText($sentinel, 'Synthetic production identity must remain unchanged.')
-$before = (Get-FileHash $sentinel -Algorithm SHA256).Hash
+$before = $null
 $identityBefore = @{}
-Get-ChildItem $identity -File -Recurse | ForEach-Object { $identityBefore[$_.FullName] = (Get-FileHash $_.FullName -Algorithm SHA256).Hash }
 $listener = [Net.Sockets.TcpListener]::new([Net.IPAddress]::Loopback, 0)
 $listener.Start()
 $port = $listener.LocalEndpoint.Port
@@ -84,6 +81,11 @@ function Record-IdentityObservation([string]$Stage) {
     $previousIdentity.Clear()
     foreach ($path in $current.Keys) { $previousIdentity[$path] = $current[$path] }
 }
+function Assert-PreservedRcmIdentity {
+    foreach ($path in $identityBefore.Keys) {
+        if (-not (Test-Path -LiteralPath $path) -or (Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash -ne $identityBefore[$path]) { throw 'Existing RCM identity data changed after FactoryFlow installation or startup' }
+    }
+}
 $rcm = $null
 $demo = $null
 try {
@@ -99,6 +101,15 @@ try {
         if (-not $process.WaitForExit(120000)) { $process.Kill(); throw "Installer timed out: $installer" }
         if ($process.ExitCode -ne 0) { throw "Installer failed: $installer ($($process.ExitCode))" }
         Record-IdentityObservation $(if ($installer -eq $rcmInstaller) { 'after-rcm-setup' } else { 'after-factoryflow-setup' })
+        if ($installer -eq $rcmInstaller) {
+            New-Item -ItemType Directory -Path $identity -Force | Out-Null
+            [IO.File]::WriteAllText($sentinel, 'Synthetic production identity must remain unchanged.')
+            $before = (Get-FileHash $sentinel -Algorithm SHA256).Hash
+            Get-ChildItem $identity -File -Recurse | ForEach-Object { $identityBefore[$_.FullName] = (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash }
+            $previousIdentity.Clear()
+            foreach ($path in $identityBefore.Keys) { $previousIdentity[$path] = $identityBefore[$path] }
+            Record-IdentityObservation 'before-factoryflow-setup'
+        } else { Assert-PreservedRcmIdentity }
     }
     if (-not (Test-Path $rcmExe) -or -not (Test-Path $demoExe)) { throw 'Separate default installation paths missing' }
     $env:RCM_SERVER_URL = "http://127.0.0.1:$sinkPort/"
@@ -131,9 +142,7 @@ try {
     if ($listener.Pending()) { throw 'Demo contacted an RCM production environment endpoint' }
     if ($rcm.HasExited) { throw 'RCM did not remain running beside FactoryFlow' }
     if (-not $realRcm -and -not (Test-Path $env:FACTORYFLOW_COEXISTENCE_MARKER)) { throw 'Synthetic RCM fixture marker missing' }
-    foreach ($path in $identityBefore.Keys) {
-        if (-not (Test-Path -LiteralPath $path) -or (Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash -ne $identityBefore[$path]) { throw 'RCM identity data changed' }
-    }
+    Assert-PreservedRcmIdentity
     $release = Get-Content (Join-Path $demoDirectory 'current/release.json') -Raw | ConvertFrom-Json
     if ($release.identity -ne 'FactoryFlow' -or $release.architecture -ne 'win-x64' -or $release.commit -notmatch '^[0-9a-f]{40}$') { throw 'Installed FactoryFlow source manifest invalid' }
     [ordered]@{
@@ -147,6 +156,9 @@ try {
         factoryFlowRelease = $release
         ignoredProductionEnvironmentRequests = 0
         rcmIdentitySha256 = $before
+        rcmIdentityFilesVerified = $identityBefore.Count
+        rcmIdentitySnapshotBoundary = 'Existing RCM installation, immediately before FactoryFlow setup'
+        identityVerifiedAfter = @('FactoryFlow installation', 'Both application startups')
         factoryFlowWindowTitle = $demo.MainWindowTitle
     } | ConvertTo-Json | Set-Content (Join-Path $results 'installer-isolation.json') -Encoding utf8NoBOM
 } catch {
