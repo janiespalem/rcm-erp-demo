@@ -1,0 +1,24 @@
+<UserControl x:Class="Rcm.Desktop.ProductionEditorForm" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Grid Margin="24"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+    <TextBlock Text="{Binding Heading}" Style="{StaticResource Title}"/>
+    <TextBlock Grid.Row="1" Text="{Binding AccessHint}" Foreground="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,10,0,16"/>
+    <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto"><StackPanel>
+      <StackPanel IsEnabled="{Binding CanEdit}">
+        <ItemsControl ItemsSource="{Binding Fields}"><ItemsControl.ItemTemplate><DataTemplate><StackPanel Margin="0,0,0,10"><TextBlock Text="{Binding Label}" Style="{StaticResource Label}"/><TextBox Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="{Binding Label}" Margin="0,5,8,0"/></StackPanel></DataTemplate></ItemsControl.ItemTemplate></ItemsControl>
+        <StackPanel Visibility="{Binding IsContract, Converter={StaticResource Visible}}">
+          <TextBlock Text="Termin (opcjonalny)" Style="{StaticResource Label}"/><DatePicker x:Name="ProductionDeadline" SelectedDate="{Binding Deadline}" Margin="0,5,8,10"/>
+          <TextBlock Text="Data otwarcia — początkowe masy powyżej" Style="{StaticResource Label}"/><DatePicker x:Name="ProductionOpeningDate" SelectedDate="{Binding OpeningDate}" DisplayDateEnd="{Binding Today, Mode=OneWay}" Margin="0,5,8,10"/>
+          <TextBlock Text="{Binding NormHint}" TextWrapping="Wrap" Margin="0,5,0,10"/>
+          <CheckBox x:Name="ProductionNormConfirmed" Content="Potwierdzam zgodność normy z kontraktem" IsChecked="{Binding NormConfirmed}" Margin="0,0,0,10"/>
+          <CheckBox Content="Kontrakt testowy — dane syntetyczne" IsChecked="{Binding IsSynthetic}" IsEnabled="{Binding CanSynthetic}" Margin="0,0,0,10"/>
+        </StackPanel>
+        <StackPanel Visibility="{Binding IsDelivery, Converter={StaticResource Visible}}"><TextBlock Text="Data dostawy" Style="{StaticResource Label}"/><DatePicker x:Name="SteelDeliveryDate" SelectedDate="{Binding DeliveryDate}" DisplayDateEnd="{Binding Today, Mode=OneWay}" Margin="0,5,8,10"/><TextBlock Text="Dostawy przed datą otwarcia pozostają w historii i nie powiększają sumy materiału. Brak daty otwarcia lub mas początkowych oznacza nieznane sumy." TextWrapping="Wrap" Foreground="{StaticResource Muted}" Margin="0,0,0,10"/></StackPanel>
+        <TextBlock Text="Powód zmiany (wymagany przy korekcie dostawy)" Style="{StaticResource Label}"/><TextBox x:Name="ProductionReason" Text="{Binding Reason, UpdateSourceTrigger=PropertyChanged}" TextWrapping="Wrap" AcceptsReturn="True" MinHeight="65" Margin="0,5,8,10"/>
+      </StackPanel>
+      <ItemsControl ItemsSource="{Binding Errors}" Foreground="{StaticResource Error}" Margin="0,4,0,10"><ItemsControl.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" TextWrapping="Wrap" Margin="0,0,0,5"/></DataTemplate></ItemsControl.ItemTemplate></ItemsControl>
+      <ItemsControl ItemsSource="{Binding Comparison}"><ItemsControl.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" TextWrapping="Wrap" Margin="0,4,0,0"/></DataTemplate></ItemsControl.ItemTemplate></ItemsControl>
+    </StackPanel></ScrollViewer>
+    <TextBlock Grid.Row="3" Text="{Binding Status}" TextWrapping="Wrap" Margin="0,12,0,12" AutomationProperties.LiveSetting="Polite"/>
+    <WrapPanel Grid.Row="4"><Button x:Name="SaveProduction" Content="Zapisz" Style="{StaticResource PrimaryButton}" IsEnabled="{Binding CanSave}" Click="Save_Click" Margin="0,0,8,8"/><Button x:Name="RetryProduction" Content="Ponów tę samą operację" IsEnabled="{Binding CanRetry}" Click="Retry_Click" Margin="0,0,8,8"/><Button x:Name="CompareProduction" Content="Porównaj z serwerem" IsEnabled="{Binding CanCompare}" Click="Compare_Click" Margin="0,0,8,8"/><Button x:Name="AcceptProductionVersion" Content="Przyjmij wersję; zachowaj pola" IsEnabled="{Binding CanAcceptComparison}" Click="Accept_Click" Margin="0,0,8,8"/><Button Content="Zatrzymaj oczekiwanie" IsEnabled="{Binding Busy}" Click="Cancel_Click" Margin="0,0,8,8"/><Button Content="Zamknij" Click="Close_Click" Margin="0,0,8,8"/></WrapPanel>
+  </Grid>
+</UserControl>

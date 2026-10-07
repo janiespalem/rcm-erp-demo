@@ -1,0 +1,33 @@
+<UserControl x:Class="Rcm.Desktop.CatalogPage" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Grid Margin="{StaticResource PageMargin}">
+    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+    <DockPanel Margin="0,0,0,20">
+      <Button DockPanel.Dock="Right" Content="+ Dodaj pozycję" Click="Create_Click" Style="{StaticResource PrimaryButton}" IsEnabled="{Binding CanWrite}" AutomationProperties.AutomationId="CreateCatalogEntry" Margin="16,0,0,0"/>
+      <StackPanel><TextBlock Text="{Binding Heading}" Style="{StaticResource Title}"/></StackPanel>
+    </DockPanel>
+    <Grid Grid.Row="1" Margin="0,0,0,14">
+      <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+      <TextBox x:Name="CatalogSearch" Text="{Binding Search, UpdateSourceTrigger=PropertyChanged}" TextChanged="Search_Changed" ToolTip="Szukaj po nazwie, kategorii lub wydziale" AutomationProperties.Name="Szukaj w katalogu"/>
+      <CheckBox Grid.Column="1" Content="Archiwum" IsChecked="{Binding IncludeArchived}" Checked="Archive_Changed" Unchecked="Archive_Changed" Visibility="{Binding IsMaterials, Converter={StaticResource Visible}}" VerticalAlignment="Center" Margin="16,0,0,0"/>
+    </Grid>
+    <Border Grid.Row="2" Style="{StaticResource Card}">
+      <DataGrid x:Name="CatalogRows" ItemsSource="{Binding Rows}" SelectedItem="{Binding Selected}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" CanUserSortColumns="True" SelectionMode="Single" SelectionUnit="FullRow" MinRowHeight="44" GridLinesVisibility="Horizontal" EnableRowVirtualization="True" EnableColumnVirtualization="True" VirtualizingPanel.VirtualizationMode="Recycling" MouseDoubleClick="Edit_Click" KeyDown="Rows_KeyDown" AutomationProperties.AutomationId="CatalogRows">
+        <DataGrid.Columns>
+          <DataGridTextColumn Header="Nazwa / wymiar" Binding="{Binding Name}" Width="2*" MinWidth="200" ElementStyle="{StaticResource CellText}"/>
+          <DataGridTextColumn x:Name="GroupColumn" Header="Kategoria" Binding="{Binding Group}" Width="*" MinWidth="130" ElementStyle="{StaticResource CellText}"/>
+          <DataGridTextColumn x:Name="RateColumn" Header="PLN/kg" Binding="{Binding RateLabel}" SortMemberPath="Rate" Width="110" ElementStyle="{StaticResource CellText}"/>
+          <DataGridTextColumn x:Name="StateColumn" Header="Stan" Binding="{Binding StateLabel}" Width="120" ElementStyle="{StaticResource CellText}"/>
+        </DataGrid.Columns>
+      </DataGrid>
+    </Border>
+    <DockPanel Grid.Row="3" Margin="0,14,0,0">
+      <StackPanel DockPanel.Dock="Right" Orientation="Horizontal"><Button Content="Poprzednia" Click="Previous_Click" IsEnabled="{Binding CanPrevious}" Margin="0,0,8,0"/><Button Content="Następna" Click="Next_Click" IsEnabled="{Binding CanNext}"/></StackPanel>
+      <WrapPanel><Button Content="Edytuj" Click="Edit_Click" IsEnabled="{Binding CanEdit}" Margin="0,0,8,8"/><Button Content="{Binding RemoveLabel}" Click="Remove_Click" IsEnabled="{Binding CanRemove}" Margin="0,0,16,8"/><TextBlock Text="{Binding PageInfo}" Foreground="{StaticResource Muted}" VerticalAlignment="Center" Margin="0,0,0,8"/></WrapPanel>
+    </DockPanel>
+    <Grid Grid.Row="4" Margin="0,10,0,0">
+      <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+      <TextBlock Text="{Binding AccessHint}" Foreground="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,0,0,10"/>
+      <DockPanel Grid.Row="1"><Button DockPanel.Dock="Right" Content="Odśwież" Click="Refresh_Click" Margin="14,0,0,0"/><TextBlock Text="{Binding Status}" TextWrapping="Wrap" VerticalAlignment="Center" AutomationProperties.LiveSetting="Polite"/></DockPanel>
+    </Grid>
+  </Grid>
+</UserControl>

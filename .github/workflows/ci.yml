@@ -1,123 +1,60 @@
-name: CI
-
+name: FactoryFlow backend
 on:
   push:
     branches: [main]
   pull_request:
-    branches: [main]
-
+  workflow_dispatch:
 permissions:
   contents: read
-
 jobs:
-  postgres-concurrency:
+  native-postgres:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
-    services:
-      postgres:
-        image: postgres:17
-        env:
-          POSTGRES_DB: rcm_erp_test
-          POSTGRES_USER: rcm_test
-          POSTGRES_PASSWORD: test-only
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U rcm_test -d rcm_erp_test"
-          --health-interval 5s --health-timeout 5s --health-retries 10
-    env:
-      APP_ENV: test
-      DISABLE_STARTUP_SEED: "1"
-      TEST_DATABASE_URL: postgresql+psycopg://rcm_test:test-only@127.0.0.1:5432/rcm_erp_test
+    timeout-minutes: 25
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-python@v7
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
-          cache: pip
-      - name: Install dependencies
+          python-version: '3.12'
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: dotnet/global.json
+      - run: python -m pip install -r requirements.txt
+      - name: Bootstrap a fresh PostgreSQL database
         run: |
-          grep -vE '^weasyprint|^pydyf' requirements.txt > /tmp/ci-req.txt
-          pip install -r /tmp/ci-req.txt -r requirements-dev.txt
-      - name: PostgreSQL migration and concurrent HTTP requests
-        run: python -m pytest tests/test_postgres_concurrency.py -v
-
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-
-      - name: Set up Node 20
-        uses: actions/setup-node@v7
-        with:
-          node-version: "20"
-          cache: npm
-          cache-dependency-path: frontend-vite/package-lock.json
-
-      - name: Build Vite frontend
-        # tests/test_build.py always checks for frontend-vite/dist/index.html
-        run: cd frontend-vite && npm ci && npm run test:lego && npm run test:tetrapod && npm run build
-
-      - name: Set up Python 3.11
-        uses: actions/setup-python@v7
-        with:
-          python-version: "3.11"
-          cache: pip
-
-      - name: Install dependencies
-        # WeasyPrint requires GTK/Cairo — exclude it in CI (pdf_gen handles missing import gracefully)
+          docker compose up -d --wait db
+          docker compose --profile setup run --build --rm bootstrap
+          docker compose up -d --build --wait api
+      - name: Install PDF text verifier
+        run: sudo apt-get update && sudo apt-get install -y poppler-utils
+      - name: Verify native workflows and isolation
         run: |
-          grep -vE '^weasyprint|^pydyf' requirements.txt > /tmp/ci-req.txt
-          pip install -r /tmp/ci-req.txt -r requirements-dev.txt
-
-      - name: Run tests
-        env:
-          APP_ENV: test
-          DISABLE_STARTUP_SEED: "1"
-        run: python -m pytest -q
-
-      - name: Install Chromium for report workflows
-        run: python -m playwright install --with-deps chromium
-
-      - name: Browser report workflows (desktop, phone, A4, logout)
-        env:
-          APP_ENV: test
-          DISABLE_STARTUP_SEED: "1"
-          RUN_SHIFT_BROWSER: "1"
-        run: python -m pytest tests/test_shift_reports.py -q
-
-  frontend-build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-
-      - name: Set up Node 20
-        uses: actions/setup-node@v7
-        with:
-          node-version: "20"
-          cache: npm
-          cache-dependency-path: frontend-vite/package-lock.json
-
-      - name: Build Vite frontend
-        run: cd frontend-vite && npm ci && npm run build
-
-  migration-check:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-
-      - name: Set up Python 3.11
-        uses: actions/setup-python@v7
-        with:
-          python-version: "3.11"
-          cache: pip
-
-      - name: Install dependencies
+          python demo/verify_fixtures.py
+          python demo/verify_documents.py
+          python demo/verify.py
+      - name: Verify persistence after restart and repeated bootstrap
         run: |
-          grep -vE '^weasyprint|^pydyf' requirements.txt > /tmp/ci-req.txt
-          pip install -r /tmp/ci-req.txt
-
-      - name: Verify alembic upgrade head on fresh SQLite
-        env:
-          DATABASE_URL: sqlite:////tmp/ci_migration_test.db
-        run: python -m alembic upgrade head
+          docker compose stop api
+          docker compose --profile setup run --rm bootstrap
+          docker compose up -d --wait api
+          python demo/verify.py --after-restart
+          python demo/verify_fixtures.py --compare
+      - name: Calculation parity
+        working-directory: dotnet
+        run: |
+          dotnet restore Rcm.Calculators.Tests --locked-mode
+          dotnet test Rcm.Calculators.Tests -c Release --no-restore
+          dotnet restore Rcm.Orders.Tests --locked-mode
+          dotnet test Rcm.Orders.Tests -c Release --no-restore
+      - name: Container diagnostics
+        if: failure()
+        run: docker compose logs --no-color
+      - name: Remove disposable test containers
+        if: always()
+        run: docker compose down -v
+  legacy-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the independent legacy profile
+        run: docker compose --profile legacy build legacy

@@ -1,0 +1,636 @@
+{
+  "files": [
+    {
+      "path": "alembic.ini",
+      "sourceSha256": "4a64414e250b20300d792058419b7f7c49adffe76d33d633fed653e99405b557"
+    },
+    {
+      "path": "backend/database.py",
+      "sourceSha256": "f644bfbbc73ddd99c0a5745e88563d3ca9af5973f0c571b7266689f537519707"
+    },
+    {
+      "path": "backend/models.py",
+      "sourceSha256": "94afff92860c9e100b389f209f19342aee12bc8d1ad164694eb1cf2e99f1035c"
+    },
+    {
+      "path": "backend/utils.py",
+      "sourceSha256": "6eaddb32e36596e7154692336293cac32da3fc0d1d35706606d80a6fba7be4ea"
+    },
+    {
+      "path": "dotnet/Directory.Build.props",
+      "sourceSha256": "701988993a4f5f3f6b83301e06a2bd2baa86b3e5ccd41eb936d7fc7a59a2bca5"
+    },
+    {
+      "path": "dotnet/Rcm.Calculators.Tests/Fixtures/lego.json",
+      "sourceSha256": "72b88995810741fe3dd1ffc37adede94cebf841da693488c66da52019308c62d"
+    },
+    {
+      "path": "dotnet/Rcm.Calculators.Tests/Fixtures/tetrapod.json",
+      "sourceSha256": "26c7d13e160e7723c3a06b2109e42ea54acabd9874cb26423b324a4253486d1c"
+    },
+    {
+      "path": "dotnet/Rcm.Calculators.Tests/LegoTests.cs",
+      "sourceSha256": "394fdfd5ed6dcafd9bd3fca533d1155d186528f0eb877d77db3e8c9c4cd614ad"
+    },
+    {
+      "path": "dotnet/Rcm.Calculators.Tests/Rcm.Calculators.Tests.csproj",
+      "sourceSha256": "e689408776e771fb4b0177acceaad0d7989381ab852b2bd24fc86dcc31b7df4f"
+    },
+    {
+      "path": "dotnet/Rcm.Calculators.Tests/TetrapodCoverageTests.cs",
+      "sourceSha256": "e7764163ca8bbd38f72332d5f0d96c6b8c2809f64721561656746f297dff0240"
+    },
+    {
+      "path": "dotnet/Rcm.Calculators.Tests/TetrapodTests.cs",
+      "sourceSha256": "49206c061828fe0261e9ea8b518414f44c269126603a89a16da278d22c0d5293"
+    },
+    {
+      "path": "dotnet/Rcm.Calculators.Tests/packages.lock.json",
+      "sourceSha256": "ae19345c9d8dbee77f2e18e2b2149d2781e90f1f616f546f41c1220304380d22"
+    },
+    {
+      "path": "dotnet/Rcm.Calculators/LegoCalculator.cs",
+      "sourceSha256": "2e0b4393d469a5668190bfddae6948818268d07210c894a9e30f09c7af67fe21"
+    },
+    {
+      "path": "dotnet/Rcm.Calculators/Rcm.Calculators.csproj",
+      "sourceSha256": "a706cb5b17f57c29d67bf812bec8fae4127c97536be0bbcd6bbccf9ed1579dad"
+    },
+    {
+      "path": "dotnet/Rcm.Calculators/TetrapodCalculator.cs",
+      "sourceSha256": "a85a8147999c55331eedf4feb48680b07a744d72027de784abcf8a75923d56aa"
+    },
+    {
+      "path": "dotnet/Rcm.Calculators/TetrapodCoverage.cs",
+      "sourceSha256": "9ab9ea197f3e98a616aad2f93cd728e1dc63ad384bd22b032696c01d2dfc5c70"
+    },
+    {
+      "path": "dotnet/Rcm.Calculators/packages.lock.json",
+      "sourceSha256": "588cba95c429c998ead9950ebcf988b105dfbe246cd5f2120b16bf44cd3ee5e8"
+    },
+    {
+      "path": "dotnet/Rcm.Contracts/CatalogContracts.cs",
+      "sourceSha256": "f4b2930cf940a8827b85430c6478f918651c7105f47adfa0a32c219094143120"
+    },
+    {
+      "path": "dotnet/Rcm.Contracts/CrmContracts.cs",
+      "sourceSha256": "496b96397447c5421eb7bb43bfe1597a3b026c741ddfb84f76247aa38532927d"
+    },
+    {
+      "path": "dotnet/Rcm.Contracts/InsightContracts.cs",
+      "sourceSha256": "ed181445c9bd03ea66dab9ad4c0d27108e9e5a07f3a482f7d7c0f312d0e111d7"
+    },
+    {
+      "path": "dotnet/Rcm.Contracts/LegoContracts.cs",
+      "sourceSha256": "8d2180c2da1c4cb30b3e4d8e3edc42c1753821e83e33f92be466fcb21f73658a"
+    },
+    {
+      "path": "dotnet/Rcm.Contracts/OrderAttachmentContracts.cs",
+      "sourceSha256": "cb546dfc982268ba08be4206318a210eb2726d94c15aba444ea1a869317a5443"
+    },
+    {
+      "path": "dotnet/Rcm.Contracts/OrderContracts.cs",
+      "sourceSha256": "0963b344622ee8ce82f4cb6023fd0c569686f0a89a636e5beba1542f51c5a3ed"
+    },
+    {
+      "path": "dotnet/Rcm.Contracts/OrderDocumentContracts.cs",
+      "sourceSha256": "df6e9dd4a6f083bf3aff32ea4d7b06b19bb80647c64ce0390f5ddd9b61390829"
+    },
+    {
+      "path": "dotnet/Rcm.Contracts/OrderQuestionQueueContracts.cs",
+      "sourceSha256": "26f36c1363465ee14d8f5a4067cf656fb80d3e43aa040d5dcbe148a5699621b1"
+    },
+    {
+      "path": "dotnet/Rcm.Contracts/OrderResourceContracts.cs",
+      "sourceSha256": "2b5ed846145a0486e6b4efc9fc1516ab6ae93c4e549b2a7f6e98c97f3343dffd"
+    },
+    {
+      "path": "dotnet/Rcm.Contracts/ProductionContracts.cs",
+      "sourceSha256": "cbf0e85fd3dfc172e943069b9c02a53722d1da83df775e2e5a5bb08e4c77b5c3"
+    },
+    {
+      "path": "dotnet/Rcm.Contracts/ProductionReviews.cs",
+      "sourceSha256": "bf1b39160c2bf1cd065fc15b42b95e7c40c53006279c56983742c5d1db94aabc"
+    },
+    {
+      "path": "dotnet/Rcm.Contracts/Rcm.Contracts.csproj",
+      "sourceSha256": "2a92a1f421ce5bb0a1e33e7f9fb80386c221d6a6ca2d226ac64af483a3f6f89d"
+    },
+    {
+      "path": "dotnet/Rcm.Contracts/SettingContracts.cs",
+      "sourceSha256": "e0200489276c25c638f01ad2a8cdeade42aa5f718f10093fda28ea3e6b721bc7"
+    },
+    {
+      "path": "dotnet/Rcm.Contracts/ShiftReportContracts.cs",
+      "sourceSha256": "71185b1d6358764a24e811ab955962a6a4ba7fee336c76652f46f60433adf10d"
+    },
+    {
+      "path": "dotnet/Rcm.Contracts/TemplateContracts.cs",
+      "sourceSha256": "e1bb01c9cd331397b28e4f5891b022ea8c260248a2366c50621576c4f97844db"
+    },
+    {
+      "path": "dotnet/Rcm.Contracts/TetrapodContracts.cs",
+      "sourceSha256": "a3acd07281e71218ce710c99ff4b12ac9980598fc287c8cbbefadf4140f54011"
+    },
+    {
+      "path": "dotnet/Rcm.Contracts/packages.lock.json",
+      "sourceSha256": "904d584a72bd92ccefc6da2b5cdeafffb56c125583124e3910c5f62538cfc677"
+    },
+    {
+      "path": "dotnet/Rcm.Crm/CrmDb.cs",
+      "sourceSha256": "b4593c866ec9121e3ac66ddd659a54ebdf3a7e1e81488b50f7f9bf5e5035796d"
+    },
+    {
+      "path": "dotnet/Rcm.Crm/CrmModule.cs",
+      "sourceSha256": "a2d4d42080965cb9919967e32ea3768d6432a09fd76047f751b7d3f9839e6cd4"
+    },
+    {
+      "path": "dotnet/Rcm.Crm/Migrations/20260923131019_InitialCrm.Designer.cs",
+      "sourceSha256": "5f22c772e24d776441c2af1bcd9f0c1ef70fd640d82b486d9d2bb0d53a8ddd39"
+    },
+    {
+      "path": "dotnet/Rcm.Crm/Migrations/20260923131019_InitialCrm.cs",
+      "sourceSha256": "6bfeafee702f27804a9a13edae359231f76453b535da48da9efe391cc3d0cbe9"
+    },
+    {
+      "path": "dotnet/Rcm.Crm/Migrations/20260925180000_ReversibleCustomerArchive.cs",
+      "sourceSha256": "18ed231de3fcef0afba0b7600f7cecd26cd6b21166ce106ab7177c9dee4ee038"
+    },
+    {
+      "path": "dotnet/Rcm.Crm/Migrations/CrmDbModelSnapshot.cs",
+      "sourceSha256": "226c5a3fb42f9a30574dd83c962eb8e991d10013f83fb749a01d7c1d09468ceb"
+    },
+    {
+      "path": "dotnet/Rcm.Crm/Rcm.Crm.csproj",
+      "sourceSha256": "5b59ea0cf866cee68d97443a884b4962a8a7f48afdefb7042d5d486236c2035b"
+    },
+    {
+      "path": "dotnet/Rcm.Crm/packages.lock.json",
+      "sourceSha256": "53bf6b1445d540fa97203a0e284cdaab0a584ac406203c714d686b5159def41b"
+    },
+    {
+      "path": "dotnet/Rcm.Host/ApplicationEndpoints.cs",
+      "sourceSha256": "adb342535d724b61986c710c9014962d78f468624fd33030426457f4d150bdc1"
+    },
+    {
+      "path": "dotnet/Rcm.Host/CatalogEndpoints.cs",
+      "sourceSha256": "7ef015fdebcd893bc32d683f366fe402d06f3e1a5e3ccab2889367841234b7db"
+    },
+    {
+      "path": "dotnet/Rcm.Host/CatalogKeywords.cs",
+      "sourceSha256": "89453d456578ffb7e4d2db7a5af2fad9ae079d517c6107154b2593bb110d8d62"
+    },
+    {
+      "path": "dotnet/Rcm.Host/DesktopDownloads.cs",
+      "sourceSha256": "8ff0612e19543dbd5eb04a6cb9ba940d11a00baba7c15aa9ce59c3682fa73ffb"
+    },
+    {
+      "path": "dotnet/Rcm.Host/DocumentAssets/DejaVuSans-Bold.ttf",
+      "sourceSha256": "d18ffe80992824fbb131e34a582786f0267bdbf68e3f086c1095bf4697bc76cd"
+    },
+    {
+      "path": "dotnet/Rcm.Host/DocumentAssets/DejaVuSans.ttf",
+      "sourceSha256": "f0d9a390aa7cf43999a2fd1502a47c381bc7809ab5fac6937f0f6dd6524096cd"
+    },
+    {
+      "path": "dotnet/Rcm.Host/DocumentAssets/LICENSE",
+      "sourceSha256": "f88d5294af5a772f9114eb385009e3478d62b21f3e5bbc34d159d328047c8867"
+    },
+    {
+      "path": "dotnet/Rcm.Host/DrawingTextExtractor.cs",
+      "sourceSha256": "d576b482f25a4579ce605ff97a8c4017d32d260f95d4ba27f1afc64755109b61"
+    },
+    {
+      "path": "dotnet/Rcm.Host/IIdentity.cs",
+      "sourceSha256": "1c1c428a7b41d0f268e51ce2a5083facaab7bbe5f09d99e8e3945fbae3d5e54b"
+    },
+    {
+      "path": "dotnet/Rcm.Host/IdentityEndpoints.cs",
+      "sourceSha256": "19cb899b59257632abfbd153243ed27905fdc509b92f49c687584240a3f3d2fe"
+    },
+    {
+      "path": "dotnet/Rcm.Host/IdentityProvisioning.cs",
+      "sourceSha256": "d3944103a076fcad0dcd03536a64d4a65765deb8dfc0ede711a7f49d7536130b"
+    },
+    {
+      "path": "dotnet/Rcm.Host/InsightCalculations.cs",
+      "sourceSha256": "d31fdd456af07a53bf2bdbc9164c8fdd6d053063a4c47403513fa6bdcdb3b29f"
+    },
+    {
+      "path": "dotnet/Rcm.Host/InsightSpreadsheet.cs",
+      "sourceSha256": "463440d677caebb93b2f195023a7135a0faca1c209620a4c4652185dd64dcccd"
+    },
+    {
+      "path": "dotnet/Rcm.Host/InsightsEndpoints.cs",
+      "sourceSha256": "f18c50fe4f7e2542190e758a51c508d48d3dd6936d522b565fd40c106971ba6e"
+    },
+    {
+      "path": "dotnet/Rcm.Host/LegacyCatalog.cs",
+      "sourceSha256": "0dd539d4ae6fb7c86ef01bb8c78bb06aaf5c63e9bf0feba1ceb51053715fd52f"
+    },
+    {
+      "path": "dotnet/Rcm.Host/LegacyIdentity.cs",
+      "sourceSha256": "59c1629a45f3190449f3643e705665b6e3a9d427367a7d1cffe4c3bcdc270687"
+    },
+    {
+      "path": "dotnet/Rcm.Host/LegacyInsights.cs",
+      "sourceSha256": "ff41aede4d19bce877cd6890b52aca24b7d1223f05dbbf70639546282e6257d3"
+    },
+    {
+      "path": "dotnet/Rcm.Host/LegacyOrders.cs",
+      "sourceSha256": "e57c7b7ae270a0fa51aac77d774bff3c112bc1c8a2d71a86bffcc6b15ef388a0"
+    },
+    {
+      "path": "dotnet/Rcm.Host/LegacySettings.cs",
+      "sourceSha256": "7e2c2833dde8d6a7f8632bdfa0776629192d250fbcc3a78fc5154b68d29e6911"
+    },
+    {
+      "path": "dotnet/Rcm.Host/LegacyShiftReports.cs",
+      "sourceSha256": "a86cd140df788a6b84be446878f556168318515252644afdf26a77c9c274fed4"
+    },
+    {
+      "path": "dotnet/Rcm.Host/LegacyTemplates.cs",
+      "sourceSha256": "a7493eae8ff878e30b74f5c4f4a4aba9efe3ebd8056531d1f77ef013676378c1"
+    },
+    {
+      "path": "dotnet/Rcm.Host/LoginAttempts.cs",
+      "sourceSha256": "976e5d256142a72c6210e4505fe1caeb2b1ae90d7628221c7e9ea7be73f7144a"
+    },
+    {
+      "path": "dotnet/Rcm.Host/NativeCatalog.cs",
+      "sourceSha256": "f8efc7000a4c6fcfe2e4de2331dd0bcd28479c3047714a1318587da681536d21"
+    },
+    {
+      "path": "dotnet/Rcm.Host/NativeIdentity.cs",
+      "sourceSha256": "211462a4d92ce9b2392300a4a7f9cc7af906ab185640d106fa11714b70f35f0f"
+    },
+    {
+      "path": "dotnet/Rcm.Host/NativeIdentityJwt.cs",
+      "sourceSha256": "ec2c36ffd4c5618c21e796880753114f632964871897fca9e9d087e41f8b789b"
+    },
+    {
+      "path": "dotnet/Rcm.Host/NativeInsights.cs",
+      "sourceSha256": "c05d64c4b4835a73d01b417bee4700e17f8c4308019e9f1055d46e7db26f25b3"
+    },
+    {
+      "path": "dotnet/Rcm.Host/NativeInsightsHistory.cs",
+      "sourceSha256": "b6dcd136ae47b623b05e2d856f6f1e717b5c1fe7167ec5c0835567203d97d4fa"
+    },
+    {
+      "path": "dotnet/Rcm.Host/NativeInsightsSpreadsheet.cs",
+      "sourceSha256": "633812631a7967f667467431306d237beaebce880d21af9ffded113c84657504"
+    },
+    {
+      "path": "dotnet/Rcm.Host/NativeOrderAttachments.cs",
+      "sourceSha256": "a773e72714148d7fe82f4262bad390a2d36a816ab32e1c326a3c407df80609a0"
+    },
+    {
+      "path": "dotnet/Rcm.Host/NativeOrderDocuments.cs",
+      "sourceSha256": "ca3e1b5663f87a0217229c73166cea4725234d976f931cb1adb3d81934cb5521"
+    },
+    {
+      "path": "dotnet/Rcm.Host/NativeOrderLifecycle.cs",
+      "sourceSha256": "eaa3ab35f0e62c25f7364934a59d8a6723fc025d01a19c833500bdc7f3950c9d"
+    },
+    {
+      "path": "dotnet/Rcm.Host/NativeOrderQuestionQueue.cs",
+      "sourceSha256": "cb8a71e47d9704d54cbfb28f06117b77c3bd760af6e68a11f4511d9467f4db4b"
+    },
+    {
+      "path": "dotnet/Rcm.Host/NativeOrderQuotes.cs",
+      "sourceSha256": "516dc74afe7a109fec7f0bb5c2a93cd4e972c317421707588bfee73581020bed"
+    },
+    {
+      "path": "dotnet/Rcm.Host/NativeOrderResources.cs",
+      "sourceSha256": "e9cd9404fc6b41c3693280294e32e4452f996683681e0d3c22ee71ad4afbfedb"
+    },
+    {
+      "path": "dotnet/Rcm.Host/NativeOrderTemplates.cs",
+      "sourceSha256": "b4727398ac0d3b1e7bdb4e27d022a662bc43b3e9bb27829379218a00a5fd7321"
+    },
+    {
+      "path": "dotnet/Rcm.Host/NativeOrderTriage.cs",
+      "sourceSha256": "5487ae82531b2dfc21e3532533459f705eff7b889ae0653e9c1fa7cc6c9970b7"
+    },
+    {
+      "path": "dotnet/Rcm.Host/NativeOrders.cs",
+      "sourceSha256": "39e3fcebd3e4a2e998c062a60e448a25c52921e50624a102314c9454a2624db5"
+    },
+    {
+      "path": "dotnet/Rcm.Host/NativePasswords.cs",
+      "sourceSha256": "4f1a1d8967611055a8d3e41bf60e358f6bb5f35208b9b12962f1b7b4de924db9"
+    },
+    {
+      "path": "dotnet/Rcm.Host/NativeSettings.cs",
+      "sourceSha256": "51d48748bc5c1aa7ebaa7652d14099f8a9b0f80b1235055b7bdcb9ce65470ee5"
+    },
+    {
+      "path": "dotnet/Rcm.Host/NativeShiftReports.cs",
+      "sourceSha256": "128976fa8b1ee5cf148214b18bf6f24d90a8fc9136e61a73f3b03d7ed5f08be7"
+    },
+    {
+      "path": "dotnet/Rcm.Host/NativeShiftReportsCommands.cs",
+      "sourceSha256": "a268e8ef3caecb083c0011435610a902b4db640c167628c6d977125e6dbfc930"
+    },
+    {
+      "path": "dotnet/Rcm.Host/NativeShiftReportsProduction.cs",
+      "sourceSha256": "e92a8c5d844ff99a67d3f859d8f056116acb7a3d14c95b9f165f740951ab3b80"
+    },
+    {
+      "path": "dotnet/Rcm.Host/NativeShiftReportsRuntime.cs",
+      "sourceSha256": "94b4e7490a0237ff98cf1c3e92f687b119af2a582c6a2e6dd270c979f40a2723"
+    },
+    {
+      "path": "dotnet/Rcm.Host/NativeShiftReportsValidation.cs",
+      "sourceSha256": "7eb2c550edd67ba7390775f9078101454422ee26c8e780bbeea8ca1372c5f6f5"
+    },
+    {
+      "path": "dotnet/Rcm.Host/NativeTemplates.cs",
+      "sourceSha256": "5ceacee6fd52936ccce7a1dc3c64fc5c8a25146c9e66a8f2eff3ff02f746fdd7"
+    },
+    {
+      "path": "dotnet/Rcm.Host/NativeTemplatesDocuments.cs",
+      "sourceSha256": "b2f7cd7b4a135343f10f349e4d3982d372a91c6533db4ed6d22d714deb6838d5"
+    },
+    {
+      "path": "dotnet/Rcm.Host/NativeTemplatesDrawings.cs",
+      "sourceSha256": "75d92adfa5e1af6fbd2c3a7017262bd584b13478517bbbcc27a257aa72fb15c9"
+    },
+    {
+      "path": "dotnet/Rcm.Host/OrderDocumentRenderer.cs",
+      "sourceSha256": "55cc6884916caad31c02b1c42ca970684d3c1e0d9f7901455104151eaa3ca898"
+    },
+    {
+      "path": "dotnet/Rcm.Host/OrderEndpoints.cs",
+      "sourceSha256": "9a0662ffa660ac6f5c320294e83a6aeb20f5cace5652638b851d8d0181db05e5"
+    },
+    {
+      "path": "dotnet/Rcm.Host/ProductionEndpoints.cs",
+      "sourceSha256": "57a76f2e4e6bdfd958b2422d724cbba8e68bbbcda7a845ccd3a0bb9cb50bfad2"
+    },
+    {
+      "path": "dotnet/Rcm.Host/Program.cs",
+      "sourceSha256": "3972c808abc55a47cf61f66b0a49561d813be3ac34a405e568e14435ec6141de"
+    },
+    {
+      "path": "dotnet/Rcm.Host/Provisioning.cs",
+      "sourceSha256": "d32cf296ed2e625b064152e6430dbc966042b7747946a03a6c5d84f9886654f7"
+    },
+    {
+      "path": "dotnet/Rcm.Host/Rcm.Host.csproj",
+      "sourceSha256": "8b9d8af1e2edfe59571666d655fde392123a47b096291bf1ce664b91324e6672"
+    },
+    {
+      "path": "dotnet/Rcm.Host/SettingsEndpoints.cs",
+      "sourceSha256": "33f20a146d949d3bd97b4e9c01566a2182364ab048ead308b3e16615785368a8"
+    },
+    {
+      "path": "dotnet/Rcm.Host/ShiftReportEndpoints.cs",
+      "sourceSha256": "6a0c8b546109e66a9a6aaa50323eba5100d19beb129d2839d11c48be6050d7e3"
+    },
+    {
+      "path": "dotnet/Rcm.Host/TemplateEndpoints.cs",
+      "sourceSha256": "65f59b022bc0915da215ba30657cbfd4efa368d3d2eb3f8d5b8de05544156f76"
+    },
+    {
+      "path": "dotnet/Rcm.Host/packages.lock.json",
+      "sourceSha256": "8bbe5fb68cbd0b765411a67b80f644913247df797ec42a22badfb4eb123d1bf9"
+    },
+    {
+      "path": "dotnet/Rcm.Orders.Tests/Fixtures/pricing.json",
+      "sourceSha256": "572b7664218460a9ffeec82613a89288a15136e6dfa98908e86f0d616331aded"
+    },
+    {
+      "path": "dotnet/Rcm.Orders.Tests/PricingTests.cs",
+      "sourceSha256": "4ff2d6854b400c04c3ddfdd3ac7a0a143b849ffc5a33ce411475b38fcd45260f"
+    },
+    {
+      "path": "dotnet/Rcm.Orders.Tests/Rcm.Orders.Tests.csproj",
+      "sourceSha256": "7fb6ac3c47536933e041e1ccd6ff4cb07030a9cf2792bb065f65edf03c3e62ca"
+    },
+    {
+      "path": "dotnet/Rcm.Orders.Tests/packages.lock.json",
+      "sourceSha256": "ea273a9c9fdb8571b0c2dc6b7a473b8d5a540f6e3cff4bfac396f3236be61b8e"
+    },
+    {
+      "path": "dotnet/Rcm.Orders/PricingCalculator.cs",
+      "sourceSha256": "1ea56eb3c92d23dc8a7876f2d1b8417a060c570b8b9631fc189e6f3928233d64"
+    },
+    {
+      "path": "dotnet/Rcm.Orders/PricingInput.cs",
+      "sourceSha256": "f376f4f390853aa5b38354d202c997060f6c98250316764ef6dc2c915c52a3cd"
+    },
+    {
+      "path": "dotnet/Rcm.Orders/Rcm.Orders.csproj",
+      "sourceSha256": "8d654c44b7bebb6b31a9f2f606927f45b5072193adc4eef8cce3f3cf3b278df3"
+    },
+    {
+      "path": "dotnet/Rcm.Orders/packages.lock.json",
+      "sourceSha256": "a29c6aa8cfb81874ff8bb78dc369d7416f28c9b8cc47e99592bfc019b20c41eb"
+    },
+    {
+      "path": "dotnet/Rcm.Production/Migrations/20261005124118_InitialProduction.Designer.cs",
+      "sourceSha256": "a7731fb9e3b8dadfa587bea205c12322b5c8460453eb1d64cc65caf972b26fe6"
+    },
+    {
+      "path": "dotnet/Rcm.Production/Migrations/20261005124118_InitialProduction.cs",
+      "sourceSha256": "392b5d4196c89a76e8e11bc333678e7069129f698731805fc7ac43aa1d205199"
+    },
+    {
+      "path": "dotnet/Rcm.Production/Migrations/20261005132209_ProductionReportReview.Designer.cs",
+      "sourceSha256": "97f175c7d8315b6e4f6d41980b9c7bd347b9c828c14b4fa5d17634deb18c9862"
+    },
+    {
+      "path": "dotnet/Rcm.Production/Migrations/20261005132209_ProductionReportReview.cs",
+      "sourceSha256": "e1a0525432be3779d59e62a0f47ab38c8286dab9506bf1fac712f0535ca6ad7d"
+    },
+    {
+      "path": "dotnet/Rcm.Production/Migrations/ProductionDbModelSnapshot.cs",
+      "sourceSha256": "5668a9f667582073d1a6f6add4135b2f515ee5e8b9853ea722574979fcb8a569"
+    },
+    {
+      "path": "dotnet/Rcm.Production/ProductionDb.cs",
+      "sourceSha256": "e21ce84b6fdce6bbd9ace032b387dcdeb91564e24463a58dd86ecde49f29a2d8"
+    },
+    {
+      "path": "dotnet/Rcm.Production/ProductionModule.cs",
+      "sourceSha256": "9b5100b7f8220e95745ef1c1161bd0f9fb83c3c0d601f70a7ca0450e1b804c2f"
+    },
+    {
+      "path": "dotnet/Rcm.Production/Rcm.Production.csproj",
+      "sourceSha256": "d603907811d40696a60456646dc46d8455c1ed603867dcd4f272ab7c98688778"
+    },
+    {
+      "path": "dotnet/Rcm.Production/packages.lock.json",
+      "sourceSha256": "f9b6cb05ff45424fb3c62199c5894c8fcfe708ffb29f7d692a1f357750989f45"
+    },
+    {
+      "path": "dotnet/global.json",
+      "sourceSha256": "289e45aafd6eb59adcc4b7dda4d6fe5f1924065345aa8ab75be4a0c2b9cb00db"
+    },
+    {
+      "path": "migrations/env.py",
+      "sourceSha256": "58c9d2f01955731092be538c935c89d3be806449870fa1be046765856d72e998"
+    },
+    {
+      "path": "migrations/script.py.mako",
+      "sourceSha256": "114d2c8daf1106848ce42d0c5f13a4d0056ec4205dfc568999d988c131bb8c54"
+    },
+    {
+      "path": "migrations/versions/20260505_0001_bootstrap_schema.py",
+      "sourceSha256": "fd0821d3a5c74392bf714cc1bceb14abedd003ebb801db0ac624a7123a43ebb3"
+    },
+    {
+      "path": "migrations/versions/20260507_0001_baseline_existing_schema.py",
+      "sourceSha256": "f9a41ce31396e9a751c05ff5c5a6b758cae6a57ce0bb627213be6410ccb572af"
+    },
+    {
+      "path": "migrations/versions/20260513_0001_status_timestamps_actual_hours.py",
+      "sourceSha256": "c0704053ce66d6963883751276e34a4e7645654af3c6c75b8afbb3b4e2d16e03"
+    },
+    {
+      "path": "migrations/versions/20260514_0001_order_events.py",
+      "sourceSha256": "88e9cdede530ecb97b573ae41c9f5775750f4df4b460338f2d32a05d1a54b49a"
+    },
+    {
+      "path": "migrations/versions/20260514_0002_operation_catalog_and_catalog_id.py",
+      "sourceSha256": "7fecd7367f76fd78e2fc4df602fbad1c4eba9671a1bffe6d48aef32e41a6f35e"
+    },
+    {
+      "path": "migrations/versions/20260514_0003_order_counters.py",
+      "sourceSha256": "f2a6aedc6450f31ee09bb33b9e7c513884ff793c049a9b74b732209fbcea71cd"
+    },
+    {
+      "path": "migrations/versions/20260514_0004_quote_zapor_multiplier.py",
+      "sourceSha256": "11933f8614ed7b46dbbc90318a7d52cb412607aa9abbebec5b86b958e3b9e34b"
+    },
+    {
+      "path": "migrations/versions/20260605_0001_quote_materials_json.py",
+      "sourceSha256": "ff6fe0cf9653f50a5ae999a39b79cd8fdc71cf3830cb29d7049e3d6bfeaa1249"
+    },
+    {
+      "path": "migrations/versions/20260623_0001_order_intake_fields.py",
+      "sourceSha256": "1e105ec2d616d452bca146529f303de00c197423c626c65ab8fe7213bcce8214"
+    },
+    {
+      "path": "migrations/versions/20260624_0001_simplify_order_status.py",
+      "sourceSha256": "e7b4d23efc8e74933a5df395e14bbee146a9fb657f303b339946236dfa6b4cf5"
+    },
+    {
+      "path": "migrations/versions/20260629_0001_order_is_internal.py",
+      "sourceSha256": "1d859c8216cdcb8b2ac9e7969b6104552126fbd4041aa2bb589d0bf14b256ac5"
+    },
+    {
+      "path": "migrations/versions/20260629_0002_quote_pricing_method.py",
+      "sourceSha256": "b1480c7546cb1b4ca96acfb2bb7c17c848eaa440c4938edcdfe5a0206f8d4044"
+    },
+    {
+      "path": "migrations/versions/20260701_0001_order_materials_json.py",
+      "sourceSha256": "e31430c0c44d066678c899b9ede4b435847527398d12e0fdacda8b9ecae516a8"
+    },
+    {
+      "path": "migrations/versions/20260715_0001_order_archived_at.py",
+      "sourceSha256": "7da0e9c564d280208011638f4e17caab429f9880cba32ed927646b09838424d4"
+    },
+    {
+      "path": "migrations/versions/20260728_0001_user_pin_hash.py",
+      "sourceSha256": "c0be4dc7a4933f95985b448c3d024edf1c4f670e134ea838d948b7732fc30159"
+    },
+    {
+      "path": "migrations/versions/20260729_0001_approved_material_fk.py",
+      "sourceSha256": "96ba5dcd285279cda143e26ccccf0b3153aa1d1f26c9511bf4d4ef00bf7870d5"
+    },
+    {
+      "path": "migrations/versions/20260912_0001_order_version.py",
+      "sourceSha256": "af1adff987382606b7621a7db2badd94cdc320757f961503449526a9143cfbd1"
+    },
+    {
+      "path": "migrations/versions/20260916_0001_shift_reports.py",
+      "sourceSha256": "421a576efa3b296886e686057888d9d9d05201c5eb7a95737c704a38e15e38a9"
+    },
+    {
+      "path": "migrations/versions/20260917_0001_shift_report_deletion.py",
+      "sourceSha256": "71629a54e3e4e8a1bd0c4f4be5000e7a16935eb99f0c6eb3ea91bd07b2eb774c"
+    },
+    {
+      "path": "migrations/versions/20260917_0002_shift_report_schema.py",
+      "sourceSha256": "624f7574bd5c43ccf400e0f56aa5e6fb1065b5d346a5185d9dd779973157516a"
+    },
+    {
+      "path": "migrations/versions/20260924_0001_crm_login_role.py",
+      "sourceSha256": "c629840fa7340b31eeb779d1827a06211f4555ce62dd9d541e55b8d6a58a727c"
+    },
+    {
+      "path": "migrations/versions/20260928_0001_order_create_receipts.py",
+      "sourceSha256": "c4cb77f2eaab8c075dee930196b7597f14794655aae79bbbe35e5bbec41556d4"
+    },
+    {
+      "path": "migrations/versions/20260928_0002_order_writer.py",
+      "sourceSha256": "4b95e0bc40c0f5190c1f90848a919067b622efc4e4bd0b453121356be1b2df96"
+    },
+    {
+      "path": "migrations/versions/20260928_0003_order_commands.py",
+      "sourceSha256": "8e7c2571cf3eebbdcaf5bc42783e4c6cb9a363cbe4984ffc30d7d21f206c00e5"
+    },
+    {
+      "path": "migrations/versions/20260930_0001_user_password_login.py",
+      "sourceSha256": "b9ae99c0274bf836851818764fb3ec12e32cf91706e978a0d86b8d9114ce1b04"
+    },
+    {
+      "path": "migrations/versions/20261001_0001_remembered_sessions.py",
+      "sourceSha256": "16b0e21c63a0420fff415beca2d7e01136f7f4e0ca14120b2d22271df42e37c1"
+    },
+    {
+      "path": "migrations/versions/20261001_0002_attachment_writer.py",
+      "sourceSha256": "02c2696c9959fc6633ac9c5e66562f275489383682c47b3a775472b33599eded"
+    },
+    {
+      "path": "migrations/versions/20261001_0003_order_runtime_lock.py",
+      "sourceSha256": "f519d0e2b02195816f77d90daf1cfa50b813e61b30b67abc31139413ec917f66"
+    },
+    {
+      "path": "migrations/versions/20261001_0004_catalog_writer.py",
+      "sourceSha256": "e87f0da99fb83a54b5b3545eec90bc2aa12e5ea6b85f92f7c61d178b1017c1e8"
+    },
+    {
+      "path": "migrations/versions/20261001_0005_template_writer.py",
+      "sourceSha256": "96e5fc81c4966d5180f1cefb07003826e6daf22be2ab04669e5acd3317f2f2cf"
+    },
+    {
+      "path": "migrations/versions/20261001_0006_shift_reports_writer.py",
+      "sourceSha256": "060beec266b7ad9f401a369a391104e3e4fa0c8a4645c76603559392062000d6"
+    },
+    {
+      "path": "migrations/versions/20261001_0007_business_settings.py",
+      "sourceSha256": "760067f48bfbc3b4cafa7eec8376bc56e22fc368d1ed3e5cc1d806f1428b4e88"
+    },
+    {
+      "path": "migrations/versions/20261002_0001_native_identity.py",
+      "sourceSha256": "ed06914245750f541d1770f98142990e344e204ee63c1b0850d8720020ada648"
+    },
+    {
+      "path": "migrations/versions/31c54e614e8c_add_indexes_status_deadline_order_number.py",
+      "sourceSha256": "30d0dfbd1b32fe8be7975804fbf21fda5e9cccc81549c3c94c69875837bb9740"
+    },
+    {
+      "path": "scripts/configure-crm-database.py",
+      "sourceSha256": "e8dc6d5936cd6ca53204e0d99ae07caa1ba71a6ba33fe524d3acf5c01514f984"
+    },
+    {
+      "path": "scripts/configure-identity-database.py",
+      "sourceSha256": "7b03ba4283ffd8f52973662d27e58ea516561a44f99d89dcf233b5a0b34dfa68"
+    },
+    {
+      "path": "scripts/configure-production-database.py",
+      "sourceSha256": "e19b3fe0e358213037e3e7cc1d7acb80ba682cfb3d14ac01744cb1b54ec6612e"
+    },
+    {
+      "path": "scripts/configure-production-review.py",
+      "sourceSha256": "7bbc877a830221aadb1d9b674ccb96d651d545bbfc74590b9cc7c3ae7cb47de1"
+    },
+    {
+      "path": "scripts/configure-shift-reports-database.py",
+      "sourceSha256": "ae19b48e428ac439faff9e9a907cbd6cf7a802ac3f7a8517c0a751cbe8877f8d"
+    }
+  ]
+}

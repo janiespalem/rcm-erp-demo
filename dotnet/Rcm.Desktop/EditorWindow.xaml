@@ -1,0 +1,64 @@
+<Window x:Class="Rcm.Desktop.EditorWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Style="{StaticResource WindowStyle}" Title="{Binding Title}" Width="680" Height="780" MinWidth="480" MinHeight="460" WindowStartupLocation="CenterOwner">
+  <Grid>
+    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+    <Border Background="White" BorderBrush="{StaticResource Line}" BorderThickness="0,0,0,1" Padding="28,22">
+      <StackPanel><TextBlock Text="FactoryFlow / KLIENCI" FontSize="10" Foreground="{StaticResource Muted}" FontWeight="SemiBold" Margin="0,0,0,8"/><TextBlock Text="{Binding Title}" Style="{StaticResource Title}" FontSize="25"/></StackPanel>
+    </Border>
+    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="28,22,28,6">
+      <StackPanel>
+        <Border Style="{StaticResource Card}" Padding="22,18" IsEnabled="{Binding CanEdit}">
+          <StackPanel>
+            <StackPanel Visibility="{Binding IsCustomer, Converter={StaticResource Visible}}">
+              <TextBlock Text="Dane klienta" Style="{StaticResource SectionTitle}" Margin="0,0,0,16"/>
+              <TextBlock Text="Firma / nazwa klienta *" Style="{StaticResource Label}"/>
+              <TextBox x:Name="CustomerName" Text="{Binding DisplayName, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True}" AutomationProperties.AutomationId="CustomerName" AutomationProperties.Name="Firma / nazwa klienta"/>
+              <TextBlock Text="Osoba kontaktowa" Style="{StaticResource Label}"/><TextBox Text="{Binding ContactPerson, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Osoba kontaktowa"/>
+              <Grid><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions>
+                <StackPanel Margin="0,0,12,0"><TextBlock Text="Telefon" Style="{StaticResource Label}"/><TextBox Text="{Binding Phone, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.AutomationId="CustomerPhone" AutomationProperties.Name="Telefon"/></StackPanel>
+                <StackPanel Grid.Column="1"><TextBlock Text="E-mail" Style="{StaticResource Label}"/><TextBox Text="{Binding Email, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True}" AutomationProperties.Name="E-mail"/></StackPanel>
+              </Grid>
+              <TextBlock Text="Skąd kontakt?" Style="{StaticResource Label}"/><TextBox Text="{Binding Source, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Skąd kontakt?"/>
+              <TextBlock Text="Pierwotna notatka" Style="{StaticResource Label}"/><TextBox x:Name="Original" Text="{Binding OriginalNote, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="94" VerticalContentAlignment="Top" AutomationProperties.Name="Pierwotna notatka"/>
+              <CheckBox x:Name="Synthetic" IsChecked="{Binding IsSynthetic}" Margin="0,8,0,6"><TextBlock Text="Dane fikcyjne — wyłączone z raportowania biznesowego" TextWrapping="Wrap" FontSize="12"/></CheckBox>
+            </StackPanel>
+            <StackPanel Visibility="{Binding IsTopic, Converter={StaticResource Visible}}">
+              <TextBlock Text="Temat rozmowy" Style="{StaticResource SectionTitle}" Margin="0,0,0,16"/>
+              <TextBlock Text="Produkty w tym temacie *" Style="{StaticResource Label}"/>
+              <ItemsControl ItemsSource="{Binding Products}" Margin="0,12,0,16">
+                <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate><DataTemplate><Border Background="#F5F7F0" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="6" Padding="10,8" Margin="0,0,8,8"><CheckBox Content="{Binding Name}" IsChecked="{Binding Selected}"/></Border></DataTemplate></ItemsControl.ItemTemplate>
+              </ItemsControl>
+              <TextBlock Text="Potrzeba" Style="{StaticResource Label}"/><TextBox Text="{Binding Need, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="100" VerticalContentAlignment="Top" AutomationProperties.Name="Potrzeba"/>
+            </StackPanel>
+            <StackPanel Visibility="{Binding IsConversation, Converter={StaticResource Visible}}">
+              <TextBlock Text="Przebieg rozmowy" Style="{StaticResource SectionTitle}" Margin="0,0,0,16"/>
+              <TextBlock Text="Krótka notatka / próba kontaktu" Style="{StaticResource Label}"/><TextBox x:Name="Note" Text="{Binding Note, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="124" VerticalContentAlignment="Top" AutomationProperties.AutomationId="ConversationNote" AutomationProperties.Name="Krótka notatka / próba kontaktu"/>
+            </StackPanel>
+            <StackPanel x:Name="Planning">
+              <Border BorderBrush="{StaticResource Line}" BorderThickness="0,1,0,0" Padding="0,18,0,0" Margin="0,4,0,14"><TextBlock Text="Kolejny krok" Style="{StaticResource SectionTitle}"/></Border>
+              <TextBlock Text="Stan rozmów" Style="{StaticResource Label}"/><ComboBox x:Name="States" SelectedValuePath="Key" DisplayMemberPath="Value" SelectedValue="{Binding State}" AutomationProperties.AutomationId="TopicState" AutomationProperties.Name="Stan rozmów"/>
+              <TextBlock Text="Następny kontakt" Style="{StaticResource Label}"/><ComboBox SelectedValuePath="Tag" SelectedValue="{Binding DateMode}" AutomationProperties.AutomationId="DateMode" AutomationProperties.Name="Następny kontakt"><ComboBoxItem Content="Bez terminu" Tag="none"/><ComboBoxItem Content="Konkretna data" Tag="exact"/><ComboBoxItem Content="Termin opisowy / nieznany" Tag="text"/></ComboBox>
+              <StackPanel Visibility="{Binding HasPlan, Converter={StaticResource Visible}}"><TextBlock Text="Następny krok (opcjonalnie)" Style="{StaticResource Label}"/><TextBox Text="{Binding NextAction, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Następny krok"/></StackPanel>
+              <StackPanel Visibility="{Binding ExactDate, Converter={StaticResource Visible}}"><TextBlock Text="Data kontaktu" Style="{StaticResource Label}"/><DatePicker x:Name="ContactDate" SelectedDate="{Binding NextDate, ValidatesOnNotifyDataErrors=True}" Margin="0,8,0,16" Padding="8" MinHeight="42" BorderBrush="#CED7C9" AutomationProperties.AutomationId="NextDate"/></StackPanel>
+              <StackPanel Visibility="{Binding DescriptiveDate, Converter={StaticResource Visible}}"><TextBlock Text="Kiedy wrócić do rozmowy?" Style="{StaticResource Label}"/><TextBox Text="{Binding NextDescription, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True}" AutomationProperties.AutomationId="NextDescription"/><Border Background="#EFF3E5" CornerRadius="6" Padding="12" Margin="0,0,0,8"><TextBlock Text="Zapisz słowa klienta. Kontakt trafi do „Termin do doprecyzowania” bez przypisywania daty." TextWrapping="Wrap" Foreground="{StaticResource Muted}" FontSize="12" LineHeight="19"/></Border></StackPanel>
+            </StackPanel>
+          </StackPanel>
+        </Border>
+        <StackPanel Visibility="{Binding HasConflict, Converter={StaticResource Visible}}" Margin="0,16,0,10">
+          <Button Content="Pokaż aktualnie zapisane dane" Click="Compare_Click"/>
+          <TextBox Text="{Binding Comparison, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" MinHeight="100"/>
+          <Button Click="AcceptVersion_Click"><TextBlock Text="Porównałem — zachowaj moje wartości do zapisu" TextWrapping="Wrap"/></Button>
+        </StackPanel>
+      </StackPanel>
+    </ScrollViewer>
+    <Border Grid.Row="2" Background="White" BorderBrush="{StaticResource Line}" BorderThickness="0,1,0,0" Padding="28,16">
+      <StackPanel>
+        <TextBlock Text="{Binding Status}" TextWrapping="Wrap" Foreground="#925220" Margin="0,0,0,12" AutomationProperties.LiveSetting="Polite" AutomationProperties.AutomationId="SaveStatus">
+          <TextBlock.Style><Style TargetType="TextBlock"><Style.Triggers><DataTrigger Binding="{Binding Status}" Value=""><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
+        </TextBlock>
+        <WrapPanel HorizontalAlignment="Right"><Button Content="Zatrzymaj oczekiwanie" Click="Stop_Click" Visibility="{Binding IsSaving, Converter={StaticResource Visible}}" Margin="0,0,8,4"/><Button Content="Anuluj / zamknij" Click="Cancel_Click" Margin="0,0,8,4"/><Button Content="Zapisz" Style="{StaticResource PrimaryButton}" Click="Save_Click" IsEnabled="{Binding CanClose}" AutomationProperties.AutomationId="Save" MinWidth="110" Margin="0,0,0,4"/></WrapPanel>
+      </StackPanel>
+    </Border>
+  </Grid>
+</Window>

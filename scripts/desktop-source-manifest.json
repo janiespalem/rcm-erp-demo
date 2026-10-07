@@ -1,0 +1,564 @@
+{
+  "files": [
+    {
+      "path": "dotnet/Rcm.Desktop.Tests/BackgroundUpdatesTests.cs",
+      "sourceSha256": "dfdf11e2a7cd34af0462d24ed0e74ef89d0928721c89c31ae6380d5eaaf66e6a"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop.Tests/CatalogTests.cs",
+      "sourceSha256": "a1a170ac676a74ed85802fc9ed12da237e1b7083052fc6d043e54b83c510ff69"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop.Tests/CustomerLifecycleTests.cs",
+      "sourceSha256": "90f1da3d1451c4330310c9227173728f3ba1edce30b170aefa498efc7b38f9f8"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop.Tests/EditorTests.cs",
+      "sourceSha256": "efdca01c6d3cc51f43a9f38571b638b94b5b2b1994bd807f43158294cfaf6b79"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop.Tests/InsightsTests.cs",
+      "sourceSha256": "5cd98361c7fa01518cd1d49ce8aa095a7156d4ce2bf4dc9715977f8ae9097a10"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop.Tests/LegoTests.cs",
+      "sourceSha256": "aa0ab388e8519201dca654505938e690979fd998f8acbf86662840fe29ead473"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop.Tests/MainViewModelTests.cs",
+      "sourceSha256": "53ab692609e0d40b6640b85daab0483ed35ffec3003b0f56d82526f49b0cebf4"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop.Tests/OrderAttachmentDownloadTests.cs",
+      "sourceSha256": "a12ad022a2b71d9f933b97eb3adeab38f005a1d34bec010246e00375bbf704a6"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop.Tests/OrderAttachmentMutationTests.cs",
+      "sourceSha256": "614ae3d6c3571abba36bd03806a551cfbd1536df0ea76dee9b53cdf3361ac65b"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop.Tests/OrderDocumentTests.cs",
+      "sourceSha256": "a9cc64e55858344286f08506287f59ca25864196ef403e99bd58061b5d465032"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop.Tests/OrderIntakeTests.cs",
+      "sourceSha256": "8ed41233de69f0f4d32f8b52b1e8c7f941d2c8371acd24aac7033adc5be0f5db"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop.Tests/OrderQuestionQueueTests.cs",
+      "sourceSha256": "d35606c0e9dd03b5784502dc9ac532bfff02d28fc4903b111040eafec97c6ac8"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop.Tests/OrderTemplateTests.cs",
+      "sourceSha256": "c1181b5b70453b8ae9a699f5bafcf46021670101a3e1c0798050d4c7a7bc30af"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop.Tests/OrderWorkflowTests.cs",
+      "sourceSha256": "c7f0cd961e81c999b1cf27316245db42eb4b1416049a218d07cf5610cfcbed88"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop.Tests/ProductionReviewTests.cs",
+      "sourceSha256": "414a7d4e811ca44c780f2000f73095c5544ba4284af220eecf969303a8e422ca"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop.Tests/ProductionReviewWindowsWorkflow.cs",
+      "sourceSha256": "dfee23c18f9ca77b9a735b1ba09c3d034505a3eb3cfbd97071df5ddb116e354b"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop.Tests/ProductionTests.cs",
+      "sourceSha256": "5409cdf08c7c9de99bfec7d715b18cfeb7b1d2715a6ba35ae348899934770d47"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop.Tests/ProductionWindowsWorkflow.cs",
+      "sourceSha256": "6f8de1b0ce31a68975a21d956b461fc9e317c458a65b5dfc0a734725f7974453"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop.Tests/Rcm.Desktop.Tests.csproj",
+      "sourceSha256": "f55030cfe1eed5f2a5490eb0ef21b136b1e6b06b58f32212fc4631d7c9b7b2c6"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop.Tests/RememberedLoginTests.cs",
+      "sourceSha256": "65f19183227bdf73ac27816c8462ae32919692911210aa6b3a1c5ad5bbcf8dff"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop.Tests/RememberedLoginWorkflowTests.cs",
+      "sourceSha256": "33e45adb40218e72251ee01b8a155ff98f24828d83b49646076e0d3751ce9cab"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop.Tests/SavedLoginStoreTests.cs",
+      "sourceSha256": "7154fe3a635d69e80a2442554f87786ed1c8367e79ccbde0d929f15ecec848ee"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop.Tests/SessionCompatibilityTests.cs",
+      "sourceSha256": "105273ddc5a6804a7a6ade7c528caa795e504d70fb21a68391898876413e77bd"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop.Tests/ShiftReportsTests.cs",
+      "sourceSha256": "fc48603ec777336bcbbb3fb230013f43f621ba88efe8ae0e500007d5fa28b31f"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop.Tests/TemplateTests.cs",
+      "sourceSha256": "a1acf756d34937cb8025c4eeb75c9f9ab0802ba940aa91a3515b73f1cc5fbdbe"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop.Tests/TetrapodViewModelTests.cs",
+      "sourceSha256": "108c8393f54d5ec753e027462c33f26c0e1da01e783de05e916d8ed508388f98"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop.Tests/WindowsBackgroundUpdatesWorkflow.cs",
+      "sourceSha256": "823791d8a5e1e24ba5ba17eb8cce5819399b043d7ae36d91e06f92273a0b3817"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop.Tests/WindowsCatalogWorkflow.cs",
+      "sourceSha256": "05c54b43f26360a7bfd504f5cd11e638f7fcbef79c6f3f4c2536685fb895c1db"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop.Tests/WindowsInsightsWorkflow.cs",
+      "sourceSha256": "e09be9c7aea24be0f76af8a61320c8eef57628d3c8e9bd157578da77ecece2b5"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop.Tests/WindowsLegoWorkflow.cs",
+      "sourceSha256": "f630992768a3038b0c89ef6c30e79600b05c4edf3f06a7d9accee55e56aba83a"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop.Tests/WindowsOrderQuestionQueueWorkflow.cs",
+      "sourceSha256": "5a2d9ebce0eaa4b0d5596f72a45bd9e6915e6bbbf7ce617cf59a8c8501c9b912"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop.Tests/WindowsOrdersWorkflow.cs",
+      "sourceSha256": "16b65e7ea811e0d16ed02c5f2f12f2f35a298f3144fd1621819e26ab7b778af2"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop.Tests/WindowsShiftReportsWorkflow.cs",
+      "sourceSha256": "06e1418ee78ecc38a1639dccb79ff604dea0b437c658530d3089d45cf8bd94c0"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop.Tests/WindowsTemplatesWorkflow.cs",
+      "sourceSha256": "37275934e330dd686c14f8e3710eb48e77d7a0dfec41fd9e1d474c2da2262aff"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop.Tests/WindowsTetrapodDeliveryWorkflow.cs",
+      "sourceSha256": "57feb14550426e2addb9d0250d564a076e57ad0fbdf982522e88c963cdb5775e"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop.Tests/WindowsViewportWorkflow.cs",
+      "sourceSha256": "c98bd3f5b9a48d98b7d07ce38a471ca47349a5474bcf2251867f558e04a58440"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop.Tests/WindowsWorkflowTests.cs",
+      "sourceSha256": "142752330b06a8e52420ae2711ba998950acc0e3447b42f68b32b1cc65d42199"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop.Tests/packages.lock.json",
+      "sourceSha256": "8f1ba42d1846625870f954e6d03de57cebbeb3691c764b281844e580acf78b0e"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/App.xaml",
+      "sourceSha256": "1453f2b802210cc2dbfa3a8e49075620a81b0221b0371eb16740a24d8509b937"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/App.xaml.cs",
+      "sourceSha256": "fa1e76f2359fd97f8f9a0aee05f8d445a7f92360187d86d2514d6ae37c6386d5"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/BackgroundUpdateClient.cs",
+      "sourceSha256": "3bf233c7905f7b3a3fc99f3ca20771d4fcca0ac730cfd0385e89523b2176c270"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/BackgroundUpdates.cs",
+      "sourceSha256": "4f980455c9f1f8a55b7fe8487f58bef6a7e05a6a543106472edeb9eee5994d6e"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/CatalogEditorViewModel.cs",
+      "sourceSha256": "cb96f2a4d553117fb11f0c48aa37f55769481ec1620d50e54642a1729e28f65b"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/CatalogEditorWindow.xaml",
+      "sourceSha256": "9490f6ac4d3ef9eb3c82e88c146aed84764bc7e90f1981838d4c34f184b7c7d2"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/CatalogEditorWindow.xaml.cs",
+      "sourceSha256": "d5de4b886d2a039e27d3364a5610a7ab3790aba177bf507e34abbe099ed40af4"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/CatalogPage.xaml",
+      "sourceSha256": "8759f379ee765adc2515a419d28b3a80234d992cf459ccb6f8ac5502f2a83e65"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/CatalogPage.xaml.cs",
+      "sourceSha256": "559503fa3b1f5139312aae25e6b02a940305d3c97cfc9cba685f5b421de9c74d"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/CatalogViewModel.cs",
+      "sourceSha256": "5204f906b0c8c00af27dd23f8d147a74292e60367c24f1ddee9ac9bca7dedc9a"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/CrmClient.cs",
+      "sourceSha256": "4d73e190f81f0b38308386a12aa7c74c4b933e033fa18b7b6065e92bb629997f"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/CustomerLifecycleViewModel.cs",
+      "sourceSha256": "9e6a668d7146b8ffc1cf63781a00f580e8eea9ccdbf20961e1c9035b14937c16"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/CustomerLifecycleWindow.xaml",
+      "sourceSha256": "1ee94a9dcec6d6db26c0e4df35e2d129e61cad6efb0bd7c00bb262f68d66c108"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/CustomerLifecycleWindow.xaml.cs",
+      "sourceSha256": "4b47849b27b3b39bd7359a07ab3b9e069bd889f163a78339a8ccab0e6b598ad8"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/EditorViewModel.cs",
+      "sourceSha256": "b31aa6b0a25e03239274f32049ca8fa26cf5daf1f69be49c8c9ecafc8eca4bea"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/EditorWindow.xaml",
+      "sourceSha256": "861cd93663432259d015c83ba97576dd933ddbd628eb9041375972e312dbf830"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/EditorWindow.xaml.cs",
+      "sourceSha256": "d29fda412cbb6b92bae63ec9cb4bfb7672d09c7efd64202752257a2a84e34d28"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/InsightsPage.xaml",
+      "sourceSha256": "1e1793fc0638a941c930f46aa588ff19fff83f4935859115faa9adc98cd930dd"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/InsightsPage.xaml.cs",
+      "sourceSha256": "d2148d4b9367a02ec2c59e706f3a6443e58ab7646bb06697c49ffd06fc610728"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/InsightsViewModel.cs",
+      "sourceSha256": "50845c9b0ffdb1967265abe92557a8ab43b04ae0a15ba5b98c104fa8a086fdb3"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/LegoCartStore.cs",
+      "sourceSha256": "f4f27a0c2e7e2cb8cee3f6696b507797d2b36e43388b6bd15c9ed307f812c379"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/LegoPage.xaml",
+      "sourceSha256": "8f8eb93bd0153b77cc9fa46e4ba38f79b77a4aeecb3b1667890a6660d7930ffe"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/LegoPage.xaml.cs",
+      "sourceSha256": "4be6b9ea137fa887598bba3b2ef166ab8eb39f7f960f87c57eadab897ed93f20"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/LegoPlanView.cs",
+      "sourceSha256": "5c4e0900c74a1016de0d36521d7c4935a488d88997b78699285b1fe886e3d0f7"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/LegoViewModel.cs",
+      "sourceSha256": "81c8df4f3e8d8052b03382bb111bd2e12e722f442979d8dcc9097bdd366dfb1a"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/LegoViewport.cs",
+      "sourceSha256": "36acf36b75a0d17ed063437434b8bc2799ba0454cdfd47d5f962d327a843a8ed"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/LoginWindow.xaml",
+      "sourceSha256": "913484248deee2d0140a52c84d8db19b66d98de161cba522d5bb61b9f2bc3ceb"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/LoginWindow.xaml.cs",
+      "sourceSha256": "e317445f8b98ceabb92b1eff8172737891ed042585f2caf87716c85a8334a319"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/MainViewModel.cs",
+      "sourceSha256": "1f400d3f637c93d5b82012ddf89fe34fa933eab260d2a98526ebe5a8569b7d82"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/MainWindow.xaml",
+      "sourceSha256": "73b6ff54c407350b2e3602f16ca7208a7e24dab914a0bed87fc25de6a8576204"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/MainWindow.xaml.cs",
+      "sourceSha256": "35d67b7e3cbb57c8cf64f383d5c7bb0ff7a4d7a761435961b41809e955858e59"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/OrderAttachmentsViewModel.cs",
+      "sourceSha256": "f09207aa1a5f37648b5c613e6e054fb90c693d418359dc848b8ebf4d30346fc7"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/OrderAttachmentsWindow.xaml",
+      "sourceSha256": "41e24b86e17a6f0216f0d0f98d5b3089fc8eb03fd86b1ec01c1a98afb85c4fb5"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/OrderAttachmentsWindow.xaml.cs",
+      "sourceSha256": "722f09fc460de250ec87ed9eccf3d4ad0b67d11514a8977303200e94fa1a27f2"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/OrderDocumentsViewModel.cs",
+      "sourceSha256": "e809c67830588d2399c006ad30079fc8b5190c50877cd9dda02f5d4acd9de246"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/OrderDocumentsWindow.xaml",
+      "sourceSha256": "c8744456b0941c5f46ae56dcd96d197f3f589baeb4e1ad0091b31021ed6b9d85"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/OrderDocumentsWindow.xaml.cs",
+      "sourceSha256": "c2b6f111bd0ea3476cbd6e62820aa5af055a3c05918d174b4bbc47816a982d2e"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/OrderEditorViewModel.cs",
+      "sourceSha256": "26957757f4c5bcf05e272295017bcdd6247afc37bb123774c52fc30ec9200ac4"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/OrderEditorWindow.xaml",
+      "sourceSha256": "cac9b2523af1cdf08ee81b83c84735855039c6dcafba8de4a100a6021a555de3"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/OrderEditorWindow.xaml.cs",
+      "sourceSha256": "8316c1c3f329885b59de70ef22681792fa048219d59c86628756219b086cdc33"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/OrderQuestionQueuePage.xaml",
+      "sourceSha256": "8ddf9c8790f30f7476a1f18534e25ea1959c55d6a0b02c320fa4278d1d53c8b5"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/OrderQuestionQueuePage.xaml.cs",
+      "sourceSha256": "6f9cf25ead16992340e6825822793e42913dedddbbf38dfbe9d565f587faf1a8"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/OrderQuestionQueueViewModel.cs",
+      "sourceSha256": "5a6a7991c5d79a1b7a05db1d74fb5f5fcec827f4f2059b861d5d610f47e3dc9f"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/OrderQuoteViewModel.cs",
+      "sourceSha256": "79fad73b09fc1c1a5d67f28b8c8f15547097a85a14c781ee3c6f35ce1dc42f7a"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/OrderQuoteWindow.xaml",
+      "sourceSha256": "d058afe36a8d6eb1d28159fed232817cce5b52551e0158907c7e51887275344a"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/OrderQuoteWindow.xaml.cs",
+      "sourceSha256": "103fc595c6183b796b3d38f0c0ad10bc86a942ab632bdb0d5a534e61fc5ebd80"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/OrderResourcesViewModel.cs",
+      "sourceSha256": "0677e0c17463cd92ebf6114f78e52131d8d3f7cbcd06764c927d5d278f725921"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/OrderResourcesWindow.xaml",
+      "sourceSha256": "5c5aa0fc60245603090631e64a90b0d021713209fea90ae4553aa181928cf10a"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/OrderResourcesWindow.xaml.cs",
+      "sourceSha256": "d623ed0413662f707961bd84cc9d816f533ce91681841075acd20bb320a7c1c8"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/OrderTemplateViewModel.cs",
+      "sourceSha256": "f6f81f66458d04ff0e504d362fd63ef56788e34952d4ca6f3251e5846bdb7e9f"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/OrderTemplateWindow.xaml",
+      "sourceSha256": "1c6f1559d0d0a3636dc6e9155293c2ff178eda1a0c6f1c76766b4301840beb76"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/OrderTemplateWindow.xaml.cs",
+      "sourceSha256": "af3e0015d88a16896a9abb817ccee700583e7c41a5b1e5baeeb9965e0fe6742f"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/OrdersPage.xaml",
+      "sourceSha256": "5b8a0e6d16e340a8e81ed26f930147114ca5a6735f647adaa23bd1f374187135"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/OrdersPage.xaml.cs",
+      "sourceSha256": "1d5fb18da796eaf6a56f0c7505dbabc77fe305e24aa24e889201d224b2e5d42a"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/OrdersViewModel.cs",
+      "sourceSha256": "78dc6645ed941a4eb9ef07e78b3e0e9562d0ce836eabd36beef04e35f24ac240"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/ProductionEditorForm.xaml",
+      "sourceSha256": "506a28de65eb380e34ef9cdbe4232ae0b3a1b2f4a9d146cd10c0ae31555859d1"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/ProductionEditorForm.xaml.cs",
+      "sourceSha256": "7d74817d0bab5461e31b5268c3e30b3259bcea22ab8a473d7359f5d828b9927e"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/ProductionEditorViewModel.cs",
+      "sourceSha256": "72fd0a0536d24c31129896ab3c2ae01e27bfd4f74aa8c21507d73d9116c8d3ce"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/ProductionPage.xaml",
+      "sourceSha256": "d78efdcb5d56a35fce15a16f15fc5b17b0c6d46e6a99eac256de35e03c4d3c1b"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/ProductionPage.xaml.cs",
+      "sourceSha256": "15472df86a633da6a89c26de4a0a5555bb8825e6b175d08793001129a4b8c937"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/ProductionReportReviewModel.cs",
+      "sourceSha256": "bcfb9efd5c071bdd3f68f1dcf39139967aaa73bac91e8f579797c1bff9fc4127"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/ProductionReportsViewModel.cs",
+      "sourceSha256": "869c0ad69573ca8a3b0137675319f2be41a8ea8b0b5ec7d3eddbece47520fc20"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/ProductionViewModel.cs",
+      "sourceSha256": "4840019dab8c8f9b18312b08299d4c8e062532bf6dac12fa3bd2c2e7d00c3418"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/ProductionWindows.cs",
+      "sourceSha256": "e451042dcb716cd835a3138de6bf9e4d06cd17fc89eca370f7f91399f02866a4"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/Program.cs",
+      "sourceSha256": "9abd24abd97e23421cc6d6aef2b2cb466c050f46cdcb73cec64c71e6c8600abe"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/Rcm.Desktop.csproj",
+      "sourceSha256": "424a7ac04c5bc0f1c1d4fd3ec1526708bfe3c94f27411dbf2a0bcfcbf6bff831"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/SavedLoginStore.cs",
+      "sourceSha256": "b3aa95c985e24c7f3ecc2b19f63641d780c674ca688cc436519a97074bdffa93"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/ShiftReportsEditorViewModel.cs",
+      "sourceSha256": "1701a84f1c78e832eb6c772c4a40d4b2882e8dec047d7a636f8eeab60c1bba6c"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/ShiftReportsEditorWindow.xaml",
+      "sourceSha256": "8976dcde766935d981d29cb52c13aca36824fadeb3f539e3e2152f2f9d35eaaf"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/ShiftReportsEditorWindow.xaml.cs",
+      "sourceSha256": "acb131104bffb901116598ada93d5925bd7c43dd5d73fa425406c966e34bfa56"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/ShiftReportsForm.cs",
+      "sourceSha256": "87afb92b4cba00efc76a43999afeb3caceed153fa549e271b5ba5740e14bc131"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/ShiftReportsPage.xaml",
+      "sourceSha256": "219c31d21f4e89a4c997257e56da3a7fb0daa7a93c863309720c373cabfd32de"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/ShiftReportsPage.xaml.cs",
+      "sourceSha256": "a34e64b47451bdfe92d6a1ace523ba06ab87e209be66c9b06b1645d486a0b210"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/ShiftReportsPrint.cs",
+      "sourceSha256": "215fff0496ed447537f26a7c1cbfe52edfd9998e1bc4d68757bafcc575761fa8"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/ShiftReportsViewModel.cs",
+      "sourceSha256": "1f0fc07dcd57f6021f39ba7b4e0a124ba31277433ab622d1329045a0d06aaaf6"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/StartupUpdates.cs",
+      "sourceSha256": "84819b35f459d00fc03b5ffbae21a530ec017dd1202a11b0d6ccc2dc984aab54"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/StartupWindow.xaml",
+      "sourceSha256": "061458ae9c15b2ce29cd741564bdf3cf0e117d3eff0021b793cb45037461d9cc"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/StartupWindow.xaml.cs",
+      "sourceSha256": "ebfd2c325aaa0d09cee669857c40bacb1e0f5ce87d0c83e042e0f94ac0604bd2"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/TemplateEditorViewModel.cs",
+      "sourceSha256": "34b36a5b1a0f01bb397f43e88a69a530ddfcb3b155726e8b6233cebab4bf6523"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/TemplateEditorWindow.xaml",
+      "sourceSha256": "85169999b5949b3be406be3ace45c84ad6b091db7f8b211cbeda2e8f21c063df"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/TemplateEditorWindow.xaml.cs",
+      "sourceSha256": "fec5d4cbb4cab4dc44f062977d99332cb60eba73ef326149aaa9d3ed790435bf"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/TemplateRows.cs",
+      "sourceSha256": "4bddb972241d9fefbddb6e17d5126252d756d3c37cdcf3760b224c6efbe6b8cb"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/TemplateWorkspace.xaml",
+      "sourceSha256": "a5d0d9c9bc1f7f37173826ea429c7e15f602bc5ae1d84b570ccdf48592a078f7"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/TemplateWorkspace.xaml.cs",
+      "sourceSha256": "895d796e82eb1f2a02a70b0dba96ba9217da3a77f6d1cb83d2479f624c622843"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/TemplateWorkspaceViewModel.cs",
+      "sourceSha256": "bde66cb74b3e65d28fcf9433389b4805342e420051a5a5a6513c773c078df108"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/TetrapodDeliveryStore.cs",
+      "sourceSha256": "5259da27b5572f0a7874bb4860841e3761953f3617a3f1c95e40d3466cd608d0"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/TetrapodPage.xaml",
+      "sourceSha256": "6fa043f268dc7fc442e7460fd7037276b84ee0d25526556f338e29244ad35f17"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/TetrapodPage.xaml.cs",
+      "sourceSha256": "c42f18e53d7e1bfe9a876d79a1dbc8a8c4589a0775d9ce59544f8c560a8e0ab7"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/TetrapodViewModel.cs",
+      "sourceSha256": "d68157f5c2973b6cd142ee10c4870bda7886787910547ca863012531be93d522"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/Theme.xaml",
+      "sourceSha256": "6a85e91ffe328d26a7db2047d08f497f2677300d85a4ca3beb96d4fd804eac38"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/WindowViewport.cs",
+      "sourceSha256": "41b5fae9daab8cf35ca05ba006c8e62ec987526eb51c1023eaabaf603e4f0810"
+    },
+    {
+      "path": "dotnet/Rcm.Desktop/packages.lock.json",
+      "sourceSha256": "e4343708d043746d0b26b5fbd4cc22ac1f30a616e3b1e0f78eec291e96e985e7"
+    },
+    {
+      "path": "dotnet/Rcm.Updates.Tests/InterruptedUpdateTests.cs",
+      "sourceSha256": "657b42a4137c863de1d69794d9c91e1a9debc2e4f45cf5d8de24b7a4a7340e61"
+    },
+    {
+      "path": "dotnet/Rcm.Updates.Tests/PackageContentTests.cs",
+      "sourceSha256": "c022b8fea5693cdc608109403b2188e8a844c347479207997d36d69041334fe1"
+    },
+    {
+      "path": "dotnet/Rcm.Updates.Tests/Rcm.Updates.Tests.csproj",
+      "sourceSha256": "000bbbce7f3b2c07cd964a8d5192f16f2da89d6294d6c4c345c7cf2c0ca5de47"
+    },
+    {
+      "path": "dotnet/Rcm.Updates.Tests/SignedUpdateTests.cs",
+      "sourceSha256": "4c6bdfd7a35d0c4e45ae02e011f64d5bb4a1d5078c9b039860d6bca6df5b64c7"
+    },
+    {
+      "path": "dotnet/Rcm.Updates.Tests/packages.lock.json",
+      "sourceSha256": "f6c30f9c69c30d7400b0537dbb428677a677dea85391490c0781a83787c23ec1"
+    },
+    {
+      "path": "dotnet/Rcm.Updates/PackageContentDigest.cs",
+      "sourceSha256": "7ec62d3191df4226a4c3d8c22eadbe837ed96766984981aa9787df11162e8f89"
+    },
+    {
+      "path": "dotnet/Rcm.Updates/Rcm.Updates.csproj",
+      "sourceSha256": "d76de5eccd98469cf393c8f098f410cac8a2aa38beb675e42d8668b4430f797e"
+    },
+    {
+      "path": "dotnet/Rcm.Updates/SignedUpdateSource.cs",
+      "sourceSha256": "2fef8de656cc200c8c9265e9a893ade8b87eaf48e5c6a0ed9cdc7fb8dd5434a2"
+    },
+    {
+      "path": "dotnet/Rcm.Updates/VerifiedUpdateManager.cs",
+      "sourceSha256": "4669a25d4fc7d53de139e10dac435959f255cc4af582140cd035bc70afe67811"
+    },
+    {
+      "path": "dotnet/Rcm.Updates/packages.lock.json",
+      "sourceSha256": "c9a7c7f1482c64eff2206089ca944187467bb693ab99e6ef37b699b278db91cc"
+    }
+  ]
+}

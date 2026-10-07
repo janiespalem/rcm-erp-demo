@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><RuntimeIdentifiers>win-x64</RuntimeIdentifiers><EnableSingleFileAnalyzer>true</EnableSingleFileAnalyzer></PropertyGroup>
+  <ItemGroup><PackageReference Include="Velopack" Version="1.2.158" /></ItemGroup>
+  <PropertyGroup><UpdatePublicKeyPath Condition="'$(UpdatePublicKeyPath)' == ''">$(MSBuildThisFileDirectory)release-public.pem</UpdatePublicKeyPath></PropertyGroup>
+  <ItemGroup><EmbeddedResource Include="$(UpdatePublicKeyPath)" LogicalName="Rcm.Updates.release-public.pem" /></ItemGroup>
+</Project>

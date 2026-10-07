@@ -1,23 +1,65 @@
+name: factoryflow
 services:
-  factoryflow-demo:
-    build: .
-    ports:
-      - "127.0.0.1:8000:8000"
-    volumes:
-      - demo-data:/app/data
+  db:
+    image: postgres:17
     environment:
-      - DATABASE_URL=sqlite:////app/data/factoryflow_demo.db
-      - JWT_SECRET=${JWT_SECRET:?set JWT_SECRET before running}
-    # Run migrations before starting the demo server.
-    command: >
-      sh -c "cd /app && python -m alembic upgrade head &&
-             cd /app/backend && python -m uvicorn main:app --host 0.0.0.0 --port 8000"
-    restart: unless-stopped
+      POSTGRES_DB: factoryflow_demo
+      POSTGRES_USER: factoryflow_admin
+      POSTGRES_PASSWORD: factoryflow-local-admin-only
+    volumes:
+      - database:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U factoryflow_admin -d factoryflow_demo']
+      interval: 2s
+      timeout: 5s
+      retries: 30
 
-# Pierwsze uruchomienie:
-#   export JWT_SECRET=<losowy-secret>
-#   docker compose up -d
-# Migracje uruchamiane automatycznie przy starcie kontenera (alembic upgrade head).
+  bootstrap:
+    build:
+      context: .
+      target: bootstrap
+    profiles: [setup]
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+psycopg://factoryflow_admin:factoryflow-local-admin-only@db/factoryflow_demo
+      APP_ENV: test
+    volumes:
+      - uploads:/app/uploads
+
+  api:
+    build:
+      context: .
+      target: runtime
+    depends_on:
+      db:
+        condition: service_healthy
+    ports: ['127.0.0.1:${FACTORYFLOW_API_PORT:-18081}:8080']
+    environment:
+      ASPNETCORE_ENVIRONMENT: Demo
+    volumes:
+      - uploads:/app/uploads
+    healthcheck:
+      test: [CMD, curl, --fail, --silent, 'http://localhost:8080/health']
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  legacy:
+    profiles: [legacy]
+    build: ./legacy
+    ports: ['127.0.0.1:18080:8000']
+    environment:
+      DATABASE_URL: sqlite:////app/data/factoryflow_legacy.db
+      JWT_SECRET: factoryflow-independent-legacy-demo-secret-only
+    volumes:
+      - legacy-data:/app/data
+    command: >-
+      sh -c "cd /app && python -m alembic upgrade head &&
+      cd backend && python -m uvicorn main:app --host 0.0.0.0 --port 8000"
 
 volumes:
-  demo-data:
+  database:
+  uploads:
+  legacy-data:

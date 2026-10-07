@@ -6,13 +6,9 @@ Create Date: 2026-05-05 00:01:00 UTC
 """
 from __future__ import annotations
 
-from pathlib import Path
-import sys
-
 from alembic import op
 import sqlalchemy as sa
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "backend"))
 from models import Base
 
 revision = "20260505_0001"
