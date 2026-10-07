@@ -66,6 +66,24 @@ function Get-InstalledProcess([string]$Executable) {
     if ($installedProcesses.Count -eq 1) { return $installedProcesses[0] }
     return $null
 }
+$identityObservations = [Collections.Generic.List[object]]::new()
+$previousIdentity = @{}
+foreach ($path in $identityBefore.Keys) { $previousIdentity[$path] = $identityBefore[$path] }
+function Record-IdentityObservation([string]$Stage) {
+    $current = @{}
+    if (Test-Path -LiteralPath $identity) {
+        Get-ChildItem $identity -File -Recurse | ForEach-Object { $current[$_.FullName] = (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash }
+    }
+    $changes = @()
+    foreach ($path in @(@($previousIdentity.Keys) + @($current.Keys) | Sort-Object -Unique)) {
+        if ($previousIdentity[$path] -ne $current[$path]) {
+            $changes += [ordered]@{ path = [IO.Path]::GetRelativePath($identity, $path); beforeSha256 = $previousIdentity[$path]; afterSha256 = $current[$path] }
+        }
+    }
+    $identityObservations.Add([ordered]@{ stage = $Stage; directoryExists = (Test-Path -LiteralPath $identity); changed = $changes })
+    $previousIdentity.Clear()
+    foreach ($path in $current.Keys) { $previousIdentity[$path] = $current[$path] }
+}
 $rcm = $null
 $demo = $null
 try {
@@ -80,6 +98,7 @@ try {
         $process = Start-Process -FilePath $installer -ArgumentList '--silent' -PassThru
         if (-not $process.WaitForExit(120000)) { $process.Kill(); throw "Installer timed out: $installer" }
         if ($process.ExitCode -ne 0) { throw "Installer failed: $installer ($($process.ExitCode))" }
+        Record-IdentityObservation $(if ($installer -eq $rcmInstaller) { 'after-rcm-setup' } else { 'after-factoryflow-setup' })
     }
     if (-not (Test-Path $rcmExe) -or -not (Test-Path $demoExe)) { throw 'Separate default installation paths missing' }
     $env:RCM_SERVER_URL = "http://127.0.0.1:$sinkPort/"
@@ -95,6 +114,7 @@ try {
         } until ($rcm.MainWindowHandle -ne 0 -or [DateTime]::UtcNow -gt $rcmDeadline)
         if ($rcm.MainWindowHandle -eq 0) { throw 'Real RCM did not display a native window using the local sink' }
     }
+    Record-IdentityObservation 'after-rcm-startup'
     $env:RCM_SERVER_URL = "http://127.0.0.1:$port/production-api/"
     $env:RCM_UPDATE_URL = "http://127.0.0.1:$port/production-updates/"
     $demo = Get-InstalledProcess $demoExe
@@ -107,6 +127,7 @@ try {
     } until ($demo.MainWindowHandle -ne 0 -or [DateTime]::UtcNow -gt $deadline)
     if ($demo.MainWindowHandle -eq 0) { throw 'Installed FactoryFlow did not display a native window' }
     Start-Sleep -Seconds 5
+    Record-IdentityObservation 'after-factoryflow-startup'
     if ($listener.Pending()) { throw 'Demo contacted an RCM production environment endpoint' }
     if ($rcm.HasExited) { throw 'RCM did not remain running beside FactoryFlow' }
     if (-not $realRcm -and -not (Test-Path $env:FACTORYFLOW_COEXISTENCE_MARKER)) { throw 'Synthetic RCM fixture marker missing' }
@@ -128,6 +149,11 @@ try {
         rcmIdentitySha256 = $before
         factoryFlowWindowTitle = $demo.MainWindowTitle
     } | ConvertTo-Json | Set-Content (Join-Path $results 'installer-isolation.json') -Encoding utf8NoBOM
+} catch {
+    $diagnostic = $identityObservations | ConvertTo-Json -Depth 6
+    $diagnostic | Set-Content (Join-Path $results 'identity-failure.json') -Encoding utf8NoBOM
+    Write-Output $diagnostic
+    throw
 } finally {
     foreach ($exe in @($demoExe, $rcmExe)) {
         $process = Get-InstalledProcess $exe
