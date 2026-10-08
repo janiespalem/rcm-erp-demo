@@ -16,9 +16,23 @@ docker compose up -d --build --wait api
 
 The API listens at `http://127.0.0.1:18081`; check `http://127.0.0.1:18081/health`. PostgreSQL has no published port. Bootstrap is an explicit, repeatable step: it applies migrations, configures restricted runtime logins and native writer ownership, then creates synthetic fixtures through the versioned API. Normal API startup does not migrate or seed.
 
-On Windows, install the self-contained **FactoryFlow-Setup.exe** from this repository's release assets. No .NET SDK or Python installation is needed by the person trying the desktop. Run the API on the same Windows machine, then open FactoryFlow and sign in. FactoryFlow installs as `FactoryFlow.exe` under `%LOCALAPPDATA%\FactoryFlow`; its protected saved login, calculator state and single-instance mutex are separate from RCM. Startup, background and manual updates are disabled. The client ignores `RCM_*` configuration. An optional `FACTORYFLOW_SERVER_URL` must be a loopback HTTP(S) root URL; redirects and HTTP proxies are disabled.
+On Windows, install the self-contained [FactoryFlow-Setup.exe from the latest release](https://github.com/janiespalem/rcm-erp-demo/releases/latest/download/FactoryFlow-Setup.exe). No .NET SDK or Python installation is needed by the person trying the desktop. Run the API on the same Windows machine, then open FactoryFlow and sign in. FactoryFlow installs as `FactoryFlow.exe` under `%LOCALAPPDATA%\FactoryFlow`; its protected saved login, calculator state and single-instance mutex are separate from RCM. Startup, background and manual updates are disabled. The client ignores `RCM_*` configuration. An optional `FACTORYFLOW_SERVER_URL` must be a loopback HTTP(S) root URL; redirects and HTTP proxies are disabled.
 
-The installer is produced and tested by the Windows workflow. Until a release asset is published, build it using [the Windows workflow](.github/workflows/windows.yml) and `scripts/package-desktop.ps1` (Windows, .NET SDK from `dotnet/global.json`, and `vpk` 1.2.158); do not substitute an employee ERP installer. Public Windows CI installs FactoryFlow beside a synthetic RCM package. The same test accepts `-ExistingRcmSetupPath` for private acceptance beside the actual RCM installer, using a separate local server sink and verifying preserved identity files. Every package includes `release.json` with its public source commit, version and installation identity; `verification.json` binds the installer and coexistence test by SHA-256. Linux backend verification does not establish Windows acceptance.
+The installer is produced and tested by the Windows workflow. To rebuild it, use [the Windows workflow](.github/workflows/windows.yml) and `scripts/package-desktop.ps1` (Windows, .NET SDK from `dotnet/global.json`, and `vpk` 1.2.158); do not substitute an employee ERP installer. Public Windows CI installs FactoryFlow beside a synthetic RCM package. The same test accepts `-ExistingRcmSetupPath` for private acceptance beside the actual RCM installer, using a separate local server sink and verifying preserved identity files. Every package includes `release.json` with its public source commit, version and installation identity; `verification.json` binds the installer and coexistence test by SHA-256. Linux backend verification does not establish Windows acceptance.
+
+## Native Windows screens
+
+These screenshots come from the Windows workflow with synthetic demo accounts and records.
+
+| Sign-in | North-team CRM |
+|---|---|
+| ![FactoryFlow sign-in](docs/screenshots/native/login.png) | ![FactoryFlow customer list](docs/screenshots/native/crm-customers.png) |
+
+| Order detail | Catalog materials |
+|---|---|
+| ![Synthetic order detail](docs/screenshots/native/order-detail.png) | ![Synthetic materials catalog](docs/screenshots/native/catalog-materials.png) |
+
+![Synthetic shift report form](docs/screenshots/native/shift-report.png)
 
 ## Demo accounts
 
@@ -97,7 +111,7 @@ The earlier Vue/FastAPI demonstration is retained under `legacy/` with its own S
 docker compose --profile legacy up -d --build legacy
 ```
 
-Open `http://127.0.0.1:18080`. Legacy PINs: Biuro `1111`, Technolog `2222`, CEO `3333`, production shifts I/II `4444`/`5555`. Earlier web screenshots in `docs/screenshots/` belong to this legacy client; they are not native WPF screenshots. The legacy source and fixtures remain separately runnable. Native screenshots are added only after capture on Windows against the synthetic demo.
+Open `http://127.0.0.1:18080`. Legacy PINs: Biuro `1111`, Technolog `2222`, CEO `3333`, production shifts I/II `4444`/`5555`. Screenshots for this Vue client remain in `docs/screenshots/`; native WPF screenshots are in `docs/screenshots/native/`. The legacy source and fixtures remain separately runnable.
 
 ## Limits
 
