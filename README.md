@@ -1,133 +1,118 @@
-# FactoryFlow — Manufacturing ERP & Shift Reporting
+# FactoryFlow
 
-A public, sanitized edition of an ERP used in a small manufacturing business. It connects office order intake, technical quotation, production handoffs and concrete-plant shift reporting in one FastAPI + Vue application.
+A native Windows ERP demonstration built with **C# / .NET 10, WPF, ASP.NET Core and PostgreSQL**. Explore customer follow-up, orders, pricing, documents, catalogs, production contracts, steel deliveries and shift reports using entirely fictional data.
 
-This is a working application, not a UI mockup. The production feature snapshot was verified on **18 September 2026**. All demo identities, customer records and prices are fictional; production data and private infrastructure are excluded.
+FactoryFlow is a public demonstration, not an employee deployment. Demo prices, customers, accounts, attachments and operational records are synthetic. The Windows interface uses Polish business terminology.
 
-[![CI](https://github.com/janiespalem/rcm-erp-demo/actions/workflows/ci.yml/badge.svg)](https://github.com/janiespalem/rcm-erp-demo/actions/workflows/ci.yml)
+## Quick start
 
-**FastAPI · SQLAlchemy · PostgreSQL · Alembic · Vue 3 · Docker · pytest · Playwright**
+Install Docker Desktop (or Docker Engine with Compose). Clone this repository and run:
 
-## Product tour
-
-| Order queue | Order workspace and audit history |
-| --- | --- |
-| ![Orders](docs/screenshots/orders.png) | ![Order workspace](docs/screenshots/order-workspace.png) |
-
-| Mobile shift report | Finalized shift report |
-| --- | --- |
-| ![Phone report](docs/screenshots/shift-mobile.png) | ![Finalized report](docs/screenshots/shift-report.png) |
-
-The interface is Polish, matching the actual shop-floor workflow. Engineering notes are in English for reviewers. There is currently no hosted public demo; run the isolated version locally.
-
-## Try it in five minutes
-
-Start the app using Docker or the local instructions below. These are deliberately public **demo credentials**, never production credentials.
-
-| Access type | PIN | Identity / purpose |
-| --- | --- | --- |
-| `biuro` | `1111` | Demo Office — intake, approvals, read-only shift history |
-| `technolog` | `2222` | Demo Technologist — quotation, catalogs and report administration |
-| `ceo` | `3333` | Demo CEO — analytics and report oversight |
-| `produkcja` | `4444` | Demo Shift I — own drafts and corrections |
-| `produkcja` | `5555` | Demo Shift II — same permissions, different author and default shift |
-
-1. Log in as **Produkcja / 4444**. Open **Dzisiejszy raport**. Author, date and shift are prefilled.
-2. Fill quantities and equipment checks. Pause to see **Zapisano**. Mark a check **NIE** to exercise the required explanation.
-3. Complete remaining fields and choose **Zakończ raport**. The report locks; subsequent changes require **Koryguj raport** and a reason.
-4. Inspect history, before/after audit and **Drukuj / PDF**. Resize to a phone viewport: the same workflow remains available.
-5. Log in as **Biuro** to read without edit access. As **Technolog**, explore synthetic orders, quotations and the separate **Kalkulatory** tab.
-
-Shift history starts empty so you can create your own report. Office orders and catalogs are seeded automatically.
-
-## What I built
-
-**Office-to-production workflow:** intake → technical triage → quotation → approval → production → delivery. Includes material/operation pricing, internal orders at cost, controlled attachments, PDF production sheets and offers, order events, archive/restore and XLSX export.
-
-**Concrete-plant shift reporting:** one report per date and shift; individual authors; autosaved drafts; nine fixed OK / NIE / N/D checks; conditional validation for damage, equipment defects and unfinished work; finalization; reasoned corrections; role-restricted archival; phone layout and browser A4 printing.
-
-**Production calculators:** steel-reinforcement quantities/materials and concrete-block layouts, weights and mixed-order costing. Reinforcement and the finished concrete product are different stages of the same product. Calculators remain separate from shift reports; this is not an inventory or batch-traceability system.
-
-## Engineering decisions worth reviewing
-
-| Problem | Implementation | Evidence |
-| --- | --- | --- |
-| Concurrent edits overwrite records | Optimistic versioning, HTTP 409, transactional audit | [PostgreSQL races](tests/test_postgres_concurrency.py) |
-| Logout or failed autosave loses input | Pending-save guard, discard confirmation, retained form values | [Chromium report workflows](tests/test_shift_reports.py) |
-| Duplicate date/shift reports | Unique database index on active reports | [Models](backend/models.py), [concurrency tests](tests/test_postgres_concurrency.py) |
-| Changed questions reinterpret old answers | Immutable question schema; snapshots pin the version | [Shared schema](shared/shift-report-schemas.json), [regression tests](tests/test_shift_reports.py) |
-| Autosave floods the audit trail | Same-actor draft saves coalesce; corrections/finalization stay separate | Test: **20 synthetic saves → 1 draft-save event**, retaining initial/final state and count |
-| Profitability view queries once per order | Eager loading of quotations and operations | [Query-count tests](tests/test_rentownosc_queries.py) |
-| Dirty files enter an exact-commit release | Archive a resolved commit, not the working directory | [Archive helper](scripts/archive-commit.sh), [release safety tests](tests/test_release_safety.py) |
-
-These are engineering guarantees and synthetic test results, **not measured business-impact claims**. Timestamps, validation, corrections and recorded defects support later pilot evaluation. No reporting-time reduction, adoption figure or defect reduction is claimed.
-
-## Run locally
-
-### Docker
-
-Requires Docker Compose. From the repository root:
-
-```bash
-JWT_SECRET="$(openssl rand -hex 32)" docker compose up --build
+```sh
+docker compose up -d --wait db
+docker compose --profile setup run --build --rm bootstrap
+docker compose up -d --build --wait api
 ```
 
-Open <http://127.0.0.1:8000>. Compose runs migrations and seeds fictional data, binding only to localhost. SQLite persists in the `demo-data` named volume; changing the secret invalidates old sessions. Never reuse demo PINs in a real deployment. Earlier demo versions used `./data`; that directory is not deleted or automatically imported.
+The API listens at `http://127.0.0.1:18081`; check `http://127.0.0.1:18081/health`. PostgreSQL has no published port. Bootstrap is an explicit, repeatable step: it applies migrations, configures restricted runtime logins and native writer ownership, then creates synthetic fixtures through the versioned API. Normal API startup does not migrate or seed.
 
-### Python + Node
+On Windows, install the self-contained [FactoryFlow-Setup.exe from the latest release](https://github.com/janiespalem/rcm-erp-demo/releases/latest/download/FactoryFlow-Setup.exe). No .NET SDK or Python installation is needed by the person trying the desktop. Run the API on the same Windows machine, then open FactoryFlow and sign in. FactoryFlow installs as `FactoryFlow.exe` under `%LOCALAPPDATA%\FactoryFlow`; its protected saved login, calculator state and single-instance mutex are separate from RCM. Startup, background and manual updates are disabled. The client ignores `RCM_*` configuration. An optional `FACTORYFLOW_SERVER_URL` must be a loopback HTTP(S) root URL; redirects and HTTP proxies are disabled.
 
-Requires Python 3.11+, Node 20+ and WeasyPrint system libraries for commercial PDFs. On Debian/Ubuntu these include `libharfbuzz-subset0`, `libharfbuzz0b`, `libpango-1.0-0` and `libpangoft2-1.0-0`; the Dockerfile installs them.
+The installer is produced and tested by the Windows workflow. To rebuild it, use [the Windows workflow](.github/workflows/windows.yml) and `scripts/package-desktop.ps1` (Windows, .NET SDK from `dotnet/global.json`, and `vpk` 1.2.158); do not substitute an employee ERP installer. Public Windows CI installs FactoryFlow beside a synthetic RCM package. The same test accepts `-ExistingRcmSetupPath` for private acceptance beside the actual RCM installer, using a separate local server sink and verifying preserved identity files. Every package includes `release.json` with its public source commit, version and installation identity; `verification.json` binds the installer and coexistence test by SHA-256. Linux backend verification does not establish Windows acceptance.
 
-```bash
-python3.11 -m venv .venv
-. .venv/bin/activate
-pip install -r requirements.txt -r requirements-dev.txt
+## Native Windows screens
 
-cd frontend-vite
-npm ci
-npm run build
-cd ..
+These screenshots come from the Windows workflow with synthetic demo accounts and records.
 
-APP_ENV=dev python -m alembic upgrade head
-cd backend
-APP_ENV=dev uvicorn main:app --host 127.0.0.1 --port 8000
-```
+| Sign-in | North-team CRM |
+|---|---|
+| ![FactoryFlow sign-in](docs/screenshots/native/login.png) | ![FactoryFlow customer list](docs/screenshots/native/crm-customers.png) |
 
-Open <http://127.0.0.1:8000>; API documentation is at `/docs`. SQLite is the zero-setup demo default. Set `DATABASE_URL` for PostgreSQL; concurrency guarantees are tested against PostgreSQL, not inferred from SQLite.
+| Order detail | Catalog materials |
+|---|---|
+| ![Synthetic order detail](docs/screenshots/native/order-detail.png) | ![Synthetic materials catalog](docs/screenshots/native/catalog-materials.png) |
 
-## Verification
+![Synthetic shift report form](docs/screenshots/native/shift-report.png)
 
-```bash
-# Repository root, virtual environment active:
-(cd frontend-vite && npm ci && npm run test:lego && npm run test:tetrapod && npm run build)
-APP_ENV=test DISABLE_STARTUP_SEED=1 python -m pytest -q
+## Demo accounts
 
-python -m playwright install --with-deps chromium
-APP_ENV=test DISABLE_STARTUP_SEED=1 RUN_SHIFT_BROWSER=1 python -m pytest tests/test_shift_reports.py -q
-```
+All accounts use password **`FactoryFlow-Demo-2026!`**. These credentials are deliberately public and suitable only for this local synthetic demo.
 
-[CI](.github/workflows/ci.yml) runs Python tests, calculator tests, frontend builds, fresh SQLite migrations, a dedicated PostgreSQL 17 migration/concurrency job and Chromium report workflows: 360/390px phone layouts, A4, finalization and logout. Browser tests are explicitly enabled. PostgreSQL tests require an isolated database named `rcm_erp_test` and refuse other names.
+| Username | Role | Useful scenario |
+|---|---|---|
+| `office` | Biuro; North CRM; assigned reviewer | Orders, documents, customer follow-up, report acceptance |
+| `engineer` | Technolog; North CRM | Pricing, catalog editing and shift reports |
+| `production` | Produkcja | Draft, save and finalize a shift report |
+| `director` | CEO | Read operational reports and analytics |
+| `sales.north` | CRM only; North team | Browse North customers, a recorded contact and contact plans |
+| `sales.south` | CRM only; South team | Browse independent South customers; North records are inaccessible |
 
-## Architecture and limitations
+Try these workflows:
+
+1. Sign in as `sales.north`, edit a topic and schedule a contact. Sign in as `sales.south` to see a separate customer set.
+2. Sign in as `office`, open a demo order and download its native PDF. The sample PDF attachment was generated from fictional records during bootstrap.
+3. Sign in as `engineer`, inspect three synthetic materials and three operations, open the populated DEMO-01 project/SOP and price an order using synthetic rates.
+4. Open the synthetic production contract and its steel delivery. Masses are integer grams; theoretical coverage is not physical production or dispatch availability.
+5. As `office`, inspect the finalized report linked to the contract and accept it. As `production`, create another report and practice draft/finalization handling.
+6. Keep an edited form open during a conflicting change. The client should retain input and require an explicit conflict decision.
+
+Data and attachments survive `docker compose stop` and `docker compose up -d`. To stop the demo, run `docker compose down`. Adding `-v` deletes the demo volumes and all records you entered; use it only for an intentional fresh start.
+
+## Architecture
 
 ```text
-Vue browser UI → FastAPI API → SQLAlchemy → PostgreSQL / local SQLite
-                       ├─ orders + quotation + document generation
-                       └─ shift reports + validation + versioning + audit
-shared/shift-report-schemas.json → versioned report question definitions
+FactoryFlow WPF desktop → /api/v1 → ASP.NET Core → PostgreSQL
+                                     │
+                              native PDF documents
+
+Explicit bootstrap → Alembic: public
+                   → EF: crm, production
+                   → restricted runtime grants + synthetic fixtures
 ```
 
-- One application and database; no separate reporting service or queue infrastructure.
-- Backend authorization is authoritative; production users cannot access commercial orders.
-- Reports live on the server. Calculator delivery/cart scratchpads use browser-local storage and are **not** a shared stock ledger.
-- Coalesced draft audit retains initial/final states, not every intermediate keystroke.
-- Shift printing uses the browser; commercial PDFs use Jinja2 + WeasyPrint.
-- Report migrations explicitly refuse unsafe downgrades rather than silently moving the migration ledger.
-- The standalone block calculator loads Three.js from a CDN; its 3D preview needs internet access.
-- The original deployment coexists with the company's accounting system. Accounting integration and linked steel-to-concrete traceability are not implemented here.
+- WPF UI and CommunityToolkit.Mvvm provide the Windows shell and forms.
+- Versioned commands live in `dotnet/Rcm.Contracts`; the desktop communicates only over HTTP.
+- Native identity, orders, catalog and shift-report writers are explicitly enabled. The demo does not require FastAPI for authentication or business writes.
+- Alembic remains the owner of `public`. EF owns `crm` and `production`, with separate migration history tables. Runtime database roles cannot migrate the schema.
+- CRM commands combine expected versions, request IDs, audit changes and persisted receipts. Team membership is resolved on the server.
+- Identity, orders, catalogs, shift reports, CRM and production use separate restricted database logins. Public demo configuration contains only disposable demo credentials.
+- API bindings are loopback-only by default. The legacy HTTP adapter points to an unavailable loopback endpoint so an accidental fallback fails locally.
 
-## Public-demo boundary
+The native source was transferred using explicit per-file manifests with source hashes. No private Git history, production database, infrastructure configuration, real credentials or uploaded business documents are included. Public display identity is FactoryFlow; shared C# namespaces remain stable, while the desktop executable, installation and saved-login identities are independent.
 
-No production database, customer uploads, drawings, real user accounts, commercial price list, secrets, private deployment configuration or private Git history are included. Existing demo branding and synthetic seeds are retained. Calculator prices are synthetic and labeled. Screenshots use fictional data.
+## Reproducible engineering checks
 
-This is an evaluation app, not an internet-facing production template: public PINs grant write access, with no per-visitor isolation or automatic resets. Keep it local or deploy only in a disposable, isolated environment.
+With the demo running, use Python 3 to exercise the real HTTP interface (standard library only):
+
+```sh
+python demo/verify.py
+docker compose restart api
+python demo/verify.py --after-restart
+```
+
+The verification checks all six account logins, CRM team isolation, eight competing retries of the same customer/order creation, receipt replay after a discarded response, stale-edit conflicts, native PDF generation, report acceptance and persistence after restart. These are correctness checks, not throughput benchmarks.
+
+LEGO demonstration prices use the existing public synthetic price table, with repriced monetary expectations and unchanged layout/geometry fixtures. Pricing fixtures are hand-built arithmetic edge cases (zero, missing values, rounding and fractional sums), not sampled customer quotes.
+
+Calculation regression tests run from `dotnet/` with the pinned SDK:
+
+```sh
+dotnet test Rcm.Calculators.Tests -c Release
+dotnet test Rcm.Orders.Tests -c Release
+```
+
+Linux CI bootstraps a new PostgreSQL volume, exercises native workflows and repeats bootstrap without resetting entered data. Windows CI builds/tests WPF and the installer. Desktop form retention, update restart behavior, keyboard access and display scaling require the Windows scenarios; a Linux build cannot validate them. No performance figures are claimed without measured hardware, dataset and command.
+
+## Legacy web profile
+
+The earlier Vue/FastAPI demonstration is retained under `legacy/` with its own SQLite volume and local port. It is an independent historical slice, not a second writer for the native database:
+
+```sh
+docker compose --profile legacy up -d --build legacy
+```
+
+Open `http://127.0.0.1:18080`. Legacy PINs: Biuro `1111`, Technolog `2222`, CEO `3333`, production shifts I/II `4444`/`5555`. Screenshots for this Vue client remain in `docs/screenshots/`; native WPF screenshots are in `docs/screenshots/native/`. The legacy source and fixtures remain separately runnable.
+
+## Limits
+
+This is a working pilot demonstration. It is not a production deployment guide, accounting system or confirmed manufacturing specification. Catalog norms require domain confirmation; theoretical material coverage is distinct from recorded consumption. Quote editing retains the source module's documented versioning limits. Public demo passwords and connection strings must never be reused for real data. New production permissions and user data are outside this demo's scope.

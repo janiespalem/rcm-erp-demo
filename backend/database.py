@@ -24,7 +24,7 @@ def _database_url_from_env() -> str:
     if password:
         user = quote(os.getenv("POSTGRES_USER", "factoryflow_demo"), safe="")
         password = quote(password, safe="")
-        host = os.getenv("POSTGRES_HOST", "factoryflow-demo-db")
+        host = os.getenv("POSTGRES_HOST", "db")
         port = os.getenv("POSTGRES_PORT", "5432")
         database = quote(os.getenv("POSTGRES_DB", "factoryflow_demo"), safe="")
         return f"postgresql+psycopg://{user}:{password}@{host}:{port}/{database}"

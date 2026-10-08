@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><TargetFramework>net10.0-windows</TargetFramework><UseWPF>true</UseWPF><EnableWindowsTargeting>true</EnableWindowsTargeting><OutputType>WinExe</OutputType><RuntimeIdentifiers>win-x64</RuntimeIdentifiers><EnableSingleFileAnalyzer>true</EnableSingleFileAnalyzer><RuntimeFrameworkVersion>10.0.12</RuntimeFrameworkVersion></PropertyGroup>
+  <PropertyGroup><AssemblyName>FactoryFlow</AssemblyName><StartupObject>Rcm.Desktop.Program</StartupObject><Version>0.2.0</Version><Company>FactoryFlow</Company><Authors>FactoryFlow</Authors><Product>FactoryFlow</Product><Description>FactoryFlow — klienci i obsługa kontaktów</Description><DebugType>embedded</DebugType></PropertyGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Rcm.Desktop.Tests" />
+    <PackageReference Include="WPF-UI" Version="4.3.0" />
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+    <ProjectReference Include="../Rcm.Contracts/Rcm.Contracts.csproj" />
+    <ProjectReference Include="../Rcm.Updates/Rcm.Updates.csproj" />
+  </ItemGroup>
+</Project>

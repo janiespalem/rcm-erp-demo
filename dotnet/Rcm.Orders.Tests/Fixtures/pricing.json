@@ -1,0 +1,945 @@
+{
+  "oracle": {
+    "python": "3.11",
+    "source": "backend/services/pricing_service.py",
+    "dataset": "Hand-constructed arithmetic edge cases; no customer records or price list."
+  },
+  "cases": [
+    {
+      "name": "defaults",
+      "input": {},
+      "expected": {
+        "ops_total": 0,
+        "material_total": 0.0,
+        "extra_labor": 0.0,
+        "weight_total": 0.0,
+        "base": 0.0,
+        "subtotal": 0.0,
+        "total_net": 0.0,
+        "pricing_method": "kalkulacja"
+      },
+      "process_totals": []
+    },
+    {
+      "name": "legacy-process-cost",
+      "input": {
+        "processes": [
+          {
+            "name": "Cut",
+            "cost": 250
+          }
+        ]
+      },
+      "expected": {
+        "ops_total": 250.0,
+        "material_total": 0.0,
+        "extra_labor": 0.0,
+        "weight_total": 0.0,
+        "base": 250.0,
+        "subtotal": 275.0,
+        "total_net": 343.75,
+        "pricing_method": "kalkulacja"
+      },
+      "process_totals": [
+        250.0
+      ]
+    },
+    {
+      "name": "explicit-hours-zero",
+      "input": {
+        "processes": [
+          {
+            "name": "Cut",
+            "hours": 0,
+            "cost": 250
+          }
+        ]
+      },
+      "expected": {
+        "ops_total": 0.0,
+        "material_total": 0.0,
+        "extra_labor": 0.0,
+        "weight_total": 0.0,
+        "base": 0.0,
+        "subtotal": 0.0,
+        "total_net": 0.0,
+        "pricing_method": "kalkulacja"
+      },
+      "process_totals": [
+        0.0
+      ]
+    },
+    {
+      "name": "explicit-rate-zero",
+      "input": {
+        "processes": [
+          {
+            "name": "Cut",
+            "rate_per_hour": 0,
+            "cost": 250
+          }
+        ]
+      },
+      "expected": {
+        "ops_total": 0.0,
+        "material_total": 0.0,
+        "extra_labor": 0.0,
+        "weight_total": 0.0,
+        "base": 0.0,
+        "subtotal": 0.0,
+        "total_net": 0.0,
+        "pricing_method": "kalkulacja"
+      },
+      "process_totals": [
+        0.0
+      ]
+    },
+    {
+      "name": "hours-without-rate",
+      "input": {
+        "processes": [
+          {
+            "name": "Cut",
+            "hours": 2,
+            "cost": 250
+          }
+        ]
+      },
+      "expected": {
+        "ops_total": 0.0,
+        "material_total": 0.0,
+        "extra_labor": 0.0,
+        "weight_total": 0.0,
+        "base": 0.0,
+        "subtotal": 0.0,
+        "total_net": 0.0,
+        "pricing_method": "kalkulacja"
+      },
+      "process_totals": [
+        0.0
+      ]
+    },
+    {
+      "name": "rate-without-hours",
+      "input": {
+        "processes": [
+          {
+            "name": "Cut",
+            "rate_per_hour": 90,
+            "cost": 250
+          }
+        ]
+      },
+      "expected": {
+        "ops_total": 0.0,
+        "material_total": 0.0,
+        "extra_labor": 0.0,
+        "weight_total": 0.0,
+        "base": 0.0,
+        "subtotal": 0.0,
+        "total_net": 0.0,
+        "pricing_method": "kalkulacja"
+      },
+      "process_totals": [
+        0.0
+      ]
+    },
+    {
+      "name": "hours-and-rate-ignore-cost",
+      "input": {
+        "processes": [
+          {
+            "name": "Cut",
+            "hours": 2,
+            "rate_per_hour": 90,
+            "cost": 250
+          }
+        ]
+      },
+      "expected": {
+        "ops_total": 180.0,
+        "material_total": 0.0,
+        "extra_labor": 0.0,
+        "weight_total": 0.0,
+        "base": 180.0,
+        "subtotal": 198.00000000000003,
+        "total_net": 247.5,
+        "pricing_method": "kalkulacja"
+      },
+      "process_totals": [
+        180.0
+      ]
+    },
+    {
+      "name": "process-default-fields",
+      "input": {
+        "processes": [
+          {
+            "name": "Cut"
+          }
+        ]
+      },
+      "expected": {
+        "ops_total": 0.0,
+        "material_total": 0.0,
+        "extra_labor": 0.0,
+        "weight_total": 0.0,
+        "base": 0.0,
+        "subtotal": 0.0,
+        "total_net": 0.0,
+        "pricing_method": "kalkulacja"
+      },
+      "process_totals": [
+        0.0
+      ]
+    },
+    {
+      "name": "mixed-processes",
+      "input": {
+        "processes": [
+          {
+            "name": "Cut",
+            "cost": 250
+          },
+          {
+            "name": "Weld",
+            "hours": 1.5,
+            "rate_per_hour": 85,
+            "cost": 99
+          }
+        ]
+      },
+      "expected": {
+        "ops_total": 377.5,
+        "material_total": 0.0,
+        "extra_labor": 0.0,
+        "weight_total": 0.0,
+        "base": 377.5,
+        "subtotal": 415.25000000000006,
+        "total_net": 519.06,
+        "pricing_method": "kalkulacja"
+      },
+      "process_totals": [
+        250.0,
+        127.5
+      ]
+    },
+    {
+      "name": "fractional-sum",
+      "input": {
+        "processes": [
+          {
+            "name": "Cut",
+            "cost": 0.1
+          },
+          {
+            "name": "Cut",
+            "cost": 0.2
+          },
+          {
+            "name": "Cut",
+            "cost": 0.3
+          }
+        ]
+      },
+      "expected": {
+        "ops_total": 0.6000000000000001,
+        "material_total": 0.0,
+        "extra_labor": 0.0,
+        "weight_total": 0.0,
+        "base": 0.6000000000000001,
+        "subtotal": 0.6600000000000001,
+        "total_net": 0.83,
+        "pricing_method": "kalkulacja"
+      },
+      "process_totals": [
+        0.1,
+        0.2,
+        0.3
+      ]
+    },
+    {
+      "name": "fractional-material-sum",
+      "input": {
+        "materials": [
+          {
+            "cost": 0.1
+          },
+          {
+            "cost": 0.1
+          },
+          {
+            "cost": 0.1
+          },
+          {
+            "cost": 0.1
+          },
+          {
+            "cost": 0.1
+          },
+          {
+            "cost": 0.1
+          },
+          {
+            "cost": 0.1
+          },
+          {
+            "cost": 0.1
+          },
+          {
+            "cost": 0.1
+          },
+          {
+            "cost": 0.1
+          }
+        ]
+      },
+      "expected": {
+        "ops_total": 0,
+        "material_total": 0.9999999999999999,
+        "extra_labor": 0.0,
+        "weight_total": 0.0,
+        "base": 0.9999999999999999,
+        "subtotal": 1.0999999999999999,
+        "total_net": 1.37,
+        "pricing_method": "kalkulacja"
+      },
+      "process_totals": []
+    },
+    {
+      "name": "material-cost",
+      "input": {
+        "material_cost": 300
+      },
+      "expected": {
+        "ops_total": 0,
+        "material_total": 300,
+        "extra_labor": 0.0,
+        "weight_total": 0.0,
+        "base": 300.0,
+        "subtotal": 330.0,
+        "total_net": 412.5,
+        "pricing_method": "kalkulacja"
+      },
+      "process_totals": []
+    },
+    {
+      "name": "material-price-overrides-cost",
+      "input": {
+        "material_weight_kg": 50,
+        "material_price_per_kg": 4.5,
+        "material_cost": 300
+      },
+      "expected": {
+        "ops_total": 0,
+        "material_total": 225.0,
+        "extra_labor": 0.0,
+        "weight_total": 0.0,
+        "base": 225.0,
+        "subtotal": 247.50000000000003,
+        "total_net": 309.38,
+        "pricing_method": "kalkulacja"
+      },
+      "process_totals": []
+    },
+    {
+      "name": "positive-price-zero-weight",
+      "input": {
+        "material_price_per_kg": 4.5,
+        "material_cost": 300
+      },
+      "expected": {
+        "ops_total": 0,
+        "material_total": 0.0,
+        "extra_labor": 0.0,
+        "weight_total": 0.0,
+        "base": 0.0,
+        "subtotal": 0.0,
+        "total_net": 0.0,
+        "pricing_method": "kalkulacja"
+      },
+      "process_totals": []
+    },
+    {
+      "name": "empty-materials-use-legacy",
+      "input": {
+        "materials": [],
+        "material_cost": 300
+      },
+      "expected": {
+        "ops_total": 0,
+        "material_total": 300,
+        "extra_labor": 0.0,
+        "weight_total": 0.0,
+        "base": 300.0,
+        "subtotal": 330.0,
+        "total_net": 412.5,
+        "pricing_method": "kalkulacja"
+      },
+      "process_totals": []
+    },
+    {
+      "name": "multi-materials-override-legacy",
+      "input": {
+        "materials": [
+          {
+            "qty_kg": 10,
+            "price_per_kg": 9,
+            "cost": 250
+          },
+          {
+            "qty_kg": 20,
+            "price_per_kg": 5,
+            "cost": 0
+          }
+        ],
+        "material_cost": 999,
+        "material_weight_kg": 999,
+        "material_price_per_kg": 999
+      },
+      "expected": {
+        "ops_total": 0,
+        "material_total": 350.0,
+        "extra_labor": 0.0,
+        "weight_total": 0.0,
+        "base": 350.0,
+        "subtotal": 385.00000000000006,
+        "total_net": 481.25,
+        "pricing_method": "kalkulacja"
+      },
+      "process_totals": []
+    },
+    {
+      "name": "empty-material-row-overrides-legacy",
+      "input": {
+        "materials": [
+          {}
+        ],
+        "material_cost": 300
+      },
+      "expected": {
+        "ops_total": 0,
+        "material_total": 0.0,
+        "extra_labor": 0.0,
+        "weight_total": 0.0,
+        "base": 0.0,
+        "subtotal": 0.0,
+        "total_net": 0.0,
+        "pricing_method": "kalkulacja"
+      },
+      "process_totals": []
+    },
+    {
+      "name": "default-labor-rate",
+      "input": {
+        "labor_hours": 3
+      },
+      "expected": {
+        "ops_total": 0,
+        "material_total": 0.0,
+        "extra_labor": 270.0,
+        "weight_total": 0.0,
+        "base": 270.0,
+        "subtotal": 297.0,
+        "total_net": 371.25,
+        "pricing_method": "kalkulacja"
+      },
+      "process_totals": []
+    },
+    {
+      "name": "full-formula",
+      "input": {
+        "processes": [
+          {
+            "name": "Mill",
+            "hours": 4,
+            "rate_per_hour": 85
+          }
+        ],
+        "material_weight_kg": 20,
+        "material_price_per_kg": 5,
+        "labor_hours": 1,
+        "labor_rate": 80,
+        "overhead_pct": 0.1,
+        "margin_pct": 0.2,
+        "transport_cost": 150
+      },
+      "expected": {
+        "ops_total": 340.0,
+        "material_total": 100,
+        "extra_labor": 80,
+        "weight_total": 0.0,
+        "base": 520.0,
+        "subtotal": 572.0,
+        "total_net": 836.4,
+        "pricing_method": "kalkulacja"
+      },
+      "process_totals": [
+        340.0
+      ]
+    },
+    {
+      "name": "internal-at-cost",
+      "input": {
+        "processes": [
+          {
+            "name": "Cut",
+            "hours": 3,
+            "rate_per_hour": 90
+          }
+        ],
+        "material_weight_kg": 10,
+        "material_price_per_kg": 7,
+        "overhead_pct": 0,
+        "margin_pct": 0
+      },
+      "expected": {
+        "ops_total": 270.0,
+        "material_total": 70,
+        "extra_labor": 0.0,
+        "weight_total": 0.0,
+        "base": 340.0,
+        "subtotal": 340.0,
+        "total_net": 340.0,
+        "pricing_method": "kalkulacja"
+      },
+      "process_totals": [
+        270.0
+      ]
+    },
+    {
+      "name": "structured-ignores-weight",
+      "input": {
+        "material_cost": 100,
+        "weight_kg": 120,
+        "weight_rate_pln_kg": 8
+      },
+      "expected": {
+        "ops_total": 0,
+        "material_total": 100,
+        "extra_labor": 0.0,
+        "weight_total": 0.0,
+        "base": 100.0,
+        "subtotal": 110.00000000000001,
+        "total_net": 137.5,
+        "pricing_method": "kalkulacja"
+      },
+      "process_totals": []
+    },
+    {
+      "name": "weight-is-all-in",
+      "input": {
+        "method": "od_masy",
+        "processes": [
+          {
+            "name": "Cut",
+            "hours": 2,
+            "rate_per_hour": 90
+          }
+        ],
+        "materials": [
+          {
+            "qty_kg": 10,
+            "price_per_kg": 10
+          }
+        ],
+        "labor_hours": 3,
+        "weight_kg": 120,
+        "weight_rate_pln_kg": 8,
+        "overhead_pct": 0.5,
+        "margin_pct": 0.5,
+        "transport_cost": 40
+      },
+      "expected": {
+        "ops_total": 180.0,
+        "material_total": 100.0,
+        "extra_labor": 270.0,
+        "weight_total": 960,
+        "base": 960,
+        "subtotal": 960,
+        "total_net": 1000,
+        "pricing_method": "od_masy"
+      },
+      "process_totals": [
+        180.0
+      ]
+    },
+    {
+      "name": "weight-zero",
+      "input": {
+        "method": "od_masy",
+        "material_cost": 100,
+        "transport_cost": 20
+      },
+      "expected": {
+        "ops_total": 0,
+        "material_total": 100,
+        "extra_labor": 0.0,
+        "weight_total": 0,
+        "base": 0,
+        "subtotal": 0,
+        "total_net": 20,
+        "pricing_method": "od_masy"
+      },
+      "process_totals": []
+    },
+    {
+      "name": "null-materials-use-legacy",
+      "input": {
+        "materials": null,
+        "material_cost": 300
+      },
+      "expected": {
+        "ops_total": 0,
+        "material_total": 300,
+        "extra_labor": 0.0,
+        "weight_total": 0.0,
+        "base": 300.0,
+        "subtotal": 330.0,
+        "total_net": 412.5,
+        "pricing_method": "kalkulacja"
+      },
+      "process_totals": []
+    },
+    {
+      "name": "null-method-defaults",
+      "input": {
+        "method": null,
+        "material_cost": 100
+      },
+      "expected": {
+        "ops_total": 0,
+        "material_total": 100,
+        "extra_labor": 0.0,
+        "weight_total": 0.0,
+        "base": 100.0,
+        "subtotal": 110.00000000000001,
+        "total_net": 137.5,
+        "pricing_method": "kalkulacja"
+      },
+      "process_totals": []
+    },
+    {
+      "name": "empty-method-defaults",
+      "input": {
+        "method": "",
+        "material_cost": 100
+      },
+      "expected": {
+        "ops_total": 0,
+        "material_total": 100,
+        "extra_labor": 0.0,
+        "weight_total": 0.0,
+        "base": 100.0,
+        "subtotal": 110.00000000000001,
+        "total_net": 137.5,
+        "pricing_method": "kalkulacja"
+      },
+      "process_totals": []
+    },
+    {
+      "name": "null-weight-values",
+      "input": {
+        "method": "od_masy",
+        "weight_kg": null,
+        "weight_rate_pln_kg": null,
+        "transport_cost": 20
+      },
+      "expected": {
+        "ops_total": 0,
+        "material_total": 0.0,
+        "extra_labor": 0.0,
+        "weight_total": 0,
+        "base": 0,
+        "subtotal": 0,
+        "total_net": 20,
+        "pricing_method": "od_masy"
+      },
+      "process_totals": []
+    },
+    {
+      "name": "null-process-hours",
+      "input": {
+        "processes": [
+          {
+            "name": "Cut",
+            "hours": null,
+            "rate_per_hour": 90,
+            "cost": 250
+          }
+        ]
+      },
+      "expected": {
+        "ops_total": 0.0,
+        "material_total": 0.0,
+        "extra_labor": 0.0,
+        "weight_total": 0.0,
+        "base": 0.0,
+        "subtotal": 0.0,
+        "total_net": 0.0,
+        "pricing_method": "kalkulacja"
+      },
+      "process_totals": [
+        0.0
+      ]
+    },
+    {
+      "name": "null-process-rate",
+      "input": {
+        "processes": [
+          {
+            "name": "Cut",
+            "rate_per_hour": null,
+            "cost": 250
+          }
+        ]
+      },
+      "expected": {
+        "ops_total": 0.0,
+        "material_total": 0.0,
+        "extra_labor": 0.0,
+        "weight_total": 0.0,
+        "base": 0.0,
+        "subtotal": 0.0,
+        "total_net": 0.0,
+        "pricing_method": "kalkulacja"
+      },
+      "process_totals": [
+        0.0
+      ]
+    },
+    {
+      "name": "null-process-cost",
+      "input": {
+        "processes": [
+          {
+            "name": "Cut",
+            "cost": null
+          }
+        ]
+      },
+      "expected": {
+        "ops_total": 0.0,
+        "material_total": 0.0,
+        "extra_labor": 0.0,
+        "weight_total": 0.0,
+        "base": 0.0,
+        "subtotal": 0.0,
+        "total_net": 0.0,
+        "pricing_method": "kalkulacja"
+      },
+      "process_totals": [
+        0.0
+      ]
+    },
+    {
+      "name": "null-material-values",
+      "input": {
+        "materials": [
+          {
+            "qty_kg": null,
+            "price_per_kg": 90,
+            "cost": null
+          }
+        ],
+        "material_cost": 300
+      },
+      "expected": {
+        "ops_total": 0,
+        "material_total": 0.0,
+        "extra_labor": 0.0,
+        "weight_total": 0.0,
+        "base": 0.0,
+        "subtotal": 0.0,
+        "total_net": 0.0,
+        "pricing_method": "kalkulacja"
+      },
+      "process_totals": []
+    },
+    {
+      "name": "large-valid-values",
+      "input": {
+        "processes": [
+          {
+            "name": "Mill",
+            "hours": 1000000,
+            "rate_per_hour": 1000000
+          }
+        ],
+        "material_weight_kg": 9999999.999,
+        "material_price_per_kg": 1000000,
+        "labor_hours": 1000000,
+        "labor_rate": 90,
+        "overhead_pct": 1,
+        "margin_pct": 1,
+        "transport_cost": 99999999.99
+      },
+      "expected": {
+        "ops_total": 1000000000000.0,
+        "material_total": 9999999999000.0,
+        "extra_labor": 90000000,
+        "weight_total": 0.0,
+        "base": 11000089999000.0,
+        "subtotal": 22000179998000.0,
+        "total_net": 44000459995999.99,
+        "pricing_method": "kalkulacja"
+      },
+      "process_totals": [
+        1000000000000.0
+      ]
+    },
+    {
+      "name": "round-2.675",
+      "input": {
+        "transport_cost": 2.675
+      },
+      "expected": {
+        "ops_total": 0,
+        "material_total": 0.0,
+        "extra_labor": 0.0,
+        "weight_total": 0.0,
+        "base": 0.0,
+        "subtotal": 0.0,
+        "total_net": 2.67,
+        "pricing_method": "kalkulacja"
+      },
+      "process_totals": []
+    },
+    {
+      "name": "round-2.685",
+      "input": {
+        "transport_cost": 2.685
+      },
+      "expected": {
+        "ops_total": 0,
+        "material_total": 0.0,
+        "extra_labor": 0.0,
+        "weight_total": 0.0,
+        "base": 0.0,
+        "subtotal": 0.0,
+        "total_net": 2.69,
+        "pricing_method": "kalkulacja"
+      },
+      "process_totals": []
+    },
+    {
+      "name": "round-1.005",
+      "input": {
+        "transport_cost": 1.005
+      },
+      "expected": {
+        "ops_total": 0,
+        "material_total": 0.0,
+        "extra_labor": 0.0,
+        "weight_total": 0.0,
+        "base": 0.0,
+        "subtotal": 0.0,
+        "total_net": 1.0,
+        "pricing_method": "kalkulacja"
+      },
+      "process_totals": []
+    },
+    {
+      "name": "round-1.015",
+      "input": {
+        "transport_cost": 1.015
+      },
+      "expected": {
+        "ops_total": 0,
+        "material_total": 0.0,
+        "extra_labor": 0.0,
+        "weight_total": 0.0,
+        "base": 0.0,
+        "subtotal": 0.0,
+        "total_net": 1.01,
+        "pricing_method": "kalkulacja"
+      },
+      "process_totals": []
+    },
+    {
+      "name": "round-0.125",
+      "input": {
+        "transport_cost": 0.125
+      },
+      "expected": {
+        "ops_total": 0,
+        "material_total": 0.0,
+        "extra_labor": 0.0,
+        "weight_total": 0.0,
+        "base": 0.0,
+        "subtotal": 0.0,
+        "total_net": 0.12,
+        "pricing_method": "kalkulacja"
+      },
+      "process_totals": []
+    },
+    {
+      "name": "round-0.375",
+      "input": {
+        "transport_cost": 0.375
+      },
+      "expected": {
+        "ops_total": 0,
+        "material_total": 0.0,
+        "extra_labor": 0.0,
+        "weight_total": 0.0,
+        "base": 0.0,
+        "subtotal": 0.0,
+        "total_net": 0.38,
+        "pricing_method": "kalkulacja"
+      },
+      "process_totals": []
+    },
+    {
+      "name": "round-0.005",
+      "input": {
+        "transport_cost": 0.005
+      },
+      "expected": {
+        "ops_total": 0,
+        "material_total": 0.0,
+        "extra_labor": 0.0,
+        "weight_total": 0.0,
+        "base": 0.0,
+        "subtotal": 0.0,
+        "total_net": 0.01,
+        "pricing_method": "kalkulacja"
+      },
+      "process_totals": []
+    },
+    {
+      "name": "round-0.015",
+      "input": {
+        "transport_cost": 0.015
+      },
+      "expected": {
+        "ops_total": 0,
+        "material_total": 0.0,
+        "extra_labor": 0.0,
+        "weight_total": 0.0,
+        "base": 0.0,
+        "subtotal": 0.0,
+        "total_net": 0.01,
+        "pricing_method": "kalkulacja"
+      },
+      "process_totals": []
+    },
+    {
+      "name": "round-99999999.985",
+      "input": {
+        "transport_cost": 99999999.985
+      },
+      "expected": {
+        "ops_total": 0,
+        "material_total": 0.0,
+        "extra_labor": 0.0,
+        "weight_total": 0.0,
+        "base": 0.0,
+        "subtotal": 0.0,
+        "total_net": 99999999.98,
+        "pricing_method": "kalkulacja"
+      },
+      "process_totals": []
+    }
+  ]
+}

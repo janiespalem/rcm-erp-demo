@@ -1,0 +1,193 @@
+<Window x:Class="Rcm.Desktop.MainWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:local="clr-namespace:Rcm.Desktop"
+        Style="{StaticResource WindowStyle}" Title="FactoryFlow — demo" Width="1380" Height="860" MinWidth="940" MinHeight="540"
+        WindowState="Maximized" WindowStartupLocation="CenterScreen">
+  <Grid>
+    <Grid.ColumnDefinitions><ColumnDefinition Width="196"/><ColumnDefinition/></Grid.ColumnDefinitions>
+    <Border Background="{StaticResource Sidebar}" Padding="12,18,12,12">
+      <Grid>
+        <Grid.RowDefinitions><RowDefinition/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+        <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel>
+          <TextBlock Text="FactoryFlow" Foreground="White" FontSize="24" FontWeight="Bold" Margin="10,0,0,20"/>
+          <Button x:Name="ProductionNav" Content="Produkcja Tetrapodów" Tag="&#xE7B8;" Visibility="{Binding CanReadProduction, Converter={StaticResource Visible}}" Click="Production_Click" AutomationProperties.AutomationId="ProductionNav">
+            <Button.Style><Style TargetType="Button" BasedOn="{StaticResource NavigationButton}"><Style.Triggers><DataTrigger Binding="{Binding IsProductionVisible}" Value="True"><Setter Property="Background" Value="{StaticResource Lime}"/><Setter Property="Foreground" Value="{StaticResource Sidebar}"/></DataTrigger></Style.Triggers></Style></Button.Style>
+          </Button>
+          <Button x:Name="InsightsNav" Content="{Binding InsightsTitle}" Tag="&#xE9D2;" Visibility="{Binding CanReadInsights, Converter={StaticResource Visible}}" Click="Insights_Click" AutomationProperties.AutomationId="InsightsNav">
+            <Button.Style><Style TargetType="Button" BasedOn="{StaticResource NavigationButton}"><Style.Triggers><DataTrigger Binding="{Binding IsInsightsVisible}" Value="True"><Setter Property="Background" Value="{StaticResource Lime}"/><Setter Property="Foreground" Value="{StaticResource Sidebar}"/></DataTrigger></Style.Triggers></Style></Button.Style>
+          </Button>
+          <Button x:Name="OrdersNav" Content="Zlecenia" Tag="&#xE8A5;" Visibility="{Binding CanReadOrders, Converter={StaticResource Visible}}" Click="Orders_Click" AutomationProperties.AutomationId="OrdersNav">
+            <Button.Style><Style TargetType="Button" BasedOn="{StaticResource NavigationButton}"><Style.Triggers><DataTrigger Binding="{Binding IsOrdersVisible}" Value="True"><Setter Property="Background" Value="{StaticResource Lime}"/><Setter Property="Foreground" Value="{StaticResource Sidebar}"/></DataTrigger></Style.Triggers></Style></Button.Style>
+          </Button>
+          <Button x:Name="OrderQuestionsNav" Content="{Binding QuestionsNavTitle}" Tag="&#xE8F2;" Visibility="{Binding CanOpenOrderQuestions, Converter={StaticResource Visible}}" Click="OrderQuestions_Click" AutomationProperties.AutomationId="OrderQuestionsNav">
+            <Button.Style><Style TargetType="Button" BasedOn="{StaticResource NavigationButton}"><Style.Triggers><DataTrigger Binding="{Binding IsOrderQuestionsVisible}" Value="True"><Setter Property="Background" Value="{StaticResource Lime}"/><Setter Property="Foreground" Value="{StaticResource Sidebar}"/></DataTrigger></Style.Triggers></Style></Button.Style>
+          </Button>
+          <Button Visibility="{Binding HasCrmAccess, Converter={StaticResource Visible}}" x:Name="ClientsNav" Content="Klienci" Tag="&#xE716;" Click="Clients_Click" AutomationProperties.AutomationId="ClientsNav">
+            <Button.Style><Style TargetType="Button" BasedOn="{StaticResource NavigationButton}"><Style.Triggers><DataTrigger Binding="{Binding IsClientsActive}" Value="True"><Setter Property="Background" Value="{StaticResource Lime}"/><Setter Property="Foreground" Value="{StaticResource Sidebar}"/></DataTrigger></Style.Triggers></Style></Button.Style>
+          </Button>
+          <Button Visibility="{Binding HasCrmAccess, Converter={StaticResource Visible}}" x:Name="QueueNav" Content="Do kontaktu" Tag="&#xE787;" Click="Queue_Click" AutomationProperties.AutomationId="QueueNav">
+            <Button.Style><Style TargetType="Button" BasedOn="{StaticResource NavigationButton}"><Style.Triggers><DataTrigger Binding="{Binding IsQueueActive}" Value="True"><Setter Property="Background" Value="{StaticResource Lime}"/><Setter Property="Foreground" Value="{StaticResource Sidebar}"/></DataTrigger></Style.Triggers></Style></Button.Style>
+          </Button>
+          <Button x:Name="ArchivedNav" Content="Usunięci klienci" Tag="&#xE74D;" Visibility="{Binding HasCrmAccess, Converter={StaticResource Visible}}" Click="Archived_Click" AutomationProperties.AutomationId="ArchivedNav">
+            <Button.Style><Style TargetType="Button" BasedOn="{StaticResource NavigationButton}"><Style.Triggers><DataTrigger Binding="{Binding IsArchivedActive}" Value="True"><Setter Property="Background" Value="{StaticResource Lime}"/><Setter Property="Foreground" Value="{StaticResource Sidebar}"/></DataTrigger></Style.Triggers></Style></Button.Style>
+          </Button>
+          <Button x:Name="TetrapodNav" Content="Tetrapod" Tag="&#xE8EF;" Visibility="{Binding CanCalculate, Converter={StaticResource Visible}}" Click="Tetrapod_Click" AutomationProperties.AutomationId="TetrapodNav">
+            <Button.Style><Style TargetType="Button" BasedOn="{StaticResource NavigationButton}"><Style.Triggers><DataTrigger Binding="{Binding IsTetrapodVisible}" Value="True"><Setter Property="Background" Value="{StaticResource Lime}"/><Setter Property="Foreground" Value="{StaticResource Sidebar}"/></DataTrigger></Style.Triggers></Style></Button.Style>
+          </Button>
+          <Button x:Name="MaterialsNav" Content="Materiały" Tag="&#xE7B8;" Visibility="{Binding CanManageCatalog, Converter={StaticResource Visible}}" Click="Materials_Click" AutomationProperties.AutomationId="MaterialsNav">
+            <Button.Style><Style TargetType="Button" BasedOn="{StaticResource NavigationButton}"><Style.Triggers><DataTrigger Binding="{Binding IsMaterialsVisible}" Value="True"><Setter Property="Background" Value="{StaticResource Lime}"/><Setter Property="Foreground" Value="{StaticResource Sidebar}"/></DataTrigger></Style.Triggers></Style></Button.Style>
+          </Button>
+          <Button x:Name="OperationsNav" Content="Operacje i usługi" Tag="&#xE90F;" Visibility="{Binding CanManageCatalog, Converter={StaticResource Visible}}" Click="Operations_Click" AutomationProperties.AutomationId="OperationsNav">
+            <Button.Style><Style TargetType="Button" BasedOn="{StaticResource NavigationButton}"><Style.Triggers><DataTrigger Binding="{Binding IsOperationsVisible}" Value="True"><Setter Property="Background" Value="{StaticResource Lime}"/><Setter Property="Foreground" Value="{StaticResource Sidebar}"/></DataTrigger></Style.Triggers></Style></Button.Style>
+          </Button>
+          <Button x:Name="ShiftReportsNav" Content="Raporty zmianowe" Tag="&#xE9D9;" Visibility="{Binding CanReadShiftReports, Converter={StaticResource Visible}}" Click="ShiftReports_Click"><Button.Style><Style TargetType="Button" BasedOn="{StaticResource NavigationButton}"><Style.Triggers><DataTrigger Binding="{Binding IsShiftReportsVisible}" Value="True"><Setter Property="Background" Value="{StaticResource Lime}"/><Setter Property="Foreground" Value="{StaticResource Sidebar}"/></DataTrigger></Style.Triggers></Style></Button.Style></Button>
+          <Button x:Name="LegoNav" Content="LEGO" Tag="&#xE809;" Visibility="{Binding CanCalculate, Converter={StaticResource Visible}}" Click="Lego_Click"><Button.Style><Style TargetType="Button" BasedOn="{StaticResource NavigationButton}"><Style.Triggers><DataTrigger Binding="{Binding IsLegoVisible}" Value="True"><Setter Property="Background" Value="{StaticResource Lime}"/><Setter Property="Foreground" Value="{StaticResource Sidebar}"/></DataTrigger></Style.Triggers></Style></Button.Style></Button>
+          <Button x:Name="TemplatesNav" Content="Szablony / SOP" Tag="&#xE8F1;" Visibility="{Binding CanAdminTemplates, Converter={StaticResource Visible}}" Click="Templates_Click"><Button.Style><Style TargetType="Button" BasedOn="{StaticResource NavigationButton}"><Style.Triggers><DataTrigger Binding="{Binding Section}" Value="Templates"><Setter Property="Background" Value="{StaticResource Lime}"/><Setter Property="Foreground" Value="{StaticResource Sidebar}"/></DataTrigger></Style.Triggers></Style></Button.Style></Button>
+          <Button x:Name="ProjectsNav" Content="Projekty" Tag="&#xE8B7;" Visibility="{Binding CanAdminTemplates, Converter={StaticResource Visible}}" Click="Projects_Click"><Button.Style><Style TargetType="Button" BasedOn="{StaticResource NavigationButton}"><Style.Triggers><DataTrigger Binding="{Binding Section}" Value="TemplateProjects"><Setter Property="Background" Value="{StaticResource Lime}"/><Setter Property="Foreground" Value="{StaticResource Sidebar}"/></DataTrigger></Style.Triggers></Style></Button.Style></Button>
+          <Button x:Name="TemplateCatalogNav" Content="Katalog produktów" Tag="&#xE8F1;" Visibility="{Binding CanOfficeTemplates, Converter={StaticResource Visible}}" Click="TemplateCatalog_Click"><Button.Style><Style TargetType="Button" BasedOn="{StaticResource NavigationButton}"><Style.Triggers><DataTrigger Binding="{Binding Section}" Value="TemplateCatalog"><Setter Property="Background" Value="{StaticResource Lime}"/><Setter Property="Foreground" Value="{StaticResource Sidebar}"/></DataTrigger></Style.Triggers></Style></Button.Style></Button>
+        </StackPanel>
+        </ScrollViewer>
+        <StackPanel Grid.Row="1">
+          <Button x:Name="LegacyModules" Click="Legacy_Click" Visibility="Collapsed" Background="#2C4B3F" BorderBrush="#466252" Foreground="#E1EADC" Padding="12" Margin="0,0,0,22" ToolTip="Wersja internetowa ERP"><TextBlock Text="Wersja internetowa ↗" TextWrapping="Wrap" FontSize="12"/></Button>
+          <Border BorderBrush="#496054" BorderThickness="0,1,0,0" Padding="10,18,10,10"><StackPanel>
+            <TextBlock Text="ZALOGOWANO" Foreground="#A8BDAE" FontSize="9" FontWeight="SemiBold" Margin="0,0,0,7"/>
+            <TextBlock Text="{Binding UserName}" Foreground="White" TextWrapping="Wrap" FontWeight="SemiBold"/>
+          </StackPanel></Border>
+          <Button Content="Wyloguj" Tag="&#xE8AC;" Style="{StaticResource NavigationButton}" Click="Logout_Click" FontSize="12"/>
+        </StackPanel>
+      </Grid>
+    </Border>
+    <Grid Grid.Column="1">
+      <Grid.RowDefinitions><RowDefinition Height="54"/><RowDefinition/></Grid.RowDefinitions>
+      <Border BorderBrush="{StaticResource Line}" BorderThickness="0,0,0,1" Background="#FAFBF7" Padding="20,0">
+        <DockPanel LastChildFill="False">
+          <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" DataContext="{Binding Updates, RelativeSource={RelativeSource AncestorType=Window}}">
+            <TextBlock x:Name="UpdateStatus" Text="{Binding Status}" ToolTip="{Binding Status}" MaxWidth="210" TextTrimming="CharacterEllipsis" Foreground="{StaticResource Muted}" FontSize="11" VerticalAlignment="Center" Margin="0,0,10,0"/>
+            <Button x:Name="CheckUpdates" Content="Aktualizacje" Visibility="Collapsed" Click="CheckUpdates_Click" Padding="10,5" FontSize="11" Margin="0,0,6,0">
+              <Button.Style><Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}"><Style.Triggers>
+                <DataTrigger Binding="{Binding Busy}" Value="True"><Setter Property="IsEnabled" Value="False"/></DataTrigger>
+                <DataTrigger Binding="{Binding Ready}" Value="True"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger>
+              </Style.Triggers></Style></Button.Style>
+            </Button>
+            <Button x:Name="InstallUpdate" Content="Zainstaluj i uruchom ponownie" Click="InstallUpdate_Click" Visibility="{Binding Ready, Converter={StaticResource Visible}}" Padding="10,5" FontSize="11"/>
+            <Button x:Name="PostponeUpdate" Content="Później" Click="PostponeUpdate_Click" Visibility="{Binding Ready, Converter={StaticResource Visible}}" Padding="10,5" FontSize="11" Margin="6,0,0,0"/>
+          </StackPanel>
+        </DockPanel>
+      </Border>
+      <Grid Grid.Row="1" Margin="{StaticResource PageMargin}" Visibility="{Binding IsCrmVisible, Converter={StaticResource Visible}}">
+        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+        <DockPanel Margin="0,0,0,20">
+          <Button DockPanel.Dock="Right" Content="Dodaj klienta" Style="{StaticResource PrimaryButton}" Click="AddCustomer_Click" AutomationProperties.AutomationId="AddCustomer" Margin="16,0,0,0" VerticalAlignment="Center" Visibility="{Binding IsCustomerActionVisible, Converter={StaticResource Visible}}"/>
+          <StackPanel><TextBlock Text="{Binding PageTitle}" Style="{StaticResource Title}"/></StackPanel>
+        </DockPanel>
+        <Grid Grid.Row="1" x:Name="ListPage" Visibility="{Binding IsListVisible, Converter={StaticResource Visible}}">
+          <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+          <Border Style="{StaticResource Card}" Padding="18,14,18,4" Margin="0,0,0,14">
+            <StackPanel>
+              <Grid x:Name="Filters">
+                <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions>
+                <DockPanel Grid.ColumnSpan="3">
+                  <TextBlock DockPanel.Dock="Left" Text="Szukaj klienta" Style="{StaticResource Label}" VerticalAlignment="Center" Margin="0,0,16,12"/>
+                  <TextBox x:Name="Search" Text="{Binding Search, UpdateSourceTrigger=PropertyChanged}" TextChanged="Search_Changed" AutomationProperties.AutomationId="CustomerSearch" AutomationProperties.Name="Szukaj klienta" ToolTip="Firma, osoba, telefon lub e-mail" Margin="0,0,0,12"/>
+                </DockPanel>
+                <StackPanel x:Name="ProductFields" Grid.Row="1" Margin="0,0,12,0"><TextBlock Text="Produkt" Style="{StaticResource Label}"/><ComboBox x:Name="ProductFilter" SelectedValuePath="Key" DisplayMemberPath="Value" SelectedValue="{Binding Product}" SelectionChanged="Filter_Changed" Margin="0,6,0,10" AutomationProperties.Name="Produkt"/></StackPanel>
+                <StackPanel x:Name="StateFields" Grid.Row="1" Grid.Column="1" Margin="0,0,12,0"><TextBlock Text="Stan rozmów" Style="{StaticResource Label}"/><ComboBox x:Name="StateFilter" SelectedValuePath="Key" DisplayMemberPath="Value" SelectedValue="{Binding State}" SelectionChanged="Filter_Changed" Margin="0,6,0,10" AutomationProperties.Name="Stan rozmów"/></StackPanel>
+                <StackPanel x:Name="DueFields" Grid.Row="1" Grid.Column="2"><TextBlock Text="Termin kontaktu" Style="{StaticResource Label}"/><ComboBox x:Name="DueFilter" SelectedValuePath="Key" DisplayMemberPath="Value" SelectedValue="{Binding Due}" SelectionChanged="Filter_Changed" Margin="0,6,0,10" AutomationProperties.Name="Termin kontaktu"/></StackPanel>
+              </Grid>
+              <ComboBox x:Name="QueueGroups" Visibility="Collapsed" SelectedValuePath="Key" DisplayMemberPath="Value" SelectedValue="{Binding QueueGroup}" SelectionChanged="Filter_Changed" HorizontalAlignment="Left" MinWidth="280" AutomationProperties.Name="Grupa kontaktów"/>
+            </StackPanel>
+          </Border>
+          <Border Grid.Row="1" Style="{StaticResource Card}" Padding="1" ClipToBounds="True">
+            <Grid>
+              <DataGrid x:Name="Customers" ItemsSource="{Binding Rows}" AutoGenerateColumns="False" IsReadOnly="True" SelectionMode="Single" CanUserAddRows="False" CanUserSortColumns="True" MinColumnWidth="100" EnableRowVirtualization="True" EnableColumnVirtualization="True" VirtualizingPanel.VirtualizationMode="Recycling" RowHeight="60" GridLinesVisibility="Horizontal" HeadersVisibility="Column" MouseDoubleClick="Open_Click" KeyDown="Customers_KeyDown" AutomationProperties.AutomationId="Customers">
+                <DataGrid.Columns>
+                  <DataGridTextColumn Header="Firma / osoba" Binding="{Binding Name}" Width="1.3*"><DataGridTextColumn.ElementStyle><Style TargetType="TextBlock" BasedOn="{StaticResource CellText}"><Setter Property="FontWeight" Value="SemiBold"/></Style></DataGridTextColumn.ElementStyle></DataGridTextColumn>
+                  <DataGridTextColumn ElementStyle="{StaticResource CellText}" Header="Dane kontaktowe" Binding="{Binding Contact}" Width="1.4*"/>
+                  <DataGridTextColumn ElementStyle="{StaticResource CellText}" Header="Produkt" Binding="{Binding Products}" Width="0.8*"/>
+                  <DataGridTextColumn ElementStyle="{StaticResource CellText}" Header="Stan rozmów" Binding="{Binding States}" Width="*"/>
+                  <DataGridTextColumn ElementStyle="{StaticResource CellText}" Header="Ostatni kontakt" Binding="{Binding Last}" SortMemberPath="LastContact" Width="*"/>
+                  <DataGridTextColumn ElementStyle="{StaticResource CellText}" Header="Następny kontakt" Binding="{Binding Next}" CanUserSort="False" Width="1.3*"/>
+                </DataGrid.Columns>
+                <DataGrid.RowStyle><Style TargetType="DataGridRow" BasedOn="{StaticResource {x:Type DataGridRow}}"><Setter Property="ToolTip" Value="{Binding Preview}"/></Style></DataGrid.RowStyle>
+              </DataGrid>
+              <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Margin="24,58,24,24" IsHitTestVisible="False">
+                <StackPanel.Style><Style TargetType="StackPanel"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><MultiDataTrigger><MultiDataTrigger.Conditions><Condition Binding="{Binding Rows.Count}" Value="0"/><Condition Binding="{Binding Busy}" Value="False"/><Condition Binding="{Binding ListFailed}" Value="False"/></MultiDataTrigger.Conditions><Setter Property="Visibility" Value="Visible"/></MultiDataTrigger></Style.Triggers></Style></StackPanel.Style>
+                <TextBlock Text="&#xE721;" FontFamily="Segoe MDL2 Assets" FontSize="28" Foreground="#8AA07C" HorizontalAlignment="Center" Margin="0,0,0,14"/>
+                <TextBlock Text="Brak pozycji do wyświetlenia" FontWeight="SemiBold" FontSize="17" HorizontalAlignment="Center"/>
+                <TextBlock Text="Zmień kryteria wyszukiwania lub wybierz inną grupę." Foreground="{StaticResource Muted}" Margin="0,8,0,0" TextWrapping="Wrap" TextAlignment="Center"/>
+              </StackPanel>
+              <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="{Binding ListFailed, Converter={StaticResource Visible}}"><TextBlock Text="Nie udało się pobrać listy." FontWeight="SemiBold" Margin="0,0,0,12"/><Button Content="Spróbuj ponownie" Click="RetryList_Click"/></StackPanel>
+            </Grid>
+          </Border>
+          <DockPanel Grid.Row="2" Margin="0,12,0,0">
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal"><Button Content="Poprzednia" Click="Previous_Click" Margin="8,0,8,0"/><Button Content="Następna" Click="Next_Click"/></StackPanel>
+            <Button Content="Otwórz klienta" Click="Open_Click" DockPanel.Dock="Left" Margin="0,0,16,0"/>
+            <TextBlock Text="{Binding PageInfo}" Foreground="{StaticResource Muted}" VerticalAlignment="Center" FontSize="12" TextWrapping="Wrap"/>
+          </DockPanel>
+        </Grid>
+        <Grid Grid.Row="1" x:Name="DetailPage" Visibility="{Binding IsDetailVisible, Converter={StaticResource Visible}}">
+          <Grid.ColumnDefinitions><ColumnDefinition Width="230"/><ColumnDefinition Width="20"/><ColumnDefinition/></Grid.ColumnDefinitions>
+          <Border Style="{StaticResource Card}" Padding="18">
+            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+              <StackPanel>
+                <Button Content="← Wróć do listy" Click="Back_Click" Margin="0,0,0,24" FontSize="12"/>
+                <TextBlock Text="Dane kontaktowe" Style="{StaticResource SectionTitle}" Margin="0,0,0,12"/>
+                <TextBox Text="{Binding CustomerSummary, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" BorderThickness="0" Background="Transparent" Padding="0" FontSize="13"/>
+                <Button Content="Edytuj dane" Click="EditCustomer_Click" HorizontalAlignment="Left" IsEnabled="{Binding CanEditCustomer}"/>
+                <Button Content="Usuń klienta" Click="ArchiveCustomer_Click" HorizontalAlignment="Left" Margin="0,18,0,0" Visibility="{Binding CanArchiveCustomer, Converter={StaticResource Visible}}" AutomationProperties.AutomationId="ArchiveCustomer"/>
+                <Button Content="Przywróć klienta" Click="RestoreCustomer_Click" Style="{StaticResource PrimaryButton}" HorizontalAlignment="Left" Margin="0,18,0,0" Visibility="{Binding CanRestoreCustomer, Converter={StaticResource Visible}}" AutomationProperties.AutomationId="RestoreCustomer"/>
+              </StackPanel>
+            </ScrollViewer>
+          </Border>
+          <Border Grid.Column="2" Style="{StaticResource Card}" Padding="20">
+            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"><StackPanel>
+              <DockPanel><Button DockPanel.Dock="Right" Content="+ Dodaj temat" Click="AddTopic_Click" IsEnabled="{Binding CanAddTopic}" AutomationProperties.AutomationId="AddTopic" FontSize="12"/><TextBlock Text="Tematy rozmowy" Style="{StaticResource SectionTitle}" VerticalAlignment="Center" TextWrapping="Wrap"/></DockPanel>
+              <ComboBox x:Name="TopicSelector" ItemsSource="{Binding Topics}" DisplayMemberPath="Label" SelectionChanged="Topic_Changed" AutomationProperties.AutomationId="Topics" Margin="0,16,0,16"/>
+              <WrapPanel Margin="0,0,0,12"><Button Content="← Tematy" Click="TopicsPrevious_Click" FontSize="12" Margin="0,0,8,8"/><Button Content="Tematy →" Click="TopicsNext_Click" FontSize="12" Margin="0,0,12,8"/><TextBlock Text="{Binding TopicPageInfo}" Foreground="{StaticResource Muted}" TextWrapping="Wrap" VerticalAlignment="Center" FontSize="12"/></WrapPanel>
+              <StackPanel>
+                <Border Background="#EFF3E5" BorderBrush="#DAE3CA" BorderThickness="1" Padding="16" CornerRadius="7"><ScrollViewer MaxHeight="180" VerticalScrollBarVisibility="Auto"><TextBlock Text="{Binding TopicSummary}" TextWrapping="Wrap" LineHeight="22"><TextBlock.Style><Style TargetType="TextBlock"><Style.Triggers><DataTrigger Binding="{Binding HistoryBusy}" Value="True"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></TextBlock.Style></TextBlock></ScrollViewer></Border>
+                <WrapPanel Margin="0,16,0,20"><Button x:Name="Conversation" Content="Zapisz rozmowę" Style="{StaticResource PrimaryButton}" Click="Conversation_Click" AutomationProperties.AutomationId="RecordConversation" Margin="0,0,8,8" IsEnabled="{Binding CanActOnTopic}"/><Button x:Name="EditTopic" Content="Edytuj temat / zaplanuj kontakt" Click="EditTopic_Click" FontSize="12" Margin="0,0,0,8" IsEnabled="{Binding CanActOnTopic}"/></WrapPanel>
+                <TextBlock Text="Historia tego tematu" FontWeight="SemiBold" Margin="0,0,0,10"/>
+              </StackPanel>
+              <Grid MinHeight="90" MaxHeight="380">
+                <ListBox ItemsSource="{Binding History}" BorderThickness="0" Background="Transparent" ScrollViewer.HorizontalScrollBarVisibility="Disabled" VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
+                  <ListBox.Style><Style TargetType="ListBox"><Style.Triggers><DataTrigger Binding="{Binding HistoryBusy}" Value="True"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></ListBox.Style>
+                  <ListBox.ItemContainerStyle><Style TargetType="ListBoxItem"><Setter Property="HorizontalContentAlignment" Value="Stretch"/><Setter Property="Padding" Value="0"/><Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ListBoxItem"><ContentPresenter/></ControlTemplate></Setter.Value></Setter></Style></ListBox.ItemContainerStyle>
+                  <ListBox.ItemTemplate><DataTemplate><Border BorderBrush="{StaticResource Line}" BorderThickness="2,0,0,0" Padding="16,4,4,18" Margin="3,0,0,6"><StackPanel><TextBlock Text="{Binding Heading}" Foreground="{StaticResource Muted}" TextWrapping="Wrap" FontSize="12"/><TextBlock Text="{Binding Text}" Margin="0,8,0,0" TextWrapping="Wrap" LineHeight="22"/></StackPanel></Border></DataTemplate></ListBox.ItemTemplate>
+                </ListBox>
+                <TextBlock Text="Nie zapisano jeszcze rozmowy." Foreground="{StaticResource Muted}" Margin="0,12" IsHitTestVisible="False"><TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><MultiDataTrigger><MultiDataTrigger.Conditions><Condition Binding="{Binding History.Count}" Value="0"/><Condition Binding="{Binding HistoryLoaded}" Value="True"/><Condition Binding="{Binding HistoryFailed}" Value="False"/><Condition Binding="{Binding HistoryBusy}" Value="False"/></MultiDataTrigger.Conditions><Setter Property="Visibility" Value="Visible"/></MultiDataTrigger></Style.Triggers></Style></TextBlock.Style></TextBlock>
+              </Grid>
+              <WrapPanel Margin="0,12,0,0"><Button Content="← Historia" Click="HistoryPrevious_Click" Margin="0,0,8,8" FontSize="12"/><Button Content="Historia →" Click="HistoryNext_Click" Margin="0,0,12,8" FontSize="12"/><TextBlock Text="{Binding HistoryInfo}" Foreground="{StaticResource Muted}" VerticalAlignment="Center" FontSize="12" Margin="0,0,8,8"/><Button Content="Spróbuj ponownie" Click="RetryHistory_Click" Visibility="{Binding HistoryFailed, Converter={StaticResource Visible}}"/></WrapPanel>
+            </StackPanel></ScrollViewer>
+          </Border>
+        </Grid>
+        <TextBlock Grid.Row="2" Text="{Binding Status}" Foreground="{StaticResource Muted}" TextWrapping="Wrap" FontSize="12" Margin="0,12,0,0" AutomationProperties.LiveSetting="Polite"/>
+      </Grid>
+      <local:TetrapodPage x:Name="Tetrapod" Grid.Row="1" Margin="{StaticResource PageMargin}" Visibility="{Binding DataContext.IsTetrapodVisible, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource Visible}}"/>
+      <local:InsightsPage x:Name="InsightsWorkspace" Grid.Row="1" Visibility="{Binding DataContext.IsInsightsVisible, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource Visible}}"/>
+      <local:OrdersPage x:Name="OrderWorkspace" Grid.Row="1" Visibility="{Binding DataContext.IsOrdersVisible, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource Visible}}"/>
+      <local:OrderQuestionQueuePage x:Name="OrderQuestionWorkspace" Grid.Row="1" Visibility="{Binding DataContext.IsOrderQuestionsVisible, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource Visible}}"/>
+      <local:ShiftReportsPage x:Name="ShiftReportsWorkspace" Grid.Row="1" Visibility="{Binding DataContext.IsShiftReportsVisible, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource Visible}}"/>
+      <local:ProductionPage x:Name="ProductionWorkspace" Grid.Row="1" Visibility="{Binding DataContext.IsProductionVisible, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource Visible}}"/>
+      <local:LegoPage x:Name="LegoWorkspace" Grid.Row="1" Visibility="{Binding DataContext.IsLegoVisible, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource Visible}}"/>
+      <local:TemplateWorkspace x:Name="TemplatesWorkspace" Grid.Row="1" Visibility="{Binding DataContext.IsTemplatesVisible, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource Visible}}"/>
+      <local:CatalogPage x:Name="MaterialCatalog" Grid.Row="1" Visibility="{Binding DataContext.IsMaterialsVisible, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource Visible}}"/>
+      <local:CatalogPage x:Name="OperationCatalog" Grid.Row="1" Visibility="{Binding DataContext.IsOperationsVisible, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource Visible}}"/>
+      <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Visibility="{Binding IsModulesVisible, Converter={StaticResource Visible}}">
+        <StackPanel Margin="36,32" MaxWidth="760" HorizontalAlignment="Left">
+          <TextBlock Text="Moduły" Style="{StaticResource Title}"/>
+          <TextBlock Text="Wybierz moduł dostępny dla Twojego konta." Foreground="{StaticResource Muted}" Margin="0,8,0,28" TextWrapping="Wrap"/>
+          <Border Style="{StaticResource Card}" Padding="24" Visibility="{Binding CanCalculate, Converter={StaticResource Visible}}">
+            <StackPanel>
+              <TextBlock Text="Tetrapod" Style="{StaticResource SectionTitle}"/>
+              <TextBlock Text="Plan zbrojenia, wykonanie i orientacyjny bilans dostaw według średnic." TextWrapping="Wrap" Margin="0,10,0,18"/>
+              <Button Content="Otwórz kalkulator" Click="Tetrapod_Click" Style="{StaticResource PrimaryButton}" HorizontalAlignment="Left"/>
+            </StackPanel>
+          </Border>
+          <TextBlock Text="Wybierz moduł w menu po lewej." Visibility="{Binding CanOpenLegacy, Converter={StaticResource Visible}}" Foreground="{StaticResource Muted}" Margin="0,24,0,0" TextWrapping="Wrap"/>
+          <TextBlock Text="{Binding Status}" Foreground="{StaticResource Muted}" Margin="0,16,0,0" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite"/>
+        </StackPanel>
+      </ScrollViewer>
+    </Grid>
+  </Grid>
+</Window>

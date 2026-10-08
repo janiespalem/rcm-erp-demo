@@ -1,0 +1,20 @@
+name: Native Windows demo
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  desktop:
+    if: github.event_name != 'workflow_dispatch' && !(github.event_name == 'push' && github.ref == 'refs/heads/main')
+    uses: ./.github/workflows/windows-checks.yml
+    with:
+      store-draft-evidence: false
+  desktop-candidate:
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+    permissions:
+      contents: write
+    uses: ./.github/workflows/windows-checks.yml
+    with:
+      store-draft-evidence: true

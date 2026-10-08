@@ -1,38 +1,33 @@
-FROM node:20-alpine AS frontend-build
-WORKDIR /app/frontend-vite
-COPY frontend-vite/package*.json ./
-RUN npm ci
-COPY frontend-vite/ ./
-COPY shared/ /app/shared/
-RUN npm run build
+FROM mcr.microsoft.com/dotnet/sdk:10.0.401 AS build
+WORKDIR /src/dotnet
+COPY dotnet/ ./
+RUN dotnet restore Rcm.Host --locked-mode
+RUN dotnet publish Rcm.Host --no-restore -c Release -o /out
 
-FROM python:3.11-slim
+FROM mcr.microsoft.com/dotnet/aspnet:10.0.12 AS base
 WORKDIR /app
+RUN apt-get update && apt-get install -y --no-install-recommends libgssapi-krb5-2 curl && rm -rf /var/lib/apt/lists/*
+ENV ASPNETCORE_ENVIRONMENT=Demo ASPNETCORE_HTTP_PORTS=8080
+EXPOSE 8080
 
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
-        libharfbuzz-subset0 \
-        libharfbuzz0b \
-        libpango-1.0-0 \
-        libpangoft2-1.0-0 \
-    && rm -rf /var/lib/apt/lists/*
+FROM base AS runtime
+COPY --from=build /out/ ./
+COPY demo/appsettings.Demo.json ./
+USER $APP_UID
+ENTRYPOINT ["dotnet", "Rcm.Host.dll"]
 
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-COPY backend/ ./backend/
-COPY shared/ ./shared/
-COPY templates/ ./templates/
-COPY alembic.ini ./
-COPY migrations/ ./migrations/
-
-COPY --from=frontend-build /app/frontend-vite/dist ./frontend-vite/dist
-
-RUN mkdir -p /app/data backend/uploads backend/static
-
-RUN useradd --create-home --uid 1000 demo && chown -R demo:demo /app
-USER demo
-
-WORKDIR /app/backend
-EXPOSE 8000
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--no-proxy-headers"]
+FROM base AS bootstrap
+RUN apt-get update && apt-get install -y --no-install-recommends python3 python3-venv && rm -rf /var/lib/apt/lists/*
+RUN python3 -m venv /opt/bootstrap
+COPY requirements.txt /src/requirements.txt
+RUN /opt/bootstrap/bin/pip install --no-cache-dir -r /src/requirements.txt
+COPY --from=build /out/ /app/
+COPY demo/appsettings.Demo.json /app/
+COPY backend/ /src/backend/
+COPY migrations/ /src/migrations/
+COPY alembic.ini /src/
+COPY scripts/configure-*.py /src/scripts/
+COPY demo/ /src/demo/
+WORKDIR /src
+ENV PYTHONPATH=/src/backend
+ENTRYPOINT ["/opt/bootstrap/bin/python", "/src/demo/bootstrap.py"]

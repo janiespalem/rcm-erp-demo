@@ -1,0 +1,77 @@
+name: Windows verification and packaging
+on:
+  workflow_call:
+    inputs:
+      store-draft-evidence:
+        type: boolean
+        required: true
+jobs:
+  desktop:
+    runs-on: windows-latest
+    timeout-minutes: 40
+    env:
+      FACTORYFLOW_UI_ARTIFACTS: ${{ github.workspace }}/dotnet/artifacts/tests/ui
+      RestoreLockedMode: 'true'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: dotnet/global.json
+      - name: Native WPF workflows and isolated demo profile
+        shell: pwsh
+        working-directory: dotnet
+        run: |
+          dotnet test Rcm.Desktop.Tests -c Release --logger trx --results-directory artifacts/tests
+          if ($LASTEXITCODE -ne 0) { throw 'Native Windows desktop tests failed' }
+          dotnet test Rcm.Updates.Tests -c Release --logger trx --results-directory artifacts/tests
+          if ($LASTEXITCODE -ne 0) { throw 'Update verification tests failed' }
+      - name: Install pinned packaging tool
+        run: dotnet tool install --global vpk --version 1.2.158
+      - name: Package self-contained installer
+        shell: pwsh
+        run: ./scripts/package-desktop.ps1 -Version '0.1.${{ github.run_number }}'
+      - name: Install and run beside synthetic RCM package
+        shell: pwsh
+        run: ./scripts/test-demo-install.ps1
+      - uses: actions/upload-artifact@v4
+        if: always() && !inputs.store-draft-evidence
+        continue-on-error: true
+        with:
+          name: factoryflow-native-windows-${{ github.sha }}
+          path: |
+            dotnet/artifacts/release/FactoryFlow-Setup.exe
+            dotnet/artifacts/release/release.json
+            dotnet/artifacts/release/test-demo-install.ps1
+            dotnet/artifacts/release/verification.json
+            dotnet/artifacts/tests
+      - name: Store candidate installer and Windows evidence in a draft release
+        if: always() && inputs.store-draft-evidence
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CHECK_RESULT: ${{ job.status }}
+        run: |
+          $tag = "windows-candidate-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          $files = @()
+          if (Test-Path dotnet/artifacts/tests) {
+            Compress-Archive -Path dotnet/artifacts/tests/* -DestinationPath windows-evidence.zip -Force
+            $files += 'windows-evidence.zip'
+          }
+          if (Test-Path dotnet/artifacts/release/FactoryFlow-Setup.exe) {
+            $files += 'dotnet/artifacts/release/FactoryFlow-Setup.exe'
+          }
+          if (Test-Path dotnet/artifacts/release/release.json) {
+            $files += 'dotnet/artifacts/release/release.json'
+          }
+          foreach ($candidate in @('test-demo-install.ps1', 'verification.json')) {
+            if (Test-Path "dotnet/artifacts/release/$candidate") { $files += "dotnet/artifacts/release/$candidate" }
+          }
+          $notes = "Candidate only; not approved for publication. Windows job result: $env:CHECK_RESULT. Commit: $env:GITHUB_SHA. Run: $env:GITHUB_SERVER_URL/$env:GITHUB_REPOSITORY/actions/runs/$env:GITHUB_RUN_ID"
+          gh release create $tag --draft --target $env:GITHUB_SHA --title "FactoryFlow Windows candidate $env:GITHUB_RUN_ID" --notes $notes
+          if ($LASTEXITCODE -ne 0) { throw 'Draft evidence release creation failed' }
+          if ($files.Count -gt 0) {
+            gh release upload $tag @files
+            if ($LASTEXITCODE -ne 0) { throw 'Draft evidence upload failed' }
+          }

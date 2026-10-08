@@ -39,3 +39,10 @@ __pycache__/
 Arkusze/
 design-system/
 rewrite_git_identity.sh
+**/bin/
+**/obj/
+dotnet/artifacts/
+legacy/backend/uploads/
+legacy/backend/exports/
+legacy/frontend-vite/node_modules/
+legacy/frontend-vite/dist/

@@ -1,0 +1,77 @@
+<Window x:Class="Rcm.Desktop.TemplateEditorWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Style="{StaticResource WindowStyle}" Title="Szablon i instrukcje SOP" Width="1120" Height="840" MinWidth="820" MinHeight="540" WindowStartupLocation="CenterOwner">
+  <Grid Margin="24">
+    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+    <TextBlock Text="{Binding Heading}" Style="{StaticResource Title}" TextWrapping="Wrap"/>
+    <TextBlock Grid.Row="1" Text="{Binding AccessHint}" Foreground="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,8,0,16"/>
+    <TabControl x:Name="TemplateTabs" Grid.Row="2">
+      <TabItem Header="Dane">
+        <ScrollViewer VerticalScrollBarVisibility="Auto"><StackPanel Margin="18">
+          <TextBlock Text="Nazwa szablonu *" Style="{StaticResource Label}"/><TextBox x:Name="TemplateName" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" IsReadOnly="{Binding ReadOnly}" Margin="0,6,0,3" AutomationProperties.Name="Nazwa szablonu"/>
+          <TextBlock Text="{Binding NameError}" Foreground="{StaticResource Error}" TextWrapping="Wrap"/>
+          <Grid Margin="0,16,0,0"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="18"/><ColumnDefinition/><ColumnDefinition Width="18"/><ColumnDefinition/></Grid.ColumnDefinitions>
+            <StackPanel><TextBlock Text="Kategoria" Style="{StaticResource Label}"/><TextBox Text="{Binding Category, UpdateSourceTrigger=PropertyChanged}" IsReadOnly="{Binding ReadOnly}" Margin="0,6,0,0"/></StackPanel>
+            <StackPanel Grid.Column="2"><TextBlock Text="Projekt" Style="{StaticResource Label}"/><TextBox Text="{Binding ProjectCode, UpdateSourceTrigger=PropertyChanged}" IsReadOnly="{Binding ReadOnly}" Margin="0,6,0,0"/></StackPanel>
+            <StackPanel Grid.Column="4"><TextBlock Text="Numer pozycji" Style="{StaticResource Label}"/><TextBox Text="{Binding PositionNumber, UpdateSourceTrigger=PropertyChanged}" IsReadOnly="{Binding ReadOnly}" Margin="0,6,0,0"/></StackPanel>
+          </Grid>
+          <Grid Margin="0,18,0,0"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="18"/><ColumnDefinition/></Grid.ColumnDefinitions>
+            <StackPanel><TextBlock Text="Cena bazowa (PLN)" Style="{StaticResource Label}"/><TextBox Text="{Binding BasePrice, UpdateSourceTrigger=PropertyChanged}" IsReadOnly="{Binding ReadOnlyPrice}" Margin="0,6,0,0"/></StackPanel>
+            <StackPanel Grid.Column="2"><TextBlock Text="Marża (%)" Style="{StaticResource Label}"/><TextBox Text="{Binding Margin, UpdateSourceTrigger=PropertyChanged}" IsReadOnly="{Binding ReadOnly}" Margin="0,6,0,0"/></StackPanel>
+          </Grid>
+          <TextBlock Text="Zmiana operacji i materiałów projektu zachowuje jego cenę bazową." Foreground="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,12,0,0"/>
+          <TextBlock Text="Uwagi" Style="{StaticResource Label}" Margin="0,20,0,0"/><TextBox Text="{Binding Notes, UpdateSourceTrigger=PropertyChanged}" IsReadOnly="{Binding ReadOnly}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="110" MaxHeight="200" VerticalScrollBarVisibility="Auto" Margin="0,6,0,0"/>
+        </StackPanel></ScrollViewer>
+      </TabItem>
+      <TabItem Header="Operacje">
+        <DockPanel Margin="14"><WrapPanel DockPanel.Dock="Bottom" Margin="0,12,0,0"><Button Content="+ Operacja" Click="AddOperation_Click" IsEnabled="{Binding CanEdit}" Margin="0,0,10,0"/><Button Content="Usuń operację" Click="RemoveOperation_Click" IsEnabled="{Binding CanEdit}"/></WrapPanel>
+          <DataGrid x:Name="TemplateOperations" ItemsSource="{Binding Operations}" IsReadOnly="{Binding ReadOnly}" AutoGenerateColumns="False" CanUserAddRows="False" CanUserSortColumns="False" EnableRowVirtualization="True" VirtualizingPanel.VirtualizationMode="Recycling" SelectionMode="Single" MinRowHeight="42">
+            <DataGrid.RowStyle><Style TargetType="DataGridRow"><Setter Property="IsEnabled" Value="{Binding IsEditable}"/></Style></DataGrid.RowStyle>
+            <DataGrid.Columns><DataGridTextColumn Header="Operacja" Binding="{Binding Name, UpdateSourceTrigger=PropertyChanged}" Width="2*"/><DataGridTextColumn Header="Wydział" Binding="{Binding Department, UpdateSourceTrigger=PropertyChanged}" Width="*"/><DataGridTextColumn Header="Godziny" Binding="{Binding Hours, UpdateSourceTrigger=PropertyChanged}" Width="100"/><DataGridTextColumn Header="PLN/h" Binding="{Binding Rate, UpdateSourceTrigger=PropertyChanged}" Width="110"/></DataGrid.Columns>
+          </DataGrid>
+        </DockPanel>
+      </TabItem>
+      <TabItem Header="Materiały / BOM">
+        <DockPanel Margin="14"><WrapPanel DockPanel.Dock="Bottom" Margin="0,12,0,0"><Button Content="+ Materiał" Click="AddMaterial_Click" IsEnabled="{Binding CanEdit}" Margin="0,0,10,0"/><Button Content="Usuń materiał" Click="RemoveMaterial_Click" IsEnabled="{Binding CanEdit}"/></WrapPanel>
+          <DataGrid x:Name="TemplateMaterials" ItemsSource="{Binding Materials}" IsReadOnly="{Binding ReadOnly}" AutoGenerateColumns="False" CanUserAddRows="False" CanUserSortColumns="False" EnableRowVirtualization="True" VirtualizingPanel.VirtualizationMode="Recycling" SelectionMode="Single" MinRowHeight="42">
+            <DataGrid.RowStyle><Style TargetType="DataGridRow"><Setter Property="IsEnabled" Value="{Binding IsEditable}"/></Style></DataGrid.RowStyle>
+            <DataGrid.Columns><DataGridTextColumn Header="Materiał" Binding="{Binding Name, UpdateSourceTrigger=PropertyChanged}" Width="2*"/><DataGridTextColumn Header="Wymiar" Binding="{Binding Dimension, UpdateSourceTrigger=PropertyChanged}" Width="*"/><DataGridTextColumn Header="Ilość" Binding="{Binding Quantity, UpdateSourceTrigger=PropertyChanged}" Width="90"/><DataGridTextColumn Header="Jm" Binding="{Binding Unit, UpdateSourceTrigger=PropertyChanged}" Width="75"/><DataGridTextColumn Header="Masa (kg)" Binding="{Binding Mass, UpdateSourceTrigger=PropertyChanged}" Width="110"/></DataGrid.Columns>
+          </DataGrid>
+        </DockPanel>
+      </TabItem>
+      <TabItem Header="Instrukcje SOP">
+        <Grid Margin="14"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+          <DockPanel Margin="0,0,0,12"><Button DockPanel.Dock="Right" Content="Dodaj blok" Click="AddInstruction_Click" IsEnabled="{Binding CanEdit}" Margin="12,0,0,0"/><ComboBox x:Name="SopLibrary" IsEnabled="{Binding CanEdit}" AutomationProperties.Name="Biblioteka bloków SOP"/></DockPanel>
+          <DataGrid x:Name="TemplateInstructions" Grid.Row="1" ItemsSource="{Binding Instructions}" IsReadOnly="{Binding ReadOnly}" AutoGenerateColumns="False" CanUserAddRows="False" CanUserSortColumns="False" EnableRowVirtualization="True" VirtualizingPanel.VirtualizationMode="Recycling" SelectionMode="Single" MinRowHeight="48">
+            <DataGrid.RowStyle><Style TargetType="DataGridRow"><Setter Property="IsEnabled" Value="{Binding IsEditable}"/></Style></DataGrid.RowStyle>
+            <DataGrid.Columns><DataGridTextColumn Header="Kolejność" Binding="{Binding Sequence}" Width="85" IsReadOnly="True"/><DataGridTextColumn Header="Treść instrukcji" Binding="{Binding Text, UpdateSourceTrigger=PropertyChanged}" Width="*" ElementStyle="{StaticResource CellText}"/></DataGrid.Columns>
+          </DataGrid>
+          <WrapPanel Grid.Row="2" Margin="0,12,0,0"><Button Content="Usuń blok" Click="RemoveInstruction_Click" IsEnabled="{Binding CanEdit}" Margin="0,0,10,0"/><Button Content="W górę" Tag="-1" Click="MoveInstruction_Click" IsEnabled="{Binding CanEdit}" Margin="0,0,10,0"/><Button Content="W dół" Tag="1" Click="MoveInstruction_Click" IsEnabled="{Binding CanEdit}"/></WrapPanel>
+        </Grid>
+      </TabItem>
+      <TabItem Header="Maszyny">
+        <DockPanel Margin="14"><WrapPanel DockPanel.Dock="Bottom" Margin="0,12,0,0"><Button Content="+ Maszyna" Click="AddMachine_Click" IsEnabled="{Binding CanEdit}" Margin="0,0,10,0"/><Button Content="Usuń maszynę" Click="RemoveMachine_Click" IsEnabled="{Binding CanEdit}"/></WrapPanel>
+          <DataGrid x:Name="TemplateMachines" ItemsSource="{Binding Machines}" IsReadOnly="{Binding ReadOnly}" AutoGenerateColumns="False" CanUserAddRows="False" CanUserSortColumns="False" EnableRowVirtualization="True" SelectionMode="Single" MinRowHeight="44"><DataGrid.RowStyle><Style TargetType="DataGridRow"><Setter Property="IsEnabled" Value="{Binding IsEditable}"/></Style></DataGrid.RowStyle><DataGrid.Columns><DataGridTextColumn Header="Maszyna / stanowisko" Binding="{Binding Name, UpdateSourceTrigger=PropertyChanged}" Width="*"/></DataGrid.Columns></DataGrid>
+        </DockPanel>
+      </TabItem>
+      <TabItem Header="Rysunek" x:Name="DrawingTab">
+        <ScrollViewer VerticalScrollBarVisibility="Auto"><StackPanel Margin="18">
+          <WrapPanel><Button Content="Zapisz rysunek PDF…" Click="DownloadDrawing_Click" IsEnabled="{Binding CanDownloadDrawing}" Margin="0,0,10,10"/><Button Content="Zapisz arkusz PDF…" Click="DownloadSheet_Click" IsEnabled="{Binding CanDownloadSheet}" Margin="0,0,10,10"/></WrapPanel>
+          <TextBlock Text="{Binding DrawingPath}" TextWrapping="Wrap" Foreground="{StaticResource Muted}" Margin="0,8,0,10"/>
+          <WrapPanel><Button Content="Wybierz PDF…" Click="ChooseDrawing_Click" IsEnabled="{Binding CanChooseDrawing}" Margin="0,0,10,10"/><Button x:Name="UploadDrawing" Content="Prześlij PDF" Click="Upload_Click" IsEnabled="{Binding CanUpload}" Margin="0,0,10,10"/><Button Content="Odrzuć wybrany plik" Click="DiscardDrawing_Click" IsEnabled="{Binding CanDiscardDrawing}" Margin="0,0,10,10"/><Button x:Name="ReadDrawing" Content="Czytaj rysunek" Click="Preview_Click" IsEnabled="{Binding CanPreview}" Margin="0,0,10,10"/></WrapPanel>
+          <StackPanel Visibility="{Binding HasPreview, Converter={StaticResource Visible}}" Margin="0,12,0,0">
+            <TextBlock Text="Odczyt PDF — sprawdź dane przed zastosowaniem" Style="{StaticResource SectionTitle}" TextWrapping="Wrap"/><TextBlock Text="{Binding PreviewSummary}" TextWrapping="Wrap" LineHeight="22" Margin="0,12,0,12"/>
+            <DataGrid ItemsSource="{Binding PreviewMaterials}" IsReadOnly="True" AutoGenerateColumns="False" CanUserAddRows="False" MaxHeight="220" EnableRowVirtualization="True"><DataGrid.Columns><DataGridTextColumn Header="Materiał" Binding="{Binding Name}" Width="*"/><DataGridTextColumn Header="Wymiar" Binding="{Binding Dimension}" Width="*"/><DataGridTextColumn Header="Ilość" Binding="{Binding Quantity}" Width="100"/><DataGridTextColumn Header="Jm" Binding="{Binding Unit}" Width="65"/></DataGrid.Columns></DataGrid>
+            <ItemsControl ItemsSource="{Binding PreviewOperations}" Margin="0,12,0,12"><ItemsControl.ItemTemplate><DataTemplate><TextBlock Text="{Binding Name}" TextWrapping="Wrap"/></DataTemplate></ItemsControl.ItemTemplate></ItemsControl>
+            <TextBox Text="{Binding Preview.RawTextPreview, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" MaxHeight="150" VerticalScrollBarVisibility="Auto"/>
+            <Button x:Name="ApplyDrawing" Content="Zastosuj odczyt do katalogu" Click="Apply_Click" IsEnabled="{Binding CanApply}" Style="{StaticResource PrimaryButton}" HorizontalAlignment="Left" Margin="0,14,0,0"/>
+          </StackPanel>
+        </StackPanel></ScrollViewer>
+      </TabItem>
+    </TabControl>
+    <StackPanel Grid.Row="3" Margin="0,12,0,0"><ItemsControl ItemsSource="{Binding Errors}"><ItemsControl.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" Foreground="{StaticResource Error}" TextWrapping="Wrap"/></DataTemplate></ItemsControl.ItemTemplate></ItemsControl><TextBox Text="{Binding Comparison, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" MaxHeight="140" VerticalScrollBarVisibility="Auto" BorderThickness="0" Background="Transparent"><TextBox.Style><Style TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}"><Style.Triggers><DataTrigger Binding="{Binding Comparison}" Value=""><Setter Property="Visibility" Value="Collapsed"/></DataTrigger><DataTrigger Binding="{Binding Comparison}" Value="{x:Null}"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></TextBox.Style></TextBox><TextBlock Text="{Binding Status}" TextWrapping="Wrap" Margin="0,8,0,12" AutomationProperties.LiveSetting="Polite"/></StackPanel>
+    <DockPanel Grid.Row="4">
+      <StackPanel DockPanel.Dock="Right" Orientation="Horizontal"><Button Content="Zamknij" Click="Close_Click" Margin="0,0,10,0"/><Button x:Name="SaveTemplate" Content="Zapisz szablon" Click="Save_Click" IsEnabled="{Binding CanSave}" Style="{StaticResource PrimaryButton}"/></StackPanel>
+      <WrapPanel><Button Content="{Binding LifecycleLabel}" Click="Lifecycle_Click" IsEnabled="{Binding CanLifecycle}" Margin="0,0,10,8"/><Button Content="Porównaj" Click="Compare_Click" Visibility="{Binding HasConflict, Converter={StaticResource Visible}}" IsEnabled="{Binding CanCompare}" Margin="0,0,10,8"/><Button Content="Użyj aktualnej wersji" Click="Accept_Click" Visibility="{Binding HasConflict, Converter={StaticResource Visible}}" IsEnabled="{Binding CanAccept}" Margin="0,0,10,8"/><Button x:Name="RetryTemplate" Content="Ponów tę samą operację" Click="Retry_Click" Visibility="{Binding Uncertain, Converter={StaticResource Visible}}" IsEnabled="{Binding CanRetry}" Margin="0,0,10,8"/><Button Content="Zatrzymaj oczekiwanie" Click="Cancel_Click" IsEnabled="{Binding Busy}" Margin="0,0,10,8"/></WrapPanel>
+    </DockPanel>
+  </Grid>
+</Window>

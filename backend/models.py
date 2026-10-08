@@ -6,7 +6,7 @@ import enum
 from datetime import datetime, timezone
 
 from sqlalchemy import (
-    Column, Integer, String, Text, Boolean, Numeric,
+    Column, Integer, BigInteger, String, Text, Boolean, Numeric,
     DateTime, Date, Enum, ForeignKey, JSON, CheckConstraint, UniqueConstraint, Index, text,
 )
 from sqlalchemy.orm import DeclarativeBase, relationship
@@ -32,6 +32,7 @@ class TriageBranch(str, enum.Enum):
     niestandard = "niestandard"
 
 class UserRole(str, enum.Enum):
+    crm          = "crm"
     produkcja    = "produkcja"
     biuro        = "biuro"
     technolog    = "technolog"
@@ -71,7 +72,23 @@ class User(Base):
     role     = Column(Enum(UserRole), nullable=False)
     pin      = Column(String(10))   # legacy plaintext; cleared by migration
     pin_hash = Column(String(128))  # null means login disabled
+    username = Column(String(64), unique=True)
+    password_hash = Column(String(128))
+    password_version = Column(Integer, nullable=False, default=0, server_default="0")
     default_shift = Column(String(2))
+
+
+class RememberedSession(Base):
+    __tablename__ = "remembered_sessions"
+
+    id = Column(String(36), primary_key=True)
+    token_hash = Column(String(64), nullable=False, unique=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    password_version = Column(Integer, nullable=False)
+    created_at = Column(DateTime(timezone=True), nullable=False)
+    last_used_at = Column(DateTime(timezone=True), nullable=False)
+    expires_at = Column(DateTime(timezone=True), nullable=False)
+    revoked_at = Column(DateTime(timezone=True))
 
 
 class ShiftReport(Base):
@@ -146,7 +163,7 @@ class Order(Base):
     requires_visit   = Column(Boolean, default=False)  # Wymaga wizyty u klienta
     template_id      = Column(Integer, ForeignKey("product_templates.id"))  # Wybrany produkt (catalog)
     quantity         = Column(Integer, default=1)      # Ilość sztuk
-    is_defence       = Column(Boolean, default=False)  # Restricted-project marker
+    is_defence       = Column(Boolean, default=False)  # Projekt zbrojeniowy / MON — czerwona ikona w liście
     is_internal      = Column(Boolean, default=False)  # Zlecenie wewnętrzne (własna firma) → koszt własny zamiast oferty
     weight_kg        = Column(Numeric(10, 3))          # Masa zlecenia (kg) — znana z rysunku/klienta
     drawing_number   = Column(String(50))              # Nr rysunku
@@ -180,6 +197,7 @@ class Order(Base):
 # =============================================================================
 class OperationCatalog(Base):
     __tablename__ = "operation_catalog"
+    version_id = Column(BigInteger, nullable=False, server_default=text("1"))
     id           = Column(Integer, primary_key=True)
     name         = Column(String(100), unique=True, nullable=False) # np. "Cięcie plazmą"
     department   = Column(String(50))                               # np. "CNC"
@@ -192,16 +210,16 @@ class OrderOperation(Base):
 
     id           = Column(Integer, primary_key=True)
     order_id     = Column(Integer, ForeignKey("orders.id"), nullable=False)
-    
+
     # Zamiast wpisywać "SPAWANIE" z palca, wybieramy ID ze słownika
     catalog_id   = Column(Integer, ForeignKey("operation_catalog.id"))
-    
+
     # Te pola mogą zostać, bo to specyfika KONKRETNEGO zlecenia
     responsible  = Column(String(100))
     sequence     = Column(Integer, default=1)
     status       = Column(String(20), default="pending")
-    actual_hours = Column(Numeric(8, 2))  
-    
+    actual_hours = Column(Numeric(8, 2))
+
     # Relacje
     catalog_entry = relationship("OperationCatalog")
     tech_card    = relationship("TechCard", back_populates="operation", uselist=False)
@@ -283,6 +301,8 @@ class MaterialRequest(Base):
 class ProductTemplate(Base):
     __tablename__ = "product_templates"
 
+    version_id = Column(BigInteger, nullable=False, server_default=text("1"))
+
     id       = Column(Integer, primary_key=True)
     name     = Column(String(200), nullable=False)  # "Wymiana zęba w łyżce"
     category = Column(String(50))                    # "remont", "zbrojenie", "prefabrykat"
@@ -304,8 +324,8 @@ class ProductTemplate(Base):
     margin_pct      = Column(Numeric(5, 4), default=DEFAULT_MARGIN_PCT)
     is_active       = Column(Boolean, default=True)
 
-    # Katalog projektów — grupowanie szablonów pod neutralny kod projektu.
-    project_code    = Column(String(50))         # np. "DEMO-A"; None = usługa/remont
+    # Katalog projektów — grupowanie szablonów pod projekt (np. "PK1")
+    project_code    = Column(String(50))         # "PK1", "PK2", None = usługa/remont
     position_nr     = Column(String(50))         # "1_legs", "2_spiral" — pozycja z rysunku
     drawing_path    = Column(String(500))        # uploads/templates/{id}/rysunek.pdf
     notes           = Column(Text)               # legenda ogólna: opis detalu, uwagi do serii
@@ -499,6 +519,7 @@ class Setting(Base):
 # =============================================================================
 class ApprovedMaterial(Base):
     __tablename__ = "approved_materials"
+    version_id = Column(BigInteger, nullable=False, server_default=text("1"))
 
     id                  = Column(Integer, primary_key=True)
     name                = Column(String(100), unique=True, nullable=False)  # "S235", "nierdzewka 304"
@@ -513,3 +534,13 @@ class OrderCounter(Base):
 
     year     = Column(Integer, primary_key=True)
     next_seq = Column(Integer, nullable=False, default=1)
+
+
+class OrderCreateReceipt(Base):
+    __tablename__ = "order_create_receipts"
+
+    request_id = Column(String(36), primary_key=True)
+    actor_id = Column(Integer, nullable=False)
+    payload_hash = Column(String(64), nullable=False)
+    response_json = Column(JSON, nullable=False)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=_now)

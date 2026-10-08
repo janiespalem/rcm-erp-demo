@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <ItemGroup>
+    <ProjectReference Include="../Rcm.Crm/Rcm.Crm.csproj" />
+    <ProjectReference Include="../Rcm.Orders/Rcm.Orders.csproj" />
+    <ProjectReference Include="../Rcm.Production/Rcm.Production.csproj" />
+    <InternalsVisibleTo Include="Rcm.Crm.Tests" />
+  </ItemGroup>
+  <ItemGroup><ProjectReference Include="../Rcm.Calculators/Rcm.Calculators.csproj" /></ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="BCrypt.Net-Next" Version="4.2.0" />
+    <PackageReference Include="PDFsharp" Version="6.2.4" />
+    <PackageReference Include="PdfPig" Version="[0.1.16]" />
+    <EmbeddedResource Include="DocumentAssets/*.ttf" />
+    <Content Include="DocumentAssets/LICENSE" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>
